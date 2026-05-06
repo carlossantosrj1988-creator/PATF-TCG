@@ -30,9 +30,28 @@
   
   <script src="screens/renderer/renderer.js"></script>
 <script src="screens/home/home.js"></script>
+  
   <script>
+    const panel = document.getElementById('options-panel');
+    const closeBtn = document.getElementById('options-close');
+    const tabs = document.querySelectorAll('.options-tab');
+    const sections = document.querySelectorAll('.options-section');
+
     document.getElementById('btn-options').addEventListener('click', function() {
-        console.log('opções clicado');
+        panel.classList.add('open');
+    });
+
+    closeBtn.addEventListener('click', function() {
+        panel.classList.remove('open');
+    });
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
     });
   </script>
   
