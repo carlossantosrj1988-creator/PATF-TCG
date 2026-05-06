@@ -9,15 +9,15 @@ function applyScale() {
   const scaleX = window.innerWidth / BASE_W;
   const scaleY = window.innerHeight / BASE_H;
   const scale = Math.max(scaleX, scaleY);
-  const w = BASE_W * scale;
-  const h = BASE_H * scale;
   gameContainer.style.width = BASE_W + 'px';
   gameContainer.style.height = BASE_H + 'px';
   gameContainer.style.transform = `scale(${scale})`;
-  gameContainer.style.transformOrigin = 'top left';
+  gameContainer.style.transformOrigin = 'center center';
   gameContainer.style.position = 'absolute';
-  gameContainer.style.left = ((window.innerWidth - w) / 2) + 'px';
-  gameContainer.style.top = ((window.innerHeight - h) / 2) + 'px';
+  gameContainer.style.left = '50%';
+  gameContainer.style.top = '50%';
+  gameContainer.style.marginLeft = -(BASE_W / 2) + 'px';
+  gameContainer.style.marginTop = -(BASE_H / 2) + 'px';
 }
 
 window.addEventListener('resize', applyScale);
