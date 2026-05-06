@@ -80,13 +80,18 @@ html {
   color: #8899aa;
 }
 
-#options-btn {
-  position: fixed;
-  top: env(safe-area-inset-top, 16px);
-  right: 16px;
-  font-size: 28px;
-  color: #c9a84c;
-  cursor: pointer;
-  z-index: 999;
-  padding: 8px;
+#btn-options {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-size: 1.8rem;
+    color: #fff;
+    cursor: pointer;
+    z-index: 1000;
+    user-select: none;
+    opacity: 0.85;
+}
+
+#btn-options:hover {
+    opacity: 1;
 }
