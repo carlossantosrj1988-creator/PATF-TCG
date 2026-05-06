@@ -95,3 +95,85 @@ html {
 #btn-options:hover {
     opacity: 1;
 }
+
+/* =====================
+   PAINEL DE OPÇÕES
+   ===================== */
+
+#options-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0d1117;
+    z-index: 2000;
+    flex-direction: column;
+}
+
+#options-panel.open {
+    display: flex;
+}
+
+/* Header */
+#options-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #ffffff18;
+}
+
+#options-header h2 {
+    color: #c9a84c;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    font-family: sans-serif;
+}
+
+#options-close {
+    color: #fff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+#options-close:hover {
+    opacity: 1;
+}
+
+/* Abas */
+#options-tabs {
+    display: flex;
+    border-bottom: 1px solid #ffffff18;
+}
+
+.options-tab {
+    flex: 1;
+    padding: 14px;
+    text-align: center;
+    color: #ffffff55;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    font-family: sans-serif;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.options-tab.active {
+    color: #c9a84c;
+    border-bottom: 2px solid #c9a84c;
+}
+
+/* Conteúdo */
+#options-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.options-section {
+    display: none;
+}
+
+.options-section.active {
+    display: block;
+}
