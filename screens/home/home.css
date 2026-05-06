@@ -70,3 +70,13 @@ body {
   font-size: 13px;
   color: #8899aa;
 }
+
+#options-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  font-size: 22px;
+  color: #c9a84c;
+  cursor: pointer;
+  z-index: 50;
+}
