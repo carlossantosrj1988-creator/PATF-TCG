@@ -14,7 +14,7 @@ homeScreen.innerHTML = `
   </div>
 `;
 
-document.body.appendChild(homeScreen);
+document.getElementById('game-container').appendChild(homeScreen);
 
 function checkOrientation() {
   const isPortrait = window.innerHeight > window.innerWidth;
