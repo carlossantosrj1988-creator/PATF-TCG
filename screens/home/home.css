@@ -177,3 +177,27 @@ html {
 .options-section.active {
     display: block;
 }
+
+.options-label {
+    color: #c9a84c;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    font-family: sans-serif;
+    margin-bottom: 12px;
+}
+
+.res-btn {
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border: 1px solid #ffffff22;
+    border-radius: 6px;
+    color: #ffffff88;
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.res-btn.active {
+    border-color: #c9a84c;
+    color: #c9a84c;
+}
