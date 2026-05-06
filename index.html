@@ -11,6 +11,23 @@
 
 <body>
   <div id="btn-options">⚙</div>
+<div id="options-panel">
+    <div id="options-header">
+        <h2>⚙ OPÇÕES</h2>
+        <span id="options-close">✕</span>
+    </div>
+    <div id="options-tabs">
+        <div class="options-tab active" data-tab="tela">TELA</div>
+        <div class="options-tab" data-tab="audio">ÁUDIO</div>
+        <div class="options-tab" data-tab="testes">TESTES</div>
+    </div>
+    <div id="options-content">
+        <div class="options-section active" id="tab-tela"></div>
+        <div class="options-section" id="tab-audio"></div>
+        <div class="options-section" id="tab-testes"></div>
+    </div>
+</div>
+  
   <script src="screens/renderer/renderer.js"></script>
 <script src="screens/home/home.js"></script>
   <script>
