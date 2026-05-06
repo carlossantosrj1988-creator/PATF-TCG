@@ -8,7 +8,7 @@ document.body.appendChild(gameContainer);
 function applyScale() {
   const scaleX = window.innerWidth / BASE_W;
   const scaleY = window.innerHeight / BASE_H;
-  const scale = Math.min(scaleX, scaleY);
+  const scale = Math.max(scaleX, scaleY);
   const w = BASE_W * scale;
   const h = BASE_H * scale;
   gameContainer.style.width = BASE_W + 'px';
