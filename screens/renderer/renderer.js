@@ -1,11 +1,11 @@
-const BASE_W = 1280;
-const BASE_H = 720;
+let BASE_W = 1280;
+let BASE_H = 720;
 
 const gameContainer = document.createElement('div');
 gameContainer.id = 'game-container';
 document.body.appendChild(gameContainer);
 
-function applyScale() {
+window.applyScale = function() {
   const scaleX = window.innerWidth / BASE_W;
   const scaleY = window.innerHeight / BASE_H;
   const scale = Math.max(scaleX, scaleY);
