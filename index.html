@@ -59,6 +59,15 @@
             document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
         });
     });
+    document.querySelectorAll('.res-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        BASE_W = parseInt(btn.dataset.w);
+        BASE_H = parseInt(btn.dataset.h);
+        window.applyScale();
+    });
+});
   </script>
   
 </body>
