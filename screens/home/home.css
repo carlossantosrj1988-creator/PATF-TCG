@@ -73,10 +73,11 @@ body {
 
 #options-btn {
   position: fixed;
-  top: 12px;
-  right: 12px;
-  font-size: 22px;
+  top: env(safe-area-inset-top, 16px);
+  right: 16px;
+  font-size: 28px;
   color: #c9a84c;
   cursor: pointer;
-  z-index: 50;
+  z-index: 999;
+  padding: 8px;
 }
