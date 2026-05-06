@@ -30,3 +30,9 @@ document.getElementById('home-screen').addEventListener('click', () => {
   if (el.requestFullscreen) el.requestFullscreen();
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
 });
+
+const optionsBtn = document.createElement('div');
+optionsBtn.id = 'options-btn';
+optionsBtn.innerHTML = '⚙';
+optionsBtn.addEventListener('click', openOptions);
+document.body.appendChild(optionsBtn);
