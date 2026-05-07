@@ -73,6 +73,19 @@
         window.applyScale();
     });
 });
+    let gameState = 'home';
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#options-panel') || e.target.closest('#btn-options')) return;
+
+  if (gameState === 'home') {
+    gameState = 'home-ready';
+  } else if (gameState === 'home-ready') {
+    document.getElementById('home-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    gameState = 'start';
+  }
+});
   </script>
   
 </body>
