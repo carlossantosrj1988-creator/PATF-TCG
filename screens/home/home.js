@@ -31,6 +31,11 @@ function checkOrientation() {
 window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
+setTimeout(() => {
+  gameState = 'home-ready';
+  document.getElementById('home-start').style.display = 'block';
+}, 5000);
+
 const optionsBtn = document.createElement('div');
 optionsBtn.id = 'options-btn';
 optionsBtn.innerHTML = '⚙';
