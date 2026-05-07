@@ -1,1 +1,187 @@
+#start-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+#start-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── COLUNA ESQUERDA ── */
+#start-left {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 12px;
+}
+
+#start-suits {
+  display: flex;
+  gap: 12px;
+  font-size: 22px;
+}
+
+.suit.hearts    { color: #e05555; }
+.suit.diamonds  { color: #e09055; }
+.suit.spades    { color: #5588cc; }
+.suit.clubs     { color: #55aa77; }
+
+#start-logo {
+  font-size: 72px;
+  font-weight: 900;
+  color: #c9a84c;
+  letter-spacing: 10px;
+}
+
+#start-subtitle {
+  font-size: 11px;
+  color: #8899aa;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+#start-divider {
+  width: 60%;
+  height: 1px;
+  background: #c9a84c55;
+  margin: 8px 0;
+}
+
+#start-login-box {
+  width: 100%;
+  background: #ffffff08;
+  border: 1px solid #ffffff15;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#start-login-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#start-lock {
+  font-size: 18px;
+}
+
+#start-login-label {
+  font-size: 10px;
+  color: #8899aa;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+#start-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+#start-google-btn img {
+  width: 18px;
+  height: 18px;
+}
+
+#start-user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+#start-user-name {
+  font-size: 13px;
+  color: #c9a84c;
+  letter-spacing: 2px;
+}
+
+#start-logout-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #ffffff30;
+  border-radius: 6px;
+  color: #ffffff88;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── COLUNA DIREITA ── */
+#start-right {
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 16px;
+}
+
+.mode-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #ffffff15;
+  cursor: pointer;
+}
+
+#mode-survivor { background: #0d2218; border-color: #1a4a2e; }
+#mode-pvp      { background: #0d1a2e; border-color: #1a2e4a; }
+#mode-teste    { background: #1a1a14; border-color: #3a3a28; }
+
+.mode-icon {
+  font-size: 28px;
+}
+
+.mode-info {
+  flex: 1;
+}
+
+.mode-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin-bottom: 6px;
+}
+
+#mode-survivor .mode-title { color: #55cc88; }
+#mode-pvp      .mode-title { color: #5599ee; }
+#mode-teste    .mode-title { color: #bbaa66; }
+
+.mode-desc {
+  font-size: 12px;
+  color: #8899aa;
+}
+
+.mode-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.mode-badge.pve    { background: #1a4a2e; color: #55cc88; }
+.mode-badge.ranked { background: #1a2e4a; color: #5599ee; }
+.mode-badge.vsia   { background: #3a3a28; color: #bbaa66; }
