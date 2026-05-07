@@ -20,6 +20,12 @@ function checkOrientation() {
   const isPortrait = window.innerHeight > window.innerWidth;
   document.getElementById('rotate-warning').style.display = isPortrait ? 'flex' : 'none';
   document.getElementById('home-content').style.display = isPortrait ? 'none' : 'flex';
+
+  if (!isPortrait) {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  }
 }
 
 window.addEventListener('resize', checkOrientation);
@@ -28,9 +34,6 @@ checkOrientation();
 document.getElementById('home-start').style.display = 'none';
 
 document.getElementById('home-screen').addEventListener('click', () => {
-  const el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
 
   setTimeout(() => {
     document.getElementById('home-start').style.display = 'block';
