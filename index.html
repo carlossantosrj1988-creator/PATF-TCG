@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PATF-TCG</title>
+  <link rel="stylesheet" href="screens/home/home.css" />
+  <link rel="stylesheet" href="screens/start/start.css" />
+  
+</head>
+
+<body>
+  <div id="btn-options">⚙</div>
+<div id="options-panel">
+    <div id="options-header">
+        <h2>⚙ OPÇÕES</h2>
+        <span id="options-close">✕</span>
+    </div>
+    <div id="options-tabs">
+        <div class="options-tab active" data-tab="tela">TELA</div>
+        <div class="options-tab" data-tab="audio">ÁUDIO</div>
+        <div class="options-tab" data-tab="testes">TESTES</div>
+    </div>
+    <div id="options-content">
+        <div class="options-section active" id="tab-tela">
+    <p class="options-label">RESOLUÇÃO</p>
+    <div class="res-btn active" data-w="480" data-h="854">480 × 854</div>
+          <div class="res-btn" data-w="720" data-h="1280">720 × 1280</div>
+<div class="res-btn" data-w="1080" data-h="1920">1080 × 1920</div>
+<div class="res-btn" data-w="1920" data-h="1080">1920 × 1080</div>
+        </div>
+      
+        <div class="options-section" id="tab-audio"></div>
+      
+        <div class="options-section" id="tab-testes"></div>
+      
+    </div>
+</div>
+  
+  <script src="screens/renderer/renderer.js"></script>
+<script src="screens/home/home.js"></script>
+<script src="screens/start/start.js"></script>
+  
+  <script>
+    const panel = document.getElementById('options-panel');
+    const closeBtn = document.getElementById('options-close');
+    const tabs = document.querySelectorAll('.options-tab');
+    const sections = document.querySelectorAll('.options-section');
+
+    document.getElementById('btn-options').addEventListener('click', function() {
+        panel.classList.add('open');
+    });
+
+    closeBtn.addEventListener('click', function() {
+        panel.classList.remove('open');
+    });
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+    document.querySelectorAll('.res-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        BASE_W = parseInt(btn.dataset.w);
+        BASE_H = parseInt(btn.dataset.h);
+        window.applyScale();
+    });
+});
+    let gameState = 'home';
+
+function requestFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#options-panel') || e.target.closest('#btn-options')) return;
+
+  if (gameState === 'home') {
+    requestFullscreen();
+    gameState = 'home-ready';
+  } else if (gameState === 'home-ready') {
+    document.getElementById('home-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    gameState = 'start';
+  }
+});
+  </script>
+  
+</body>
+
+</html>
