@@ -25,10 +25,15 @@ function checkOrientation() {
 window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
-document.getElementById('home-screen').addEventListener('click', () => {
+setTimeout(() => {
   const el = document.documentElement;
   if (el.requestFullscreen) el.requestFullscreen();
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+}, 5500);
+
+document.getElementById('home-screen').addEventListener('click', () => {
+  document.getElementById('home-screen').style.display = 'none';
+document.getElementById('start-screen').style.display = 'flex';
 });
 
 const optionsBtn = document.createElement('div');
