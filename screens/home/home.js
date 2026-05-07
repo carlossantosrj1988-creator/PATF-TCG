@@ -25,17 +25,22 @@ function checkOrientation() {
 window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
-setTimeout(() => {
+document.getElementById('home-start').style.display = 'none';
+
+document.getElementById('home-screen').addEventListener('click', () => {
   const el = document.documentElement;
   if (el.requestFullscreen) el.requestFullscreen();
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-}, 5500);
 
-document.getElementById('home-screen').addEventListener('click', () => {
-  document.getElementById('home-screen').style.display = 'none';
-document.getElementById('start-screen').style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('home-start').style.display = 'block';
+
+    document.getElementById('home-start').addEventListener('click', () => {
+      document.getElementById('home-screen').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'flex';
+    });
+  }, 5000);
 });
-
 const optionsBtn = document.createElement('div');
 optionsBtn.id = 'options-btn';
 optionsBtn.innerHTML = '⚙';
