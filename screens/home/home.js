@@ -31,13 +31,9 @@ function checkOrientation() {
 window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
-setTimeout(() => {
-  gameState = 'home-ready';
-  document.getElementById('home-start').style.display = 'block';
-}, 5000);
+document.getElementById('home-start').style.display = 'none';
 
-const optionsBtn = document.createElement('div');
-optionsBtn.id = 'options-btn';
-optionsBtn.innerHTML = '⚙';
-optionsBtn.addEventListener('click', openOptions);
-homeScreen.appendChild(optionsBtn);
+document.addEventListener('click', function onFirstTouch() {
+  document.getElementById('home-start').style.display = 'block';
+  document.removeEventListener('click', onFirstTouch);
+});
