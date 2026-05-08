@@ -95,7 +95,14 @@ document.addEventListener('click', (e) => {
     document.getElementById('home-screen').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
     gameState = 'start';
-  }
+  } else if (gameState === 'start') {
+      if (e.target.closest('#mode-teste')) {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('screen-select').style.display = 'flex';
+        SELECT.init();
+        gameState = 'select';
+      }
+    }
 });
   </script>
   
