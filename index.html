@@ -102,6 +102,8 @@ document.addEventListener('click', (e) => {
         SELECT.init();
         gameState = 'select';
       }
+    } else if (gameState === 'select') {
+      return;
     }
 });
   </script>
