@@ -103,7 +103,7 @@ document.addEventListener('click', (e) => {
         gameState = 'select';
       }
     } else if (gameState === 'select') {
-      if (e.target.closest('#screen-select')) return;
+      return;
   }
     }
 });
