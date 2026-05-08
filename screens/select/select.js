@@ -58,7 +58,7 @@ const SELECT = (() => {
       const card = document.createElement('div');
       card.className = 'pool-card' + (selecionado === char.id ? ' selecionado' : '');
       card.dataset.id = char.id;
-      card.textContent = '?';
+      card.innerHTML = `<span style="font-size:0.65rem;color:#ccc;text-align:center;line-height:1.2">${char.label}</span>`;
       card.addEventListener('click', () => selecionarChar(char.id));
       pool.appendChild(card);
     });
