@@ -81,3 +81,7 @@ firebase.auth().onAuthStateChanged(user => {
     });
   }
 });
+document.getElementById('mode-teste').addEventListener('click', () => {
+  document.getElementById('start-screen').style.display = 'none';
+  SELECT.init();
+});
