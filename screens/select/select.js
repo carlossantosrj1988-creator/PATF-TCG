@@ -146,6 +146,9 @@ const SELECT = (() => {
   // ── Init ──────────────────────────────────────────────────────────────────
 
   function init() {
+    const el = document.createElement('div');
+el.id = 'screen-select';
+document.getElementById('game-container').appendChild(el);
     rodada = 0;
     selecionado = null;
     personagensMontados = [];
