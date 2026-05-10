@@ -1,0 +1,523 @@
+/* screens/tutorial/tutorial.css */
+
+/* ── Container principal ── */
+#screen-tutorial {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #0a0e1a;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* ── Fundo do mapa ── */
+#tutorial-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 60%, #0d2a1a 0%, #0a0e1a 70%);
+  z-index: 0;
+}
+
+/* ── Topbar ── */
+#tutorial-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: #0a0d14cc;
+  border-bottom: 1px solid #ffffff10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+#tutorial-topbar-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  font-weight: bold;
+}
+
+#tutorial-topbar-pontos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #f0c030;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.topbar-coin { font-size: 1rem; }
+
+/* ── Painel esquerdo — personagens ── */
+#tutorial-chars {
+  position: absolute;
+  top: 72px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 10;
+  width: 200px;
+}
+
+.tutorial-char-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tutorial-char-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutorial-char-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
+  border: 2px solid #ffffff20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.tutorial-char-nome {
+  font-size: 0.7rem;
+  color: #ccc;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.tutorial-char-hp-bar {
+  width: 100%;
+  height: 6px;
+  background: #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tutorial-char-hp-fill {
+  height: 100%;
+  background: #44dd88;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.tutorial-char-hp-texto {
+  font-size: 0.6rem;
+  color: #555;
+  letter-spacing: 1px;
+}
+
+/* ── Painel direito — botões ── */
+#tutorial-actions {
+  position: absolute;
+  top: 72px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+}
+
+.tutorial-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #ffffff20;
+  background: #0d0d1a;
+  color: #aaa;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  font-family: sans-serif;
+  text-transform: uppercase;
+}
+
+.tutorial-action-btn:hover {
+  background: #1a1a2a;
+  border-color: #ffffff40;
+  color: #fff;
+}
+
+#btn-tutorial-status {
+  border-color: #c9a84c44;
+  color: #c9a84c;
+}
+
+#btn-tutorial-status:hover {
+  background: #1a1500;
+  border-color: #c9a84c;
+}
+
+#btn-tutorial-desistir {
+  border-color: #cc444444;
+  color: #cc6666;
+}
+
+#btn-tutorial-desistir:hover {
+  background: #1a0a0a;
+  border-color: #cc4444;
+}
+
+/* ── Mapa de etapas (centro) ── */
+#tutorial-mapa {
+  position: absolute;
+  top: 52px;
+  left: 220px;
+  right: 180px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  gap: 0;
+}
+
+.mapa-etapa-linha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  flex-direction: column;
+}
+
+/* Linha conectora vertical */
+.mapa-conector {
+  width: 2px;
+  height: 40px;
+  background: #ffffff18;
+}
+
+.mapa-conector.ativa {
+  background: #44dd8866;
+}
+
+/* Nó da etapa */
+.mapa-no {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: default;
+  user-select: none;
+}
+
+.mapa-no-circulo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid #ffffff20;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #444;
+  transition: border-color 0.3s, background 0.3s, color 0.3s, transform 0.2s;
+  position: relative;
+}
+
+.mapa-no-label {
+  font-size: 0.65rem;
+  color: #555;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  position: absolute;
+  white-space: nowrap;
+}
+
+/* Label à direita nos nós ímpares, esquerda nos pares */
+.mapa-no[data-lado="direita"] .mapa-no-label {
+  left: calc(100% + 16px);
+}
+
+.mapa-no[data-lado="esquerda"] .mapa-no-label {
+  right: calc(100% + 16px);
+  text-align: right;
+}
+
+/* Estados do nó */
+.mapa-no-circulo.concluida {
+  border-color: #44dd88;
+  background: #0a2a18;
+  color: #44dd88;
+}
+
+.mapa-no-circulo.ativa {
+  border-color: #c9a84c;
+  background: #1a1400;
+  color: #c9a84c;
+  cursor: pointer;
+  animation: pulsar 2s ease-in-out infinite;
+}
+
+.mapa-no-circulo.ativa:hover {
+  transform: scale(1.08);
+  background: #2a2000;
+}
+
+.mapa-no-circulo.bloqueada {
+  border-color: #ffffff10;
+  background: #0d0d1a;
+  color: #2a2a2a;
+  cursor: not-allowed;
+}
+
+@keyframes pulsar {
+  0%, 100% { box-shadow: 0 0 0 0 #c9a84c33; }
+  50%       { box-shadow: 0 0 0 8px #c9a84c00; }
+}
+
+/* ── Popup de tutorial ── */
+#tutorial-popup {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#tutorial-popup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+#tutorial-popup-box {
+  position: relative;
+  background: #0d1117;
+  border: 1px solid #ffffff18;
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  width: 480px;
+  max-width: 90%;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#tutorial-popup-tag {
+  font-size: 0.65rem;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+#tutorial-popup-titulo {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 2px;
+}
+
+#tutorial-popup-texto {
+  font-size: 0.8rem;
+  color: #8899aa;
+  line-height: 1.7;
+}
+
+#tutorial-popup-texto strong {
+  color: #c9a84c;
+}
+
+#tutorial-popup-indicador {
+  font-size: 0.7rem;
+  color: #44dd88;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#tutorial-popup-btn {
+  align-self: flex-end;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #c9a84c;
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s;
+}
+
+#tutorial-popup-btn:hover {
+  background: #e0c060;
+}
+
+/* ── Popup de recompensa ── */
+#tutorial-recompensa {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#tutorial-recompensa-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+#tutorial-recompensa-box {
+  position: relative;
+  background: #0d1117;
+  border: 1px solid #c9a84c44;
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 360px;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.recompensa-icone {
+  font-size: 2.4rem;
+}
+
+.recompensa-titulo {
+  font-size: 0.7rem;
+  color: #44dd88;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.recompensa-pontos {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #f0c030;
+  letter-spacing: 4px;
+}
+
+.recompensa-desc {
+  font-size: 0.72rem;
+  color: #8899aa;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.recompensa-btn {
+  margin-top: 8px;
+  padding: 10px 28px;
+  border-radius: 8px;
+  border: none;
+  background: #c9a84c;
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s;
+}
+
+.recompensa-btn:hover {
+  background: #e0c060;
+}
+
+/* ── Highlight de destino (seta piscante) ── */
+.tutorial-highlight {
+  animation: highlight-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Placeholder de batalha ── */
+#tutorial-batalha-placeholder {
+  position: absolute;
+  inset: 0;
+  background: #0a0e1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 200;
+}
+
+.batalha-ph-titulo {
+  font-size: 0.7rem;
+  color: #44dd88;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+.batalha-ph-desc {
+  font-size: 1.2rem;
+  color: #fff;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+.batalha-ph-sub {
+  font-size: 0.75rem;
+  color: #555;
+  letter-spacing: 2px;
+}
+
+.batalha-ph-btn {
+  margin-top: 16px;
+  padding: 12px 32px;
+  border-radius: 8px;
+  border: none;
+  background: #c9a84c;
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s;
+}
+
+.batalha-ph-btn:hover {
+  background: #e0c060;
+}
+
+/* ── Placeholder de status ── */
+#tutorial-status-placeholder {
+  position: absolute;
+  inset: 0;
+  background: #0a0a14;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 200;
+}
