@@ -1,0 +1,333 @@
+/* screens/select/select.css */
+
+/*
+  Container base: 1280 × 720px
+  Distribuição vertical:
+    header:       52px
+    etapas:       52px
+    pool cards:   96px
+    card central: 220px
+    bottom:       120px
+    gaps/padding: ~60px (4 × 15px entre blocos + 16px top/bottom)
+    total:        ~600px — cabe com folga em 720px
+*/
+
+#screen-select {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  background: #0d0d0d;
+  color: #ffffff;
+  padding: 16px 16px 16px 16px;
+  box-sizing: border-box;
+  gap: 15px;
+  overflow: hidden;
+}
+
+/* ── Header — 52px ── */
+.select-header {
+  width: 100%;
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+  height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.select-header-titulo {
+  font-size: 0.8rem;
+  color: #c9a84c;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-family: sans-serif;
+  font-weight: bold;
+}
+
+.select-header-desc {
+  font-size: 0.65rem;
+  color: #555;
+  font-family: sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* ── Indicador de etapas — 52px ── */
+.select-etapas {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+  flex-shrink: 0;
+  height: 52px;
+  align-items: center;
+}
+
+.etapa-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.etapa-item.ativa    { opacity: 1; }
+.etapa-item.concluida { opacity: 0.7; }
+
+.etapa-numero {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #888;
+  font-family: sans-serif;
+}
+
+.etapa-item.ativa    .etapa-numero { border-color: #c9a84c; color: #c9a84c; }
+.etapa-item.concluida .etapa-numero { border-color: #55cc88; color: #55cc88; font-size: 0.65rem; }
+
+.etapa-label {
+  font-size: 0.6rem;
+  color: #888;
+  font-family: sans-serif;
+  max-width: 80px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etapa-item.ativa    .etapa-label { color: #c9a84c; }
+.etapa-item.concluida .etapa-label { color: #55cc88; }
+
+/* ── Pool de 4 cards — 96px ── */
+.select-pool {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  flex-shrink: 0;
+  height: 96px;
+  align-items: center;
+}
+
+.pool-card {
+  width: 72px;
+  height: 88px;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #4a4a4a, #1a1a1a);
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+  box-sizing: border-box;
+}
+
+.pool-card:hover      { border-color: #aaa; transform: translateY(-3px); }
+.pool-card.selecionado { border-color: #c9a84c; }
+
+/* ── Card central — 220px ── */
+.select-card-central {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 220px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #3a3a3a, #1a1a1a);
+  border: 2px solid #555;
+  padding: 12px;
+  box-sizing: border-box;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.select-card-central.vazio { opacity: 0.3; }
+
+.card-simbolo {
+  font-size: 2.6rem;
+  color: #888;
+}
+
+.card-stats {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 3px 16px;
+  font-size: 0.78rem;
+  color: #aaa;
+  font-family: sans-serif;
+}
+
+.card-stats span {
+  color: #fff;
+  font-weight: bold;
+}
+
+.card-descricao {
+  font-size: 0.68rem;
+  color: #888;
+  text-align: center;
+  font-style: italic;
+  font-family: sans-serif;
+}
+
+/* ── Área inferior — 120px ── */
+.select-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-shrink: 0;
+  height: 120px;
+  justify-content: center;
+}
+
+.select-nome-label {
+  font-size: 0.75rem;
+  color: #888;
+  font-family: sans-serif;
+}
+
+.select-nome-input {
+  width: 220px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 0.95rem;
+  text-align: center;
+  outline: none;
+  font-family: sans-serif;
+}
+
+.select-nome-input:focus   { border-color: #c9a84c; }
+.select-nome-input:disabled { opacity: 0.4; }
+
+.select-botoes {
+  display: flex;
+  gap: 14px;
+}
+
+.btn-cancelar {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #888;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-cancelar:hover    { border-color: #aaa; color: #fff; }
+.btn-cancelar:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.btn-confirmar {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: none;
+  background: #c9a84c;
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s;
+}
+
+.btn-confirmar:hover    { background: #e0c060; }
+.btn-confirmar:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
+
+/* ── Painel de confirmação ── */
+#painel-confirmacao {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.painel-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+}
+
+.painel-box {
+  position: relative;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 300px;
+  z-index: 101;
+}
+
+.painel-titulo {
+  font-size: 0.8rem;
+  color: #c9a84c;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: sans-serif;
+}
+
+.painel-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+
+.painel-simbolo { font-size: 2rem; color: #888; }
+
+.painel-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.painel-nome  { font-size: 1rem; font-weight: bold; color: #fff; letter-spacing: 2px; font-family: sans-serif; }
+.painel-tipo  { font-size: 0.72rem; color: #888; font-family: sans-serif; }
+.painel-stats { font-size: 0.68rem; color: #555; font-family: sans-serif; }
+
+.painel-aviso {
+  font-size: 0.68rem;
+  color: #444;
+  font-style: italic;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.painel-botoes {
+  display: flex;
+  gap: 12px;
+}
