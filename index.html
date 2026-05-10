@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PATF-TCG</title>
+  <link rel="stylesheet" href="screens/home/home.css" />
+  <link rel="stylesheet" href="screens/start/start.css" />
+  <link rel="stylesheet" href="screens/select/select.css" />
+</head>
+
+<body>
+
+  <!-- ── Botão de opções (fixo, fora do game-container) ── -->
+  <div id="btn-options">⚙</div>
+
+  <!-- ── Painel de opções (fixo, fora do game-container) ── -->
+  <div id="options-panel">
+    <div id="options-header">
+      <h2>⚙ OPÇÕES</h2>
+      <span id="options-close">✕</span>
+    </div>
+    <div id="options-tabs">
+      <div class="options-tab active" data-tab="tela">TELA</div>
+      <div class="options-tab" data-tab="audio">ÁUDIO</div>
+      <div class="options-tab" data-tab="testes">TESTES</div>
+    </div>
+    <div id="options-content">
+      <div class="options-section active" id="tab-tela">
+        <p class="options-label">RESOLUÇÃO</p>
+        <div class="res-btn active" data-w="1280" data-h="720">1280 × 720</div>
+        <div class="res-btn" data-w="480" data-h="854">480 × 854</div>
+        <div class="res-btn" data-w="720" data-h="1280">720 × 1280</div>
+        <div class="res-btn" data-w="1080" data-h="1920">1080 × 1920</div>
+        <div class="res-btn" data-w="1920" data-h="1080">1920 × 1080</div>
+      </div>
+      <div class="options-section" id="tab-audio"></div>
+      <div class="options-section" id="tab-testes"></div>
+    </div>
+  </div>
+
+  <!-- ── Scripts de módulo — ordem de dependência ── -->
+  <script src="screens/renderer/renderer.js"></script>
+  <script src="chars/chars.js"></script>
+  <script src="screens/home/home.js"></script>
+  <script src="screens/start/start.js"></script>
+  <script src="screens/select/select.js"></script>
+
+  <script>
+
+    // ── Fullscreen ────────────────────────────────────────────────────────────
+
+    function requestFullscreen() {
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > window.innerHeight) requestFullscreen();
+    });
+
+    // ── Painel de opções ──────────────────────────────────────────────────────
+
+    const panel    = document.getElementById('options-panel');
+    const closeBtn = document.getElementById('options-close');
+    const tabs     = document.querySelectorAll('.options-tab');
+    const sections = document.querySelectorAll('.options-section');
+
+    document.getElementById('btn-options').addEventListener('click', function () {
+      panel.classList.add('open');
+    });
+
+    closeBtn.addEventListener('click', function () {
+      panel.classList.remove('open');
+    });
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(t => t.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('.res-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        BASE_W = parseInt(btn.dataset.w);
+        BASE_H = parseInt(btn.dataset.h);
+        window.applyScale();
+      });
+    });
+
+    // ── Navegação entre telas ─────────────────────────────────────────────────
+
+    let gameState = 'home';
+
+    // Função de navegação central — usada pelos módulos filhos
+    window.irParaTela = function(tela) {
+      // esconde todas as telas conhecidas
+      const todas = ['home-screen', 'start-screen', 'screen-select', 'screen-resultado'];
+      todas.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+
+      const destino = document.getElementById(tela);
+      if (destino) destino.style.display = 'flex';
+
+      gameState = tela;
+    };
+
+    document.addEventListener('click', (e) => {
+
+      // Opções — nunca interceptar
+      if (e.target.closest('#options-panel') || e.target.closest('#btn-options')) return;
+
+      if (gameState === 'home') {
+        requestFullscreen();
+        gameState = 'home-ready';
+
+      } else if (gameState === 'home-ready') {
+        window.irParaTela('start-screen');
+        gameState = 'start-screen';
+
+      } else if (gameState === 'start-screen') {
+        if (e.target.closest('#mode-teste')) {
+          window.irParaTela('screen-select');
+          SELECT.init();
+          gameState = 'screen-select';
+        }
+
+      } else if (gameState === 'screen-select') {
+        // select.js gerencia os próprios cliques
+        e.stopPropagation();
+
+      } else if (gameState === 'screen-resultado') {
+        // resultado gerencia os próprios cliques
+        e.stopPropagation();
+      }
+
+    });
+
+  </script>
+
+</body>
+
+</html>
