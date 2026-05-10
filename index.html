@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PATF-TCG</title>
+  <link rel="stylesheet" href="screens/home/home.css" />
+  <link rel="stylesheet" href="screens/start/start.css" />
+  <link rel="stylesheet" href="screens/select/select.css" />
+
+  <style>
+    /* ── Bloqueio de portrait ── */
+    #portrait-lock {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0e1a;
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: #fff;
+      font-family: sans-serif;
+    }
+    #portrait-lock .lock-icon  { font-size: 48px; }
+    #portrait-lock .lock-title { font-size: 16px; color: #c9a84c; letter-spacing: 4px; }
+    #portrait-lock .lock-sub   { font-size: 13px; color: #8899aa; }
+
+    /* ── Botão reativar fullscreen ── */
+    #btn-fullscreen {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #c9a84c;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      cursor: pointer;
+      z-index: 1000;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Bloqueio portrait ── -->
+  <div id="portrait-lock">
+    <div class="lock-icon">📱</div>
+    <div class="lock-title">VIRE SEU DISPOSITIVO</div>
+    <div class="lock-sub">PATF TCG requer modo paisagem</div>
+  </div>
+
+  <!-- ── Botão reativar fullscreen ── -->
+  <button id="btn-fullscreen">⛶ TELA CHEIA</button>
+
+  <!-- ── Botão de opções (fixo) ── -->
+  <div id="btn-options">⚙</div>
+
+  <!-- ── Painel de opções ── -->
+  <div id="options-panel">
+    <div id="options-header">
+      <h2>⚙ OPÇÕES</h2>
+      <span id="options-close">✕</span>
+    </div>
+    <div id="options-tabs">
+      <div class="options-tab active" data-tab="tela">TELA</div>
+      <div class="options-tab" data-tab="audio">ÁUDIO</div>
+      <div class="options-tab" data-tab="testes">TESTES</div>
+    </div>
+    <div id="options-content">
+      <div class="options-section active" id="tab-tela">
+        <p class="options-label">RESOLUÇÃO</p>
+        <div class="res-btn active" data-w="1280" data-h="720">1280 × 720</div>
+        <div class="res-btn" data-w="480" data-h="854">480 × 854</div>
+        <div class="res-btn" data-w="720" data-h="1280">720 × 1280</div>
+        <div class="res-btn" data-w="1080" data-h="1920">1080 × 1920</div>
+        <div class="res-btn" data-w="1920" data-h="1080">1920 × 1080</div>
+      </div>
+      <div class="options-section" id="tab-audio"></div>
+      <div class="options-section" id="tab-testes"></div>
+    </div>
+  </div>
+
+  <!-- ── Scripts — ordem de dependência ── -->
+  <script src="screens/renderer/renderer.js"></script>
+  <script src="chars/chars.js"></script>
+  <script src="screens/home/home.js"></script>
+  <script src="screens/start/start.js"></script>
+  <script src="screens/select/select.js"></script>
+
+  <script>
+
+    // ── Fullscreen ────────────────────────────────────────────────────────────
+
+    function ativarFullscreen() {
+      const el = document.documentElement;
+      if (el.requestFullscreen)            el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    }
+
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    function isLandscape() {
+      return window.innerWidth > window.innerHeight;
+    }
+
+    function atualizarEstadoTela() {
+      const portrait      = document.getElementById('portrait-lock');
+      const btnFullscreen = document.getElementById('btn-fullscreen');
+
+      if (!isLandscape()) {
+        portrait.style.display      = 'flex';
+        btnFullscreen.style.display = 'none';
+      } else {
+        portrait.style.display      = 'none';
+        btnFullscreen.style.display = isFullscreen() ? 'none' : 'block';
+      }
+    }
+
+    document.getElementById('btn-fullscreen').addEventListener('click', function () {
+      ativarFullscreen();
+    });
+
+    document.addEventListener('fullscreenchange',       atualizarEstadoTela);
+    document.addEventListener('webkitfullscreenchange', atualizarEstadoTela);
+    window.addEventListener('resize',                   atualizarEstadoTela);
+
+    atualizarEstadoTela();
+
+    // ── Painel de opções ──────────────────────────────────────────────────────
+
+    const panel    = document.getElementById('options-panel');
+    const closeBtn = document.getElementById('options-close');
+    const tabs     = document.querySelectorAll('.options-tab');
+    const sections = document.querySelectorAll('.options-section');
+
+    document.getElementById('btn-options').addEventListener('click', function () {
+      panel.classList.add('open');
+    });
+
+    closeBtn.addEventListener('click', function () {
+      panel.classList.remove('open');
+    });
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(t => t.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('.res-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        BASE_W = parseInt(btn.dataset.w);
+        BASE_H = parseInt(btn.dataset.h);
+        window.applyScale();
+      });
+    });
+
+    // ── Navegação central ─────────────────────────────────────────────────────
+
+    let gameState = 'home';
+
+    window.irParaTela = function(tela) {
+      const todas = ['home-screen', 'start-screen', 'screen-select', 'screen-resultado'];
+      todas.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const destino = document.getElementById(tela);
+      if (destino) destino.style.display = 'flex';
+      gameState = tela;
+    };
+
+    document.addEventListener('click', (e) => {
+
+      if (e.target.closest('#options-panel'))  return;
+      if (e.target.closest('#btn-options'))     return;
+      if (e.target.closest('#btn-fullscreen'))  return;
+      if (e.target.closest('#portrait-lock'))   return;
+
+      if (gameState === 'home') {
+        ativarFullscreen();
+        gameState = 'home-ready';
+
+      } else if (gameState === 'home-ready') {
+        window.irParaTela('start-screen');
+        gameState = 'start-screen';
+
+      } else if (gameState === 'start-screen') {
+        if (e.target.closest('#mode-teste')) {
+          window.irParaTela('screen-select');
+          SELECT.init();
+          gameState = 'screen-select';
+        }
+
+      } else if (gameState === 'screen-select') {
+        e.stopPropagation();
+
+      } else if (gameState === 'screen-resultado') {
+        e.stopPropagation();
+      }
+
+    });
+
+  </script>
+
+</body>
+
+</html>
