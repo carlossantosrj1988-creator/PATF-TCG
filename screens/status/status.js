@@ -368,16 +368,101 @@ const STATUS = (() => {
   }
 
   function renderAtlas() {
+    const area   = document.getElementById('status-atlas-area');
     const canvas = document.getElementById('status-atlas-canvas');
-    if (!canvas) return;
+    if (!canvas || !area) return;
     const p = PLAYER_STATE.personagens[charIdx];
     canvas.innerHTML = '';
 
     if (!p.naipe) {
+      canvas.style.cssText = 'position:relative;width:800px;height:800px;margin:auto;';
+      area.style.overflow  = 'auto';
       renderSeletorNaipe(canvas);
     } else {
+      canvas.style.cssText = 'position:relative;width:100%;min-height:100%;';
+      area.style.overflow  = 'auto';
       renderArvoreNaipe(canvas, p.naipe);
     }
+  }
+
+  // ── Árvore expandida — 4 colunas verticais ───────────────────────────────
+  function renderArvoreNaipe(canvas, naipeId) {
+    const naipe     = ATLAS_NAIPES[naipeId];
+    const comprados = PLAYER_STATE.personagens[charIdx].atlasComprados || [];
+    const nos       = ATLAS_NOS.filter(n => n.naipe === naipeId);
+
+    const h1  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 1);
+    const h2  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 2);
+    const h3  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 3);
+    const pas = nos.filter(n => n.tipo === 'passiva');
+
+    const colunas = [
+      { label: 'HAB BÁSICA',      icone: '⚔', nos: h1  },
+      { label: 'HAB INTERMEDIÁRIA', icone: '⚡', nos: h2  },
+      { label: 'HAB AVANÇADA',    icone: '💥', nos: h3  },
+      { label: 'PASSIVAS',        icone: '◈', nos: pas },
+    ];
+
+    // ── Cabeçalho do naipe ──
+    const header = document.createElement('div');
+    header.className = 'arvore-header';
+    header.style.cssText = `border-bottom: 1px solid ${naipe.cor}33;`;
+    header.innerHTML = `
+      <div class="arvore-header-simbolo" style="color:${naipe.cor}">${naipe.label.split(' ')[0]}</div>
+      <div class="arvore-header-nome" style="color:${naipe.cor}">${naipe.label}</div>
+    `;
+    canvas.appendChild(header);
+
+    // ── Banda TIER 1 ──
+    const tier = document.createElement('div');
+    tier.className = 'arvore-tier-band';
+    tier.style.cssText = `background: linear-gradient(90deg, transparent, ${naipe.cor}22, transparent);border-color:${naipe.cor}33;`;
+    tier.textContent = 'TIER  1';
+    canvas.appendChild(tier);
+
+    // ── Grid de 4 colunas ──
+    const grid = document.createElement('div');
+    grid.className = 'arvore-grid';
+
+    colunas.forEach(col => {
+      const colEl = document.createElement('div');
+      colEl.className = 'arvore-coluna';
+
+      const colHeader = document.createElement('div');
+      colHeader.className = 'arvore-col-header';
+      colHeader.style.cssText = `color:${naipe.cor};border-bottom:1px solid ${naipe.cor}33;`;
+      colHeader.innerHTML = `<span>${col.icone}</span><span>${col.label}</span>`;
+      colEl.appendChild(colHeader);
+
+      col.nos.forEach(no => {
+        const comprado = comprados.includes(no.id);
+        const noEl = document.createElement('div');
+        noEl.className = 'arvore-no' + (comprado ? ' comprado' : '');
+        noEl.style.cssText = comprado
+          ? `border-color:${naipe.cor}88;background:${naipe.cor}15;color:${naipe.cor};`
+          : '';
+        noEl.innerHTML = `
+          <div class="arvore-no-icone">${col.icone}</div>
+          <div class="arvore-no-label">${no.label}</div>
+          <div class="arvore-no-custo">${comprado ? '✓' : no.custo + ' PT'}</div>
+        `;
+        if (!comprado) {
+          noEl.addEventListener('click', () => abrirPopupNo(no));
+        }
+        colEl.appendChild(noEl);
+      });
+
+      grid.appendChild(colEl);
+    });
+
+    canvas.appendChild(grid);
+
+    // ── Espaço reservado para Tier 2 ──
+    const tier2 = document.createElement('div');
+    tier2.className = 'arvore-tier-futuro';
+    tier2.style.cssText = `border-color:${naipe.cor}22;color:${naipe.cor}44;`;
+    tier2.textContent = 'TIER 2 — EM BREVE';
+    canvas.appendChild(tier2);
   }
 
   // ── Seletor inicial — 4 ícones cardinais ─────────────────────────────────
