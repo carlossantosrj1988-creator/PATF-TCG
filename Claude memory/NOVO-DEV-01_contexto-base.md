@@ -194,7 +194,13 @@ README.md
 | 2026-05-11 | Renderer migrado para `Math.min` (letterbox) — nada mais é cortado em telas wide |
 | 2026-05-11 | `BASE_W` agora é dinâmico: `max(1280, round(720 × aspect_device))` — telas 19.5:9/20:9 preenchem sem bordas pretas |
 | 2026-05-11 | Regra de Interface atualizada: BASE_H 720 fixa, BASE_W dinâmica. Y livre em px; X só por ancoragem (`left:0`/`right:0`) ou centralização proporcional |
+| 2026-05-11 | Tela de Status construída em 3 etapas: estrutura base + árvore Atlas (SVG + 12 nós + comprarNo) + popups de seleção/detalhe das habilidades e passivas |
+| 2026-05-11 | Slots de habilidade têm categoria fixa (slot 0=cat1, 1=cat2, 2=cat3); itens equipados somem da lista de seleção; slot ocupado abre popup de detalhe com botão REMOVER |
+| 2026-05-11 | Estado por personagem: `atlasComprados[]`, `habilidades[null,null,null]`, `passivas[null,null]` — inicializados em `STATUS.init()` |
+| 2026-05-11 | ⚙ engrenagem migrou do `<body>` para dentro do `#game-container` (criado em `renderer.js`) — semi-universal, escala com o canvas, ancorado no canto superior direito do canvas |
+| 2026-05-11 | Topbars de 52px reservam `padding-right: 60px` para o ⚙; coin/contadores deslocam pra esquerda |
+| 2026-05-11 | Fluxo de trabalho atualizado: conversa direta dentro do Claude Code é o padrão. Fluxo "Chat web mastigador" da sessão 002 vira referência opcional |
 
 ---
 
-*Última atualização: 2026-05-11 — renderer híbrido (BASE_H fixa, BASE_W dinâmica), tela de Status com Atlas + popups de habilidade/passiva*
+*Última atualização: 2026-05-11 — sessão 003 fechada: tela de Status (fundação), canvas híbrido, ⚙ semi-universal*
