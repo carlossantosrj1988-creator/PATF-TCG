@@ -521,6 +521,7 @@ const STATUS = (() => {
           div.className = 'atlas-no-cat';
           div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
           div.innerHTML = `<div class="atlas-no-cat-circulo">${no.icone}</div><div class="atlas-naipe-label">${no.label}</div>`;
+          div.addEventListener('click', () => abrirPopupCategoria(no.id.split('_')[1], no.naipeId));
           canvas.appendChild(div);
 
         } else {
@@ -639,6 +640,62 @@ const STATUS = (() => {
           <strong style="color:${naipe.cor}">H3</strong> — Habilidades avançadas · 4 pts<br>
           <strong style="color:${naipe.cor}">P</strong> &nbsp;— Passivas automáticas · 2 pts
         </div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-fechar">ENTENDIDO</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+  }
+
+  function abrirPopupCategoria(catId, naipeId) {
+    fecharPopup();
+    const screen = document.getElementById('screen-status');
+    const naipe  = NAIPES_DATA[naipeId];
+
+    const INFO = {
+      h1: {
+        icone: '⚔',
+        titulo: 'H1 — HABILIDADES BÁSICAS',
+        custo: '2 PT cada',
+        desc: 'Habilidades de entrada de qualquer build. Disponíveis no início do turno e geralmente sem recarga — você pode contar com elas toda rodada. São o ponto de partida da sua estratégia.',
+      },
+      h2: {
+        icone: '⚡',
+        titulo: 'H2 — HABILIDADES INTERMEDIÁRIAS',
+        custo: '3 PT cada',
+        desc: 'Mais versáteis e poderosas que as básicas. Ideais para combos e situações específicas. Costumam ter recarga após uso — use no momento certo.',
+      },
+      h3: {
+        icone: '💥',
+        titulo: 'H3 — HABILIDADES ESPECIAIS',
+        custo: '4 PT cada',
+        desc: 'As mais impactantes da árvore. Definem o estilo da sua build. Geralmente bloqueadas no primeiro turno e com recarga pesada — mas quando ativam, mudam o rumo da batalha.',
+      },
+      pa: {
+        icone: '◈',
+        titulo: 'PASSIVAS',
+        custo: '2 PT cada',
+        desc: 'Não precisam de ativação. Enquanto equipadas nos slots de passiva, funcionam automaticamente durante a batalha conforme a descrição.',
+      },
+    };
+
+    const info = INFO[catId];
+    if (!info) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div class="popup-topo-row">
+          <span class="popup-cat-badge">${info.titulo}</span>
+          <span class="popup-custo-badge">${info.custo}</span>
+        </div>
+        <div class="popup-detalhe-icone" style="color:${naipe.cor}">${info.icone}</div>
+        <div class="popup-detalhe-naipe" style="color:${naipe.cor}99">${naipe.label}</div>
+        <div class="popup-detalhe-desc">${info.desc}</div>
         <div class="popup-detalhe-acoes">
           <button id="status-popup-fechar">ENTENDIDO</button>
         </div>
