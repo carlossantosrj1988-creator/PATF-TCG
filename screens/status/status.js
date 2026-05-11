@@ -64,8 +64,8 @@ const STATUS = (() => {
       <div id="status-topbar-esq">
         <button id="status-topbar-voltar">← VOLTAR</button>
         <div id="status-topbar-titulo">⚔ STATUS</div>
+        <div id="status-topbar-pontos">PONTOS:<span id="status-topbar-pontos-valor">${PLAYER_STATE.pontos ?? 0}</span></div>
       </div>
-      <div id="status-topbar-pontos">PONTOS:<span id="status-topbar-pontos-valor">${PLAYER_STATE.pontos ?? 0}</span></div>
     `;
     topbar.querySelector('#status-topbar-voltar').addEventListener('click', voltar);
     screen.appendChild(topbar);
