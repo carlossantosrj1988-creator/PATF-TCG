@@ -445,30 +445,33 @@ const STATUS = (() => {
     const resultado = [{ tipo: 't1', x: t1X, y: t1Y, naipeId }];
     const linhas    = [{ x1: naipeX, y1: naipeY, x2: t1X, y2: t1Y, op: 0.6 }];
 
+    // Tronco continua além dos galhos → T2
+    const t2X = t1X + 370 * dx;
+    const t2Y = t1Y + 370 * dy;
+    resultado.push({ tipo: 't2', x: t2X, y: t2Y, naipeId });
+    linhas.push({ x1: t1X, y1: t1Y, x2: t2X, y2: t2Y, op: 0.12, dashed: true });
+
     cats.forEach(cat => {
+      // Nó de categoria: 140px no tronco + offset perpendicular
       const catX = t1X + 140 * dx + cat.po * qx;
       const catY = t1Y + 140 * dy + cat.po * qy;
       resultado.push({ tipo: 'categoria', id: naipeId + '_' + cat.catId, label: cat.label, icone: cat.icone, x: catX, y: catY, naipeId });
       linhas.push({ x1: t1X, y1: t1Y, x2: catX, y2: catY, op: 0.35 });
 
+      // Skills se abrem para fora (perpendicular, afastando do centro)
+      const sinal = cat.po < 0 ? -1 : 1;
       cat.nos.forEach((no, i) => {
-        const sx = catX + (i + 1) * 90 * dx;
-        const sy = catY + (i + 1) * 90 * dy;
+        const sx = catX + (i + 1) * 80 * sinal * qx;
+        const sy = catY + (i + 1) * 80 * sinal * qy;
         resultado.push({ ...no, x: sx, y: sy });
-        const px2 = i === 0 ? catX : catX + i * 90 * dx;
-        const py2 = i === 0 ? catY : catY + i * 90 * dy;
+        const px2 = i === 0 ? catX : catX + i * 80 * sinal * qx;
+        const py2 = i === 0 ? catY : catY + i * 80 * sinal * qy;
         linhas.push({ x1: px2, y1: py2, x2: sx, y2: sy, op: 0.25 });
       });
-
-      // Placeholder T2 no fim do ramo
-      const lastCount = cat.nos.length;
-      const t2x = catX + (lastCount + 1) * 90 * dx;
-      const t2y = catY + (lastCount + 1) * 90 * dy;
-      const lastX = lastCount > 0 ? catX + lastCount * 90 * dx : catX;
-      const lastY = lastCount > 0 ? catY + lastCount * 90 * dy : catY;
-      resultado.push({ tipo: 't2', x: t2x, y: t2y, naipeId });
-      linhas.push({ x1: lastX, y1: lastY, x2: t2x, y2: t2y, op: 0.1, dashed: true });
     });
+
+    return { nos: resultado, linhas };
+  }
 
     return { nos: resultado, linhas };
   }
