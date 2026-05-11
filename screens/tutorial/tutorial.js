@@ -200,10 +200,12 @@ Boa sorte.`,
     painel.id = 'tutorial-actions';
     painel.innerHTML = `
       <button class="tutorial-action-btn" id="btn-tutorial-status">⚔ STATUS</button>
+      <button class="tutorial-action-btn" id="btn-tutorial-equipamentos">🎒 EQUIPAMENTOS</button>
       <button class="tutorial-action-btn" id="btn-tutorial-desistir">🏳 DESISTIR</button>
     `;
 
     painel.querySelector('#btn-tutorial-status').addEventListener('click', abrirStatus);
+    painel.querySelector('#btn-tutorial-equipamentos').addEventListener('click', () => {});
     painel.querySelector('#btn-tutorial-desistir').addEventListener('click', confirmarDesistir);
 
     return painel;

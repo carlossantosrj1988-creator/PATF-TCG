@@ -62,8 +62,9 @@
 /* ── Painel esquerdo — personagens ── */
 #tutorial-chars {
   position: absolute;
-  top: 72px;
+  top: 50%;
   left: 20px;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -129,8 +130,9 @@
 /* ── Painel direito — botões ── */
 #tutorial-actions {
   position: absolute;
-  top: 72px;
+  top: 50%;
   right: 20px;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 10px;
