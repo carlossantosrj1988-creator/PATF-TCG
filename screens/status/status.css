@@ -225,9 +225,6 @@
 
 #status-atlas-canvas {
   position: relative;
-  width: 800px;
-  height: 800px;
-  margin: auto;
 }
 
 /* ── Painel direito ── */
@@ -405,68 +402,89 @@
   background: #1a1a2a;
 }
 
-/* ── Árvore Atlas ── */
-.atlas-no {
+/* ── Nós PoE-style ── */
+.atlas-no-t1,
+.atlas-no-cat,
+.atlas-no-skill {
   position: absolute;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  cursor: pointer;
+  gap: 5px;
   user-select: none;
 }
 
-.atlas-no-circulo {
+.atlas-no-t1 { cursor: pointer; }
+.atlas-no-cat { cursor: default; }
+.atlas-no-skill { cursor: pointer; }
+.atlas-no-skill.comprado { cursor: default; }
+
+.atlas-no-t1-circulo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--naipe-cor);
+  background: color-mix(in srgb, var(--naipe-cor) 14%, #0d0d1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: bold;
+  color: var(--naipe-cor);
+  letter-spacing: 2px;
+  transition: transform 0.15s, background 0.2s;
+}
+
+.atlas-no-t1:hover .atlas-no-t1-circulo {
+  transform: scale(1.1);
+  background: color-mix(in srgb, var(--naipe-cor) 24%, #0d0d1a);
+}
+
+.atlas-no-cat-circulo {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #ffffff15;
+  border: 1.5px solid color-mix(in srgb, var(--naipe-cor) 55%, transparent);
+  background: color-mix(in srgb, var(--naipe-cor) 8%, #0d0d1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--naipe-cor) 75%, white);
+}
+
+.atlas-no-skill-circulo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px dashed #ffffff18;
   background: #0d0d1a;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  color: #333;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s;
-}
-
-.atlas-no-label {
-  font-size: 0.55rem;
+  font-size: 0.62rem;
   color: #444;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s, color 0.2s;
 }
 
-.atlas-no.disponivel .atlas-no-circulo {
+.atlas-no-skill:not(.comprado):hover .atlas-no-skill-circulo {
   border-color: var(--naipe-cor);
+  border-style: solid;
+  color: var(--naipe-cor);
+  transform: scale(1.18);
+  background: color-mix(in srgb, var(--naipe-cor) 10%, #0d0d1a);
+}
+
+.atlas-no-skill.comprado .atlas-no-skill-circulo {
+  border-color: var(--naipe-cor);
+  border-style: solid;
+  background: color-mix(in srgb, var(--naipe-cor) 18%, #0d0d1a);
   color: var(--naipe-cor);
 }
 
-.atlas-no.disponivel .atlas-no-circulo:hover {
-  transform: scale(1.15);
-  background: #1a1a2a;
-}
-
-.atlas-no.comprado .atlas-no-circulo {
-  border-color: var(--naipe-cor);
-  background: color-mix(in srgb, var(--naipe-cor) 15%, #0d0d1a);
-  color: var(--naipe-cor);
-}
-
-.atlas-no.centro .atlas-no-circulo {
-  width: 48px;
-  height: 48px;
-  border-color: #c9a84c44;
-  background: #1a1400;
-  color: #c9a84c;
-  font-size: 1rem;
-}
-
-.atlas-no.bloqueado {
-  opacity: 0.3;
-  cursor: not-allowed;
+.atlas-naipe-circulo.ativo {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--naipe-cor) 60%, transparent);
 }
 
 @keyframes shake {
@@ -480,117 +498,6 @@
   color: #cc4444 !important;
 }
 
-/* ── Árvore expandida ── */
-.arvore-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 24px 16px;
-}
-
-.arvore-header-simbolo { font-size: 1.6rem; }
-
-.arvore-header-nome {
-  font-size: 0.8rem;
-  font-weight: bold;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-}
-
-.arvore-tier-band {
-  margin: 0 24px 0;
-  padding: 6px 16px;
-  border: 1px solid;
-  border-radius: 6px;
-  font-size: 0.55rem;
-  letter-spacing: 6px;
-  color: #888;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.arvore-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  padding: 16px 24px;
-}
-
-.arvore-coluna {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.arvore-col-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 4px 10px;
-  font-size: 0.55rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-align: center;
-  margin-bottom: 4px;
-}
-
-.arvore-col-header span:first-child { font-size: 1rem; }
-
-.arvore-no {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 6px;
-  border-radius: 8px;
-  border: 1px dashed #ffffff12;
-  background: #0d0d1a;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  text-align: center;
-}
-
-.arvore-no:hover:not(.comprado) {
-  border-color: #ffffff30;
-  background: #13131f;
-}
-
-.arvore-no.comprado { cursor: default; }
-
-.arvore-no-icone {
-  font-size: 0.9rem;
-  color: #444;
-}
-
-.arvore-no.comprado .arvore-no-icone { color: inherit; }
-
-.arvore-no-label {
-  font-size: 0.6rem;
-  color: #555;
-  letter-spacing: 1px;
-}
-
-.arvore-no.comprado .arvore-no-label { color: inherit; opacity: 0.9; }
-
-.arvore-no-custo {
-  font-size: 0.55rem;
-  color: #444;
-  letter-spacing: 1px;
-}
-
-.arvore-no.comprado .arvore-no-custo { color: inherit; }
-
-.arvore-tier-futuro {
-  margin: 8px 24px 24px;
-  padding: 12px;
-  border: 1px dashed;
-  border-radius: 6px;
-  font-size: 0.55rem;
-  letter-spacing: 6px;
-  text-align: center;
-  text-transform: uppercase;
-}
 
 /* ── Popup ── */
 #status-popup-overlay {
