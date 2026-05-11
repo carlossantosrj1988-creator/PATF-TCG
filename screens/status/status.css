@@ -213,16 +213,6 @@
   margin: auto;
 }
 
-.atlas-placeholder {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.5rem;
-  color: #1a1a2a;
-  letter-spacing: 4px;
-}
-
 /* ── Painel direito ── */
 #status-painel-dir {
   position: absolute;
@@ -291,4 +281,79 @@
 .status-slot-passiva.ocupado {
   border-color: #8866ff66;
   color: #8866ff;
+}
+
+/* ── Árvore Atlas ── */
+.atlas-no {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.atlas-no-circulo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #ffffff15;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #333;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.atlas-no-label {
+  font-size: 0.55rem;
+  color: #444;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.atlas-no.disponivel .atlas-no-circulo {
+  border-color: var(--naipe-cor);
+  color: var(--naipe-cor);
+}
+
+.atlas-no.disponivel .atlas-no-circulo:hover {
+  transform: scale(1.15);
+  background: #1a1a2a;
+}
+
+.atlas-no.comprado .atlas-no-circulo {
+  border-color: var(--naipe-cor);
+  background: color-mix(in srgb, var(--naipe-cor) 15%, #0d0d1a);
+  color: var(--naipe-cor);
+}
+
+.atlas-no.centro .atlas-no-circulo {
+  width: 48px;
+  height: 48px;
+  border-color: #c9a84c44;
+  background: #1a1400;
+  color: #c9a84c;
+  font-size: 1rem;
+}
+
+.atlas-no.bloqueado {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.sem-pontos {
+  animation: shake 0.3s ease;
+  color: #cc4444 !important;
 }
