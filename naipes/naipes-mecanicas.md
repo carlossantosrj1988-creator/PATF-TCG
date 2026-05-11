@@ -44,13 +44,40 @@ Leitura: A → B significa A tem **vantagem** sobre B.
 
 ---
 
-### ♣ Paus
-> *A definir*
+### ♣ Paus — "O Furtivo"
+
+**Gatilho base:** ♣ recebe dano de ♦  
+**Beneficiário:** sempre ♣  
+
+**Efeito ao ser atingido por ♦:**
+1. ♣ **contra-ataca** usando H1 equipada + opção de jogar uma carta para dano adicional
+2. ♣ ganha (ou renova) a condição **Furtivo** por 2 rodadas
+
+**Condição Furtivo:**
+- Enquanto ativa: ♣ passa a contra-atacar **qualquer** personagem/inimigo que causar dano nele (não só ♦)
+- O contra-ataque em Furtivo usa o mesmo mecanismo: H1 + carta opcional
+- **Furtivo só renova** se ♣ receber dano de ♦ novamente — outros atacantes não renovam
+- Furtivo tem efeitos adicionais a definir na engine e nas habilidades
+
+**Dependências de engine:**
+- Timing e resolução do contra-ataque (ordem de iniciativa)
+- Mecânica de "jogar carta para dano" no contra-ataque
+- Definição completa do estado **Furtivo** (outros efeitos além do contra-ataque expandido)
+
+> ⚠️ Mecânica parcial — contra-ataque e Furtivo dependem da engine de combate e das habilidades para serem totalmente especificados.
+
+> Identidade: o mais complexo dos quatro. Em estado normal, é um contra-atacante especializado em ♦. Uma vez em Furtivo, vira uma ameaça para qualquer atacante.
 
 ---
 
-### ♦ Ouro
-> *A definir*
+### ♦ Ouro — "A Rodada Extra"
+
+**Gatilho:** ♦ causa OU recebe dano de ♠  
+**Beneficiário:** sempre ♦  
+**Efeito:** ganha uma **rodada extra**  
+**Regras da rodada extra:** dependem da engine de combate — mesmo mecanismo do ★ Coringa  
+
+> ⚠️ Mecânica parcial — o comportamento completo ("o que é uma rodada extra") só pode ser finalizado após a engine de turnos estar construída.
 
 ---
 
