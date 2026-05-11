@@ -458,14 +458,19 @@ const STATUS = (() => {
       resultado.push({ tipo: 'categoria', id: naipeId + '_' + cat.catId, label: cat.label, icone: cat.icone, x: catX, y: catY, naipeId });
       linhas.push({ x1: t1X, y1: t1Y, x2: catX, y2: catY, op: 0.35 });
 
-      // Skills se abrem para fora (perpendicular, afastando do centro)
-      const sinal = cat.po < 0 ? -1 : 1;
+      // Skills crescem na direção T1→categoria (cada galho irradia na sua própria diagonal)
+      const ddx = catX - t1X;
+      const ddy = catY - t1Y;
+      const dist = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+      const nx = ddx / dist;
+      const ny = ddy / dist;
+
       cat.nos.forEach((no, i) => {
-        const sx = catX + (i + 1) * 80 * sinal * qx;
-        const sy = catY + (i + 1) * 80 * sinal * qy;
+        const sx = catX + (i + 1) * 80 * nx;
+        const sy = catY + (i + 1) * 80 * ny;
         resultado.push({ ...no, x: sx, y: sy });
-        const px2 = i === 0 ? catX : catX + i * 80 * sinal * qx;
-        const py2 = i === 0 ? catY : catY + i * 80 * sinal * qy;
+        const px2 = i === 0 ? catX : catX + i * 80 * nx;
+        const py2 = i === 0 ? catY : catY + i * 80 * ny;
         linhas.push({ x1: px2, y1: py2, x2: sx, y2: sy, op: 0.25 });
       });
     });
