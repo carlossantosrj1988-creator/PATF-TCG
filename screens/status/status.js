@@ -1,38 +1,97 @@
 const STATUS = (() => {
   let charIdx = 0;
 
+  // ── Naipes — posições cardinais, vantagem/desvantagem, bônus ──────────────
   const ATLAS_NAIPES = {
-    espadas: { label: '♠ ESPADAS', cor: '#5599cc', x: 400, y: 80  },
-    copas:   { label: '♥ COPAS',   cor: '#e05555', x: 80,  y: 400 },
-    ouro:    { label: '♦ OURO',    cor: '#f0c030', x: 720, y: 400 },
-    paus:    { label: '♣ PAUS',    cor: '#4caf50', x: 400, y: 720 },
+    copas:   { label: '♥ COPAS',   cor: '#e05555', iconeX: 400, iconeY: 100, direcao: 'cima',     vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
+    espadas: { label: '♠ ESPADAS', cor: '#5599cc', iconeX: 700, iconeY: 400, direcao: 'direita',  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
+    ouro:    { label: '♦ OURO',    cor: '#f0c030', iconeX: 400, iconeY: 700, direcao: 'baixo',    vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
+    paus:    { label: '♣ PAUS',    cor: '#4caf50', iconeX: 100, iconeY: 400, direcao: 'esquerda', vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
   };
 
+  const CUSTO_NAIPE = 1;
+
+  // ── Nós da árvore — 18 por naipe (H1×5 + H2×5 + H3×5 + Passivas×3) ───────
   const ATLAS_NOS = [
-    { id: 'centro', x: 400, y: 400, label: '',        tipo: 'centro',     custo: 0, naipe: null,      desbloqueado: true  },
+    // ── Copas ────────────────────────────────────────────────────────────────
+    { id: 'cop_h1_1', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'cop_h1_2', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'cop_h1_3', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'cop_h1_4', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'cop_h1_5', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'cop_h2_1', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'cop_h2_2', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'cop_h2_3', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'cop_h2_4', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'cop_h2_5', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'cop_h3_1', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'cop_h3_2', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'cop_h3_3', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'cop_h3_4', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'cop_h3_5', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'cop_p1',   naipe: 'copas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'cop_p2',   naipe: 'copas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'cop_p3',   naipe: 'copas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
 
-    { id: 'esp_1',  x: 400, y: 280, label: 'ATQ +2',  tipo: 'atributo',   custo: 1, naipe: 'espadas', desbloqueado: false },
-    { id: 'esp_2',  x: 320, y: 200, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'espadas', desbloqueado: false, categoria: 1 },
-    { id: 'esp_3',  x: 480, y: 200, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'espadas', desbloqueado: false },
+    // ── Espadas ──────────────────────────────────────────────────────────────
+    { id: 'esp_h1_1', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'esp_h1_2', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'esp_h1_3', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'esp_h1_4', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'esp_h1_5', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'esp_h2_1', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'esp_h2_2', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'esp_h2_3', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'esp_h2_4', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'esp_h2_5', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'esp_h3_1', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'esp_h3_2', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'esp_h3_3', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'esp_h3_4', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'esp_h3_5', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'esp_p1',   naipe: 'espadas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'esp_p2',   naipe: 'espadas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'esp_p3',   naipe: 'espadas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
 
-    { id: 'cop_1',  x: 280, y: 400, label: 'DEF +2',  tipo: 'atributo',   custo: 1, naipe: 'copas',   desbloqueado: false },
-    { id: 'cop_2',  x: 200, y: 320, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'copas',   desbloqueado: false, categoria: 1 },
-    { id: 'cop_3',  x: 200, y: 480, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'copas',   desbloqueado: false },
+    // ── Ouro ─────────────────────────────────────────────────────────────────
+    { id: 'our_h1_1', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'our_h1_2', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'our_h1_3', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'our_h1_4', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'our_h1_5', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'our_h2_1', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'our_h2_2', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'our_h2_3', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'our_h2_4', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'our_h2_5', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'our_h3_1', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'our_h3_2', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'our_h3_3', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'our_h3_4', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'our_h3_5', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'our_p1',   naipe: 'ouro', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'our_p2',   naipe: 'ouro', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'our_p3',   naipe: 'ouro', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
 
-    { id: 'our_1',  x: 520, y: 400, label: 'INC +2',  tipo: 'atributo',   custo: 1, naipe: 'ouro',    desbloqueado: false },
-    { id: 'our_2',  x: 600, y: 320, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'ouro',    desbloqueado: false, categoria: 1 },
-    { id: 'our_3',  x: 600, y: 480, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'ouro',    desbloqueado: false },
-
-    { id: 'pau_1',  x: 400, y: 520, label: 'PVS +2',  tipo: 'atributo',   custo: 1, naipe: 'paus',    desbloqueado: false },
-    { id: 'pau_2',  x: 320, y: 600, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'paus',    desbloqueado: false, categoria: 1 },
-    { id: 'pau_3',  x: 480, y: 600, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'paus',    desbloqueado: false },
-  ];
-
-  const ATLAS_CONEXOES = [
-    ['centro', 'esp_1'], ['esp_1', 'esp_2'], ['esp_1', 'esp_3'],
-    ['centro', 'cop_1'], ['cop_1', 'cop_2'], ['cop_1', 'cop_3'],
-    ['centro', 'our_1'], ['our_1', 'our_2'], ['our_1', 'our_3'],
-    ['centro', 'pau_1'], ['pau_1', 'pau_2'], ['pau_1', 'pau_3'],
+    // ── Paus ─────────────────────────────────────────────────────────────────
+    { id: 'pau_h1_1', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'pau_h1_2', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'pau_h1_3', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'pau_h1_4', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'pau_h1_5', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'pau_h2_1', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'pau_h2_2', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'pau_h2_3', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'pau_h2_4', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'pau_h2_5', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'pau_h3_1', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'pau_h3_2', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'pau_h3_3', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'pau_h3_4', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'pau_h3_5', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'pau_p1',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'pau_p2',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'pau_p3',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
   ];
 
   function init() {
@@ -367,6 +426,37 @@ const STATUS = (() => {
     });
   }
 
+  function comprarNaipe(naipeId) {
+    if (PLAYER_STATE.pontos < CUSTO_NAIPE) {
+      const el = document.getElementById('status-topbar-pontos');
+      if (el) {
+        el.classList.add('sem-pontos');
+        setTimeout(() => el.classList.remove('sem-pontos'), 600);
+      }
+      return;
+    }
+    const p = PLAYER_STATE.personagens[charIdx];
+    PLAYER_STATE.pontos -= CUSTO_NAIPE;
+    p.naipe     = naipeId;
+    p.naipeAtivo = naipeId;
+
+    const naipe = ATLAS_NAIPES[naipeId];
+    if (naipe.bonusCampo && naipe.bonusValor > 0) {
+      p[naipe.bonusCampo] = (p[naipe.bonusCampo] || 0) + naipe.bonusValor;
+    }
+
+    if (typeof salvarEstado === 'function') salvarEstado();
+
+    const pontosEl = document.getElementById('status-topbar-pontos-valor');
+    if (pontosEl) pontosEl.textContent = PLAYER_STATE.pontos;
+
+    const painelEsq = document.getElementById('status-painel-esq');
+    if (painelEsq) painelEsq.replaceWith(renderPainelEsq());
+
+    fecharPopup();
+    renderAtlas();
+  }
+
   function comprarNo(no) {
     if (PLAYER_STATE.pontos < no.custo) {
       const el = document.getElementById('status-topbar-pontos');
@@ -380,24 +470,12 @@ const STATUS = (() => {
     const p = PLAYER_STATE.personagens[charIdx];
     if (!p.atlasComprados) p.atlasComprados = [];
     p.atlasComprados.push(no.id);
-
-    let naipeDefinido = false;
-    if (no.tipo === 'atributo' && no.naipe && !p.naipe) {
-      p.naipe = no.naipe;
-      p.naipeAtivo = no.naipe;
-      naipeDefinido = true;
-    }
-
     if (typeof salvarEstado === 'function') salvarEstado();
 
     const pontosEl = document.getElementById('status-topbar-pontos-valor');
     if (pontosEl) pontosEl.textContent = PLAYER_STATE.pontos;
 
-    if (naipeDefinido) {
-      const painelEsq = document.getElementById('status-painel-esq');
-      if (painelEsq) painelEsq.replaceWith(renderPainelEsq());
-    }
-
+    fecharPopup();
     renderAtlas();
   }
 
