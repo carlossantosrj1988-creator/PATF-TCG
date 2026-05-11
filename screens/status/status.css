@@ -487,6 +487,44 @@
   box-shadow: 0 0 14px color-mix(in srgb, var(--naipe-cor) 60%, transparent);
 }
 
+/* ── Passiva — nó maior e roxo ── */
+.atlas-no-passiva {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.atlas-no-passiva-circulo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #8866ff;
+  background: #12103a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: #8866ff;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.atlas-no-passiva:hover .atlas-no-passiva-circulo {
+  transform: scale(1.15);
+  background: #1e1550;
+  box-shadow: 0 0 12px #8866ff55;
+}
+
+.atlas-no-passiva.comprado .atlas-no-passiva-circulo {
+  background: #2a1a60;
+  color: #bb99ff;
+  box-shadow: 0 0 8px #8866ff44;
+}
+
 /* ── Placeholder T2 ── */
 .atlas-no-t2 {
   position: absolute;
@@ -541,12 +579,12 @@
   background: #0d1117;
   border: 1px solid #ffffff18;
   border-radius: 16px;
-  padding: 24px 20px;
-  width: 360px;
-  max-height: 480px;
+  padding: 20px 22px 22px;
+  width: 380px;
+  max-height: 520px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   position: relative;
   z-index: 51;
   box-sizing: border-box;
@@ -557,6 +595,35 @@
   color: #c9a84c;
   letter-spacing: 4px;
   text-transform: uppercase;
+}
+
+/* ── Badge topo do popup ── */
+.popup-topo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-cat-badge {
+  font-size: 0.58rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #888;
+  background: #ffffff08;
+  border: 1px solid #ffffff12;
+  border-radius: 4px;
+  padding: 3px 10px;
+}
+
+.popup-custo-badge {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  font-weight: bold;
+  color: #c9a84c;
+  background: #c9a84c18;
+  border: 1px solid #c9a84c44;
+  border-radius: 4px;
+  padding: 3px 10px;
 }
 
 #status-popup-lista {
@@ -660,11 +727,13 @@
 }
 
 .popup-detalhe-desc {
-  font-size: 0.72rem;
-  color: #8899aa;
-  line-height: 1.7;
+  font-size: 0.8rem;
+  color: #9aacbc;
+  line-height: 1.8;
   text-align: center;
-  padding: 8px 4px;
+  padding: 8px 8px;
+  border-top: 1px solid #ffffff0d;
+  border-bottom: 1px solid #ffffff0d;
 }
 
 .popup-detalhe-acoes {
