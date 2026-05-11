@@ -190,6 +190,23 @@
   color: #666;
 }
 
+.status-slot-naipe {
+  margin: 0 16px 8px;
+  height: 52px;
+  border-radius: 8px;
+  border: 1px dashed #ffffff15;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #333;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
 /* ── Área central — Atlas ── */
 #status-atlas-area {
   position: absolute;

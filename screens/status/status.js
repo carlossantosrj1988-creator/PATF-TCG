@@ -100,6 +100,10 @@ const STATUS = (() => {
     const painel = document.createElement('div');
     painel.id = 'status-painel-esq';
     const p = PLAYER_STATE.personagens[charIdx] || {};
+    const naipeInfo = p.naipe ? ATLAS_NAIPES[p.naipe] : null;
+    const naipeSlotStyle = naipeInfo
+      ? `color:${naipeInfo.cor};border-color:${naipeInfo.cor}55;background:${naipeInfo.cor}12;border-style:solid;`
+      : '';
     painel.innerHTML = `
       <div id="status-char-avatar">?</div>
       <div id="status-char-nome">${p.nome || '—'}</div>
@@ -108,6 +112,10 @@ const STATUS = (() => {
       <div class="status-attr-linha"><span class="label">DEF</span><span class="valor">${p.def ?? 0}</span></div>
       <div class="status-attr-linha"><span class="label">INC</span><span class="valor">${p.inc ?? 0}</span></div>
       <div class="status-attr-linha"><span class="label">PVS</span><span class="valor">${p.pvs ?? 0}</span></div>
+      <div class="status-slot-titulo">NAIPE</div>
+      <div class="status-slot-naipe ${naipeInfo ? 'definido' : ''}" style="${naipeSlotStyle}">
+        ${naipeInfo ? naipeInfo.label : 'SEM NAIPE'}
+      </div>
       <div class="status-slot-titulo">EQUIPAMENTO</div>
       <div class="status-slot-item">SEM ITEM</div>
       <div class="status-slot-titulo">RELÍQUIA</div>
@@ -372,10 +380,23 @@ const STATUS = (() => {
     const p = PLAYER_STATE.personagens[charIdx];
     if (!p.atlasComprados) p.atlasComprados = [];
     p.atlasComprados.push(no.id);
+
+    let naipeDefinido = false;
+    if (no.tipo === 'atributo' && no.naipe && !p.naipe) {
+      p.naipe = no.naipe;
+      p.naipeAtivo = no.naipe;
+      naipeDefinido = true;
+    }
+
     if (typeof salvarEstado === 'function') salvarEstado();
 
     const pontosEl = document.getElementById('status-topbar-pontos-valor');
     if (pontosEl) pontosEl.textContent = PLAYER_STATE.pontos;
+
+    if (naipeDefinido) {
+      const painelEsq = document.getElementById('status-painel-esq');
+      if (painelEsq) painelEsq.replaceWith(renderPainelEsq());
+    }
 
     renderAtlas();
   }
