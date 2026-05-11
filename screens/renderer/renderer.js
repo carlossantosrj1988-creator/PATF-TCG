@@ -9,6 +9,9 @@ window.applyScale = function() {
   const scaleX = window.innerWidth / BASE_W;
   const scaleY = window.innerHeight / BASE_H;
   const scale = Math.max(scaleX, scaleY);
+  document.documentElement.style.setProperty('--base-w', BASE_W + 'px');
+  document.documentElement.style.setProperty('--base-h', BASE_H + 'px');
+  document.documentElement.style.setProperty('--scale', scale);
   gameContainer.style.width = BASE_W + 'px';
   gameContainer.style.height = BASE_H + 'px';
   gameContainer.style.transform = `scale(${scale})`;
