@@ -257,26 +257,29 @@ const STATUS = (() => {
 
   function abrirPopupNo(no) {
     fecharPopup();
-    const screen  = document.getElementById('screen-status');
-    const naipe   = ATLAS_NAIPES[no.naipe];
-    const icone   = no.tipo === 'habilidade' ? '⚔' : '◈';
+    const screen   = document.getElementById('screen-status');
+    const naipe    = ATLAS_NAIPES[no.naipe];
+    const icone    = no.tipo === 'habilidade' ? '⚔' : '◈';
     const catLabel = no.tipo === 'habilidade'
-      ? ['', 'HAB BÁSICA', 'HAB INTERMEDIÁRIA', 'HAB AVANÇADA'][no.categoria] || ''
+      ? ['', 'H1 — BÁSICA', 'H2 — INTERMEDIÁRIA', 'H3 — AVANÇADA'][no.categoria] || ''
       : 'PASSIVA';
-    const descricao = no.descricao || 'Descrição em breve.';
+    const descricao = no.descricao || 'Sem descrição ainda.';
 
     const overlay = document.createElement('div');
     overlay.id = 'status-popup-overlay';
     overlay.innerHTML = `
       <div id="status-popup-box">
-        <div id="status-popup-titulo">${catLabel}</div>
+        <div class="popup-topo-row">
+          <span class="popup-cat-badge">${catLabel}</span>
+          <span class="popup-custo-badge">${no.custo} PT</span>
+        </div>
         <div class="popup-detalhe-icone" style="color:${naipe.cor}">${icone}</div>
         <div class="popup-detalhe-nome" style="color:${naipe.cor}">${no.label}</div>
-        <div class="popup-detalhe-naipe" style="color:${naipe.cor}88">${naipe.label}</div>
+        <div class="popup-detalhe-naipe" style="color:${naipe.cor}99">${naipe.label}</div>
         <div class="popup-detalhe-desc">${descricao}</div>
         <div class="popup-detalhe-acoes">
           <button id="status-popup-fechar">FECHAR</button>
-          <button id="btn-comprar-no" style="color:${naipe.cor};border-color:${naipe.cor}66;">COMPRAR — ${no.custo} PT</button>
+          <button id="btn-comprar-no" style="color:${naipe.cor};border-color:${naipe.cor}66;">COMPRAR</button>
         </div>
       </div>
     `;
@@ -535,12 +538,15 @@ const STATUS = (() => {
             div.innerHTML = `<div class="atlas-no-t2-circulo">T2</div>`;
             canvas.appendChild(div);
           } else {
-            const comprado = comprados.includes(no.id);
-            const icone    = no.tipo === 'passiva' ? '◈' : '⚔';
+            const comprado  = comprados.includes(no.id);
+            const isPassiva = no.tipo === 'passiva';
+            const icone     = isPassiva ? '◈' : '⚔';
+            const baseClass = isPassiva ? 'atlas-no-passiva' : 'atlas-no-skill';
+            const circClass = isPassiva ? 'atlas-no-passiva-circulo' : 'atlas-no-skill-circulo';
             const div = document.createElement('div');
-            div.className = 'atlas-no-skill' + (comprado ? ' comprado' : '');
+            div.className = baseClass + (comprado ? ' comprado' : '');
             div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
-            div.innerHTML = `<div class="atlas-no-skill-circulo">${comprado ? '✓' : icone}</div>`;
+            div.innerHTML = `<div class="${circClass}">${comprado ? '✓' : icone}</div>`;
             if (!comprado) div.addEventListener('click', () => abrirPopupNo(no));
             canvas.appendChild(div);
           }
