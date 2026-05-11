@@ -416,13 +416,14 @@ const STATUS = (() => {
 
   // ── Atlas PoE-style ───────────────────────────────────────────────────────
 
-  function svgLinha(svg, x1, y1, x2, y2, cor, opacity) {
+  function svgLinha(svg, x1, y1, x2, y2, cor, opacity, dashed) {
     const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     l.setAttribute('x1', x1); l.setAttribute('y1', y1);
     l.setAttribute('x2', x2); l.setAttribute('y2', y2);
     l.setAttribute('stroke', cor);
     l.setAttribute('stroke-width', '1.5');
     l.setAttribute('opacity', opacity);
+    if (dashed) l.setAttribute('stroke-dasharray', '4 4');
     svg.appendChild(l);
   }
 
@@ -458,6 +459,15 @@ const STATUS = (() => {
         const py2 = i === 0 ? catY : catY + i * 90 * dy;
         linhas.push({ x1: px2, y1: py2, x2: sx, y2: sy, op: 0.25 });
       });
+
+      // Placeholder T2 no fim do ramo
+      const lastCount = cat.nos.length;
+      const t2x = catX + (lastCount + 1) * 90 * dx;
+      const t2y = catY + (lastCount + 1) * 90 * dy;
+      const lastX = lastCount > 0 ? catX + lastCount * 90 * dx : catX;
+      const lastY = lastCount > 0 ? catY + lastCount * 90 * dy : catY;
+      resultado.push({ tipo: 't2', x: t2x, y: t2y, naipeId });
+      linhas.push({ x1: lastX, y1: lastY, x2: t2x, y2: t2y, op: 0.1, dashed: true });
     });
 
     return { nos: resultado, linhas };
@@ -493,7 +503,7 @@ const STATUS = (() => {
       const { nos, linhas } = gerarNosArvore(p.naipe);
       const naipe = ATLAS_NAIPES[p.naipe];
 
-      linhas.forEach(l => svgLinha(svg, l.x1, l.y1, l.x2, l.y2, naipe.cor, l.op));
+      linhas.forEach(l => svgLinha(svg, l.x1, l.y1, l.x2, l.y2, naipe.cor, l.op, l.dashed));
 
       nos.forEach(no => {
         if (no.tipo === 't1') {
@@ -513,14 +523,22 @@ const STATUS = (() => {
           canvas.appendChild(div);
 
         } else {
-          const comprado = comprados.includes(no.id);
-          const icone    = no.tipo === 'passiva' ? '◈' : '⚔';
-          const div = document.createElement('div');
-          div.className = 'atlas-no-skill' + (comprado ? ' comprado' : '');
-          div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
-          div.innerHTML = `<div class="atlas-no-skill-circulo">${comprado ? '✓' : icone}</div>`;
-          if (!comprado) div.addEventListener('click', () => abrirPopupNo(no));
-          canvas.appendChild(div);
+          if (no.tipo === 't2') {
+            const div = document.createElement('div');
+            div.className = 'atlas-no-t2';
+            div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
+            div.innerHTML = `<div class="atlas-no-t2-circulo">T2</div>`;
+            canvas.appendChild(div);
+          } else {
+            const comprado = comprados.includes(no.id);
+            const icone    = no.tipo === 'passiva' ? '◈' : '⚔';
+            const div = document.createElement('div');
+            div.className = 'atlas-no-skill' + (comprado ? ' comprado' : '');
+            div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
+            div.innerHTML = `<div class="atlas-no-skill-circulo">${comprado ? '✓' : icone}</div>`;
+            if (!comprado) div.addEventListener('click', () => abrirPopupNo(no));
+            canvas.appendChild(div);
+          }
         }
       });
     }

@@ -487,6 +487,33 @@
   box-shadow: 0 0 14px color-mix(in srgb, var(--naipe-cor) 60%, transparent);
 }
 
+/* ── Placeholder T2 ── */
+.atlas-no-t2 {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+  opacity: 0.22;
+}
+
+.atlas-no-t2-circulo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--naipe-cor);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: bold;
+  color: var(--naipe-cor);
+  letter-spacing: 1px;
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25%      { transform: translateX(-4px); }
