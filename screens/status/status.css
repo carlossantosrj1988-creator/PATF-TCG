@@ -1,0 +1,294 @@
+/* ── Tela de Status ── */
+#screen-status {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #07090f;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* ── Topbar ── */
+#status-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: #0a0d14cc;
+  border-bottom: 1px solid #ffffff10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 60px 0 20px;
+  z-index: 20;
+  box-sizing: border-box;
+}
+
+#status-topbar-esq {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#status-topbar-voltar {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #ffffff20;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s, color 0.2s;
+}
+
+#status-topbar-voltar:hover {
+  background: #1a1a2a;
+  color: #fff;
+}
+
+#status-topbar-titulo {
+  font-size: 0.8rem;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  font-weight: bold;
+}
+
+#status-topbar-pontos {
+  font-size: 0.72rem;
+  color: #888;
+  letter-spacing: 2px;
+}
+
+#status-topbar-pontos-valor {
+  color: #c9a84c;
+  font-weight: bold;
+  margin-left: 6px;
+}
+
+/* ── Abas ── */
+#status-abas {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: #0a0d14;
+  border-bottom: 1px solid #ffffff10;
+  display: flex;
+  z-index: 15;
+}
+
+.status-aba {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  color: #555;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: 0.2s;
+  text-transform: uppercase;
+}
+
+.status-aba.ativa {
+  color: #c9a84c;
+  border-bottom-color: #c9a84c;
+  background: #0d0d1a;
+}
+
+/* ── Painel esquerdo ── */
+#status-painel-esq {
+  position: absolute;
+  top: 96px;
+  left: 0;
+  width: 220px;
+  bottom: 0;
+  background: #0a0c14;
+  border-right: 1px solid #ffffff0d;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+#status-char-avatar {
+  width: 100%;
+  height: 140px;
+  background: linear-gradient(135deg, #111827, #0d111c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #333;
+  flex-shrink: 0;
+}
+
+#status-char-nome {
+  padding: 12px 16px 4px;
+  font-size: 0.75rem;
+  color: #fff;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+#status-char-pool {
+  padding: 0 16px 12px;
+  font-size: 0.65rem;
+  color: #555;
+  letter-spacing: 2px;
+  border-bottom: 1px solid #ffffff0d;
+}
+
+.status-attr-linha {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 16px;
+  font-size: 0.7rem;
+}
+
+.status-attr-linha .label {
+  color: #555;
+}
+
+.status-attr-linha .valor {
+  color: #c9a84c;
+  font-weight: bold;
+}
+
+.status-slot-titulo {
+  padding: 12px 16px 6px;
+  font-size: 0.6rem;
+  color: #444;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.status-slot-item {
+  margin: 0 16px 8px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px dashed #ffffff15;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.status-slot-item:hover {
+  border-color: #ffffff30;
+  color: #666;
+}
+
+/* ── Área central — Atlas ── */
+#status-atlas-area {
+  position: absolute;
+  top: 96px;
+  left: 220px;
+  right: 200px;
+  bottom: 0;
+  overflow: auto;
+  z-index: 5;
+  cursor: grab;
+}
+
+#status-atlas-area:active {
+  cursor: grabbing;
+}
+
+#status-atlas-canvas {
+  position: relative;
+  width: 800px;
+  height: 800px;
+  margin: auto;
+}
+
+.atlas-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  color: #1a1a2a;
+  letter-spacing: 4px;
+}
+
+/* ── Painel direito ── */
+#status-painel-dir {
+  position: absolute;
+  top: 96px;
+  right: 0;
+  width: 200px;
+  bottom: 0;
+  background: #0a0c14;
+  border-left: 1px solid #ffffff0d;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.status-dir-label {
+  font-size: 0.6rem;
+  color: #444;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.status-slot-habilidade {
+  height: 52px;
+  border-radius: 8px;
+  border: 1px dashed #ffffff15;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-size: 0.7rem;
+  color: #333;
+}
+
+.status-slot-habilidade:hover {
+  border-color: #c9a84c44;
+}
+
+.status-slot-habilidade.ocupado {
+  border-color: #c9a84c66;
+  background: #1a1400;
+}
+
+.status-slot-passiva {
+  height: 44px;
+  border-radius: 8px;
+  border: 1px dashed #ffffff15;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.status-slot-passiva:hover {
+  border-color: #8866ff44;
+}
+
+.status-slot-passiva.ocupado {
+  border-color: #8866ff66;
+  color: #8866ff;
+}
