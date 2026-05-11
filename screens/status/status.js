@@ -370,60 +370,66 @@ const STATUS = (() => {
   function renderAtlas() {
     const canvas = document.getElementById('status-atlas-canvas');
     if (!canvas) return;
-    const comprados = PLAYER_STATE.personagens[charIdx].atlasComprados || [];
+    const p = PLAYER_STATE.personagens[charIdx];
     canvas.innerHTML = '';
 
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '800');
-    svg.setAttribute('height', '800');
-    svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+    if (!p.naipe) {
+      renderSeletorNaipe(canvas);
+    } else {
+      renderArvoreNaipe(canvas, p.naipe);
+    }
+  }
 
-    ATLAS_CONEXOES.forEach(([paiId, filhoId]) => {
-      const pai   = ATLAS_NOS.find(n => n.id === paiId);
-      const filho = ATLAS_NOS.find(n => n.id === filhoId);
-      if (!pai || !filho) return;
-      const ativa = comprados.includes(paiId);
-      const cor   = ativa && filho.naipe ? ATLAS_NAIPES[filho.naipe].cor : '#ffffff0d';
-      const line  = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', pai.x);
-      line.setAttribute('y1', pai.y);
-      line.setAttribute('x2', filho.x);
-      line.setAttribute('y2', filho.y);
-      line.setAttribute('stroke', cor);
-      line.setAttribute('stroke-width', '1.5');
-      line.setAttribute('opacity', ativa ? '0.4' : '1');
-      svg.appendChild(line);
-    });
-
-    canvas.appendChild(svg);
-
-    ATLAS_NOS.forEach(no => {
-      const comprado   = comprados.includes(no.id);
-      const disponivel = !comprado && (
-        no.id === 'centro' ||
-        ATLAS_CONEXOES.some(([pai, filho]) => filho === no.id && comprados.includes(pai))
-      );
-      const estado   = comprado ? 'comprado' : disponivel ? 'disponivel' : 'bloqueado';
-      const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
-      const icone    = no.tipo === 'centro'      ? '✦'
-                     : no.tipo === 'habilidade'  ? '⚔'
-                     : no.tipo === 'passiva'     ? '◈'
-                     : '+';
-
+  // ── Seletor inicial — 4 ícones cardinais ─────────────────────────────────
+  function renderSeletorNaipe(canvas) {
+    Object.entries(ATLAS_NAIPES).forEach(([id, naipe]) => {
       const div = document.createElement('div');
-      div.className = `atlas-no ${estado} ${no.tipo}`;
-      div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipeCor};`;
+      div.className = 'atlas-naipe-icone';
+      div.style.cssText = `left:${naipe.iconeX}px;top:${naipe.iconeY}px;--naipe-cor:${naipe.cor};`;
       div.innerHTML = `
-        <div class="atlas-no-circulo">${icone}</div>
-        <div class="atlas-no-label">${no.label}</div>
+        <div class="atlas-naipe-circulo">${naipe.label.split(' ')[0]}</div>
+        <div class="atlas-naipe-label">${naipe.label.split(' ').slice(1).join(' ')}</div>
       `;
-
-      if (disponivel && no.id !== 'centro') {
-        div.addEventListener('click', () => comprarNo(no));
-      }
-
+      div.addEventListener('click', () => abrirPopupNaipe(id));
       canvas.appendChild(div);
     });
+  }
+
+  function abrirPopupNaipe(naipeId) {
+    fecharPopup();
+    const screen  = document.getElementById('screen-status');
+    const naipe   = ATLAS_NAIPES[naipeId];
+    const vantNaipe = ATLAS_NAIPES[naipe.vantagem];
+    const desvNaipe = ATLAS_NAIPES[naipe.desvantagem];
+    const bonusTexto = naipe.bonusCampo && naipe.bonusValor > 0
+      ? `+${naipe.bonusValor} ${naipe.bonusCampo.toUpperCase()}`
+      : 'Bônus a definir';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div class="atlas-naipe-popup-simbolo" style="color:${naipe.cor}">${naipe.label.split(' ')[0]}</div>
+        <div id="status-popup-titulo" style="color:${naipe.cor}">${naipe.label}</div>
+        <div class="atlas-naipe-popup-linha">
+          <span class="atlas-naipe-popup-tag vantagem">VANTAGEM</span>
+          <span style="color:${vantNaipe.cor}">${vantNaipe.label}</span>
+        </div>
+        <div class="atlas-naipe-popup-linha">
+          <span class="atlas-naipe-popup-tag desvantagem">DESVANTAGEM</span>
+          <span style="color:${desvNaipe.cor}">${desvNaipe.label}</span>
+        </div>
+        <div class="atlas-naipe-popup-bonus">${bonusTexto}</div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-fechar">CANCELAR</button>
+          <button id="btn-comprar-naipe" style="color:${naipe.cor};border-color:${naipe.cor}66;">DEFINIR NAIPE — ${CUSTO_NAIPE} PT</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+    overlay.querySelector('#btn-comprar-naipe').addEventListener('click', () => comprarNaipe(naipeId));
   }
 
   function comprarNaipe(naipeId) {
