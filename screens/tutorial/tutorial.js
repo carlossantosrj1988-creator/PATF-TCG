@@ -375,69 +375,18 @@ Boa sorte.`,
     });
   }
 
-  // ── Placeholder de Status ─────────────────────────────────────────────────
+  // ── Abertura da tela de Status ────────────────────────────────────────────
 
   function abrirStatus() {
-    const screen = document.getElementById('screen-tutorial');
-
-    // Remove placeholder anterior se existir
-    const anterior = document.getElementById('tutorial-status-placeholder');
-    if (anterior) anterior.remove();
-
-    const ph = document.createElement('div');
-    ph.id = 'tutorial-status-placeholder';
-
-    // Conteúdo do status varia conforme etapa
-    let conteudo = '';
-
-    if (etapaAtual === 0 && aguardandoStatus) {
-      // Primeira visita ao status — explicação do Atlas e naipes
-      conteudo = `
-        <div style="font-size:0.65rem;color:#c9a84c;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">ÁRVORE DE STATUS — ATLAS</div>
-        <div style="font-size:1.1rem;font-weight:900;color:#fff;letter-spacing:4px;margin-bottom:20px;">ESCOLHA SEU NAIPE</div>
-        <div style="font-size:0.78rem;color:#8899aa;max-width:420px;text-align:center;line-height:1.8;margin-bottom:24px;">
-          O Atlas define a progressão do seu personagem.<br>
-          Cada naipe tem seu foco e estilo de jogo:<br><br>
-          <strong style="color:#e05555;">♥ Copas</strong> — Tank. Absorve dano, protege o time.<br>
-          <strong style="color:#5599cc;">♠ Espadas</strong> — Ofensivo. Causa dano, pressiona o inimigo.<br>
-          <strong style="color:#f0c030;">♦ Ouro</strong> — Utilidade. Controla o ritmo, cria oportunidades.<br>
-          <strong style="color:#4caf50;">♣ Paus</strong> — Habilidoso. Combos e efeitos especiais.<br><br>
-          Naipes têm vantagens e desvantagens entre si:<br>
-          <strong>♥ → ♣ → ♦ → ♠ → ♥</strong>
-        </div>
-        <div style="font-size:0.65rem;color:#555;letter-spacing:2px;margin-bottom:20px;">[ ATLAS A SER CONSTRUÍDO ]</div>
-        <button class="batalha-ph-btn" id="btn-fechar-status">VOLTAR AO MAPA</button>
-      `;
-    } else {
-      // Visitas subsequentes
-      conteudo = `
-        <div style="font-size:0.65rem;color:#c9a84c;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">ÁRVORE DE STATUS — ATLAS</div>
-        <div style="font-size:1.1rem;font-weight:900;color:#fff;letter-spacing:4px;margin-bottom:20px;">SEU ATLAS</div>
-        <div style="font-size:0.78rem;color:#8899aa;max-width:420px;text-align:center;line-height:1.8;margin-bottom:24px;">
-          Aqui você compra <strong style="color:#c9a84c;">habilidades</strong> e <strong style="color:#c9a84c;">passivas</strong> com seus pontos.<br><br>
-          <strong>Habilidades</strong> são ativadas durante o combate e ficam nos 3 slots de habilidade do personagem.<br><br>
-          <strong>Passivas</strong> funcionam automaticamente, sem ativação. Ficam nos 2 slots de passiva.<br><br>
-          <strong>Equipamentos</strong> potencializam ainda mais seus personagens. Em breve.
-        </div>
-        <div style="font-size:0.65rem;color:#555;letter-spacing:2px;margin-bottom:8px;">Pontos disponíveis: <strong style="color:#f0c030;">${PLAYER_STATE.pontos}</strong></div>
-        <div style="font-size:0.65rem;color:#555;letter-spacing:2px;margin-bottom:20px;">[ ATLAS A SER CONSTRUÍDO ]</div>
-        <button class="batalha-ph-btn" id="btn-fechar-status">VOLTAR AO MAPA</button>
-      `;
-    }
-
-    ph.innerHTML = conteudo;
-    screen.appendChild(ph);
-
-    ph.querySelector('#btn-fechar-status').addEventListener('click', () => {
-      ph.remove();
-
+    window.aoVoltarDoStatus = () => {
       if (aguardandoStatus) {
-        // Após visita obrigatória ao status, avança a etapa
         aguardandoStatus = false;
         etapaAtual++;
         renderTela();
       }
-    });
+    };
+    if (typeof STATUS !== 'undefined') STATUS.init();
+    window.irParaTela('screen-status');
   }
 
   // ── Confirmar desistir ────────────────────────────────────────────────────
