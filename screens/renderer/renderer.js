@@ -6,6 +6,11 @@ const gameContainer = document.createElement('div');
 gameContainer.id = 'game-container';
 document.body.appendChild(gameContainer);
 
+const btnOptions = document.createElement('div');
+btnOptions.id = 'btn-options';
+btnOptions.textContent = '⚙';
+gameContainer.appendChild(btnOptions);
+
 window.applyScale = function() {
   const aspectDevice = window.innerWidth / window.innerHeight;
   BASE_W = Math.max(BASE_W_MIN, Math.round(BASE_H * aspectDevice));
