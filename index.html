@@ -85,7 +85,10 @@
         <div class="res-btn" data-w="1920" data-h="1080">1920 × 1080</div>
       </div>
       <div class="options-section" id="tab-audio"></div>
-      <div class="options-section" id="tab-testes"></div>
+      <div class="options-section" id="tab-testes">
+        <p class="options-label">PERSONAGENS</p>
+        <div class="res-btn" id="btn-reset-time" style="color:#e05555;border-color:#552222;">↺ RESETAR TIME</div>
+      </div>
     </div>
   </div>
 
@@ -173,6 +176,13 @@
       });
     });
 
+    document.getElementById('btn-reset-time').addEventListener('click', function () {
+      limparEstado();
+      panel.classList.remove('open');
+      window.irParaTela('start-screen');
+      gameState = 'start-screen';
+    });
+
     // ── Navegação central ─────────────────────────────────────────────────────
 
     let gameState = 'home';
@@ -212,9 +222,16 @@
 
       } else if (gameState === 'start-screen') {
         if (e.target.closest('#mode-teste')) {
-          window.irParaTela('screen-select');
-          SELECT.init();
-          gameState = 'screen-select';
+          carregarEstado();
+          if (PLAYER_STATE.personagens.length >= 3) {
+            window.irParaTela('screen-tutorial');
+            TUTORIAL.init();
+            gameState = 'screen-tutorial';
+          } else {
+            window.irParaTela('screen-select');
+            SELECT.init();
+            gameState = 'screen-select';
+          }
         }
 
       } else if (gameState === 'screen-select') {
