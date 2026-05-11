@@ -1,12 +1,16 @@
+// screens/status/status.js
+
 const STATUS = (() => {
   let charIdx = 0;
 
-  // ── Naipes — posições cardinais, vantagem/desvantagem, bônus ──────────────
+  // ── Naipes — direções cardinais no canvas 2000×2000 ───────────────────────
+  const CX = 1000, CY = 1000;
+
   const ATLAS_NAIPES = {
-    copas:   { label: '♥ COPAS',   cor: '#e05555', iconeX: 400, iconeY: 200, direcao: 'cima',     vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
-    espadas: { label: '♠ ESPADAS', cor: '#5599cc', iconeX: 600, iconeY: 400, direcao: 'direita',  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
-    ouro:    { label: '♦ OURO',    cor: '#f0c030', iconeX: 400, iconeY: 600, direcao: 'baixo',    vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
-    paus:    { label: '♣ PAUS',    cor: '#4caf50', iconeX: 200, iconeY: 400, direcao: 'esquerda', vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
+    copas:   { label: '♥ COPAS',   cor: '#e05555', mainDir: [0,-1], perpDir: [1,0],  vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
+    espadas: { label: '♠ ESPADAS', cor: '#5599cc', mainDir: [1,0],  perpDir: [0,1],  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
+    ouro:    { label: '♦ OURO',    cor: '#f0c030', mainDir: [0,1],  perpDir: [1,0],  vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
+    paus:    { label: '♣ PAUS',    cor: '#4caf50', mainDir: [-1,0], perpDir: [0,1],  vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
   };
 
   const CUSTO_NAIPE = 1;
@@ -94,6 +98,8 @@ const STATUS = (() => {
     { id: 'pau_p3',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
   ];
 
+  // ── Init ──────────────────────────────────────────────────────────────────
+
   function init() {
     if (!document.getElementById('screen-status')) {
       const el = document.createElement('div');
@@ -112,6 +118,8 @@ const STATUS = (() => {
       if (!p.passivas)       p.passivas       = [null, null];
     });
   }
+
+  // ── Render da tela ────────────────────────────────────────────────────────
 
   function renderTela() {
     const screen = document.getElementById('screen-status');
@@ -151,9 +159,10 @@ const STATUS = (() => {
 
     screen.appendChild(renderPainelDir());
 
-    initScroll();
     renderAtlas();
   }
+
+  // ── Painel esquerdo ───────────────────────────────────────────────────────
 
   function renderPainelEsq() {
     const painel = document.createElement('div');
@@ -182,6 +191,8 @@ const STATUS = (() => {
     `;
     return painel;
   }
+
+  // ── Painel direito ────────────────────────────────────────────────────────
 
   function renderPainelDir() {
     const painel = document.createElement('div');
@@ -236,6 +247,8 @@ const STATUS = (() => {
 
     return painel;
   }
+
+  // ── Popup helpers ─────────────────────────────────────────────────────────
 
   function fecharPopup() {
     const overlay = document.getElementById('status-popup-overlay');
@@ -351,9 +364,7 @@ const STATUS = (() => {
     const slotsAtuais = tipo === 'habilidade' ? p.habilidades : p.passivas;
     const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
     const icone    = tipo === 'habilidade' ? '⚔' : '◈';
-    const tituloTipo = tipo === 'habilidade'
-      ? `HABILIDADE ${slotIdx + 1}`
-      : `PASSIVA ${slotIdx + 1}`;
+    const tituloTipo = tipo === 'habilidade' ? `HABILIDADE ${slotIdx + 1}` : `PASSIVA ${slotIdx + 1}`;
 
     const overlay = document.createElement('div');
     overlay.id = 'status-popup-overlay';
@@ -382,6 +393,8 @@ const STATUS = (() => {
     });
   }
 
+  // ── Navegação ─────────────────────────────────────────────────────────────
+
   function trocarChar(idx) {
     charIdx = idx;
     document.querySelectorAll('.status-aba').forEach((a, i) => {
@@ -401,147 +414,174 @@ const STATUS = (() => {
     }
   }
 
+  // ── Atlas PoE-style ───────────────────────────────────────────────────────
+
+  function svgLinha(svg, x1, y1, x2, y2, cor, opacity, dashed) {
+    const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+    l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    l.setAttribute('stroke', cor);
+    l.setAttribute('stroke-width', '1.5');
+    l.setAttribute('opacity', opacity);
+    if (dashed) l.setAttribute('stroke-dasharray', '4 4');
+    svg.appendChild(l);
+  }
+
+  function gerarNosArvore(naipeId) {
+    const naipe = ATLAS_NAIPES[naipeId];
+    const [dx, dy] = naipe.mainDir;
+    const [qx, qy] = naipe.perpDir;
+    const naipeX = CX + 200 * dx, naipeY = CY + 200 * dy;
+    const t1X    = naipeX + 200 * dx, t1Y = naipeY + 200 * dy;
+
+    const nos = ATLAS_NOS.filter(n => n.naipe === naipeId);
+    const cats = [
+      { catId: 'h1', label: 'H1', icone: '⚔', po: -225, nos: nos.filter(n => n.tipo === 'habilidade' && n.categoria === 1) },
+      { catId: 'h2', label: 'H2', icone: '⚡', po: -75,  nos: nos.filter(n => n.tipo === 'habilidade' && n.categoria === 2) },
+      { catId: 'h3', label: 'H3', icone: '💥', po: +75,  nos: nos.filter(n => n.tipo === 'habilidade' && n.categoria === 3) },
+      { catId: 'pa', label: 'P',  icone: '◈',  po: +225, nos: nos.filter(n => n.tipo === 'passiva') },
+    ];
+
+    const resultado = [{ tipo: 't1', x: t1X, y: t1Y, naipeId }];
+    const linhas    = [{ x1: naipeX, y1: naipeY, x2: t1X, y2: t1Y, op: 0.6 }];
+
+    cats.forEach(cat => {
+      const catX = t1X + 140 * dx + cat.po * qx;
+      const catY = t1Y + 140 * dy + cat.po * qy;
+      resultado.push({ tipo: 'categoria', id: naipeId + '_' + cat.catId, label: cat.label, icone: cat.icone, x: catX, y: catY, naipeId });
+      linhas.push({ x1: t1X, y1: t1Y, x2: catX, y2: catY, op: 0.35 });
+
+      cat.nos.forEach((no, i) => {
+        const sx = catX + (i + 1) * 90 * dx;
+        const sy = catY + (i + 1) * 90 * dy;
+        resultado.push({ ...no, x: sx, y: sy });
+        const px2 = i === 0 ? catX : catX + i * 90 * dx;
+        const py2 = i === 0 ? catY : catY + i * 90 * dy;
+        linhas.push({ x1: px2, y1: py2, x2: sx, y2: sy, op: 0.25 });
+      });
+
+      // Placeholder T2 no fim do ramo
+      const lastCount = cat.nos.length;
+      const t2x = catX + (lastCount + 1) * 90 * dx;
+      const t2y = catY + (lastCount + 1) * 90 * dy;
+      const lastX = lastCount > 0 ? catX + lastCount * 90 * dx : catX;
+      const lastY = lastCount > 0 ? catY + lastCount * 90 * dy : catY;
+      resultado.push({ tipo: 't2', x: t2x, y: t2y, naipeId });
+      linhas.push({ x1: lastX, y1: lastY, x2: t2x, y2: t2y, op: 0.1, dashed: true });
+    });
+
+    return { nos: resultado, linhas };
+  }
+
   function renderAtlas() {
     const area   = document.getElementById('status-atlas-area');
     const canvas = document.getElementById('status-atlas-canvas');
     if (!canvas || !area) return;
+
     const p = PLAYER_STATE.personagens[charIdx];
     canvas.innerHTML = '';
+    canvas.style.cssText = 'position:relative;width:2000px;height:2000px;';
 
-    if (!p.naipe) {
-      canvas.style.cssText = 'position:relative;width:800px;height:800px;margin:auto;';
-      area.style.overflow  = 'auto';
-      renderSeletorNaipe(canvas);
-    } else {
-      canvas.style.cssText = 'position:relative;width:100%;min-height:100%;';
-      area.style.overflow  = 'auto';
-      renderArvoreNaipe(canvas, p.naipe);
-    }
-  }
-
-  // ── Árvore expandida — 4 colunas verticais ───────────────────────────────
-  function renderArvoreNaipe(canvas, naipeId) {
-    const naipe     = ATLAS_NAIPES[naipeId];
-    const comprados = PLAYER_STATE.personagens[charIdx].atlasComprados || [];
-    const nos       = ATLAS_NOS.filter(n => n.naipe === naipeId);
-
-    const h1  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 1);
-    const h2  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 2);
-    const h3  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 3);
-    const pas = nos.filter(n => n.tipo === 'passiva');
-
-    const colunas = [
-      { label: 'HAB BÁSICA',      icone: '⚔', nos: h1  },
-      { label: 'HAB INTERMEDIÁRIA', icone: '⚡', nos: h2  },
-      { label: 'HAB AVANÇADA',    icone: '💥', nos: h3  },
-      { label: 'PASSIVAS',        icone: '◈', nos: pas },
-    ];
-
-    // ── Cabeçalho do naipe ──
-    const header = document.createElement('div');
-    header.className = 'arvore-header';
-    header.style.cssText = `border-bottom: 1px solid ${naipe.cor}33;`;
-    header.innerHTML = `
-      <div class="arvore-header-simbolo" style="color:${naipe.cor}">${naipe.label.split(' ')[0]}</div>
-      <div class="arvore-header-nome" style="color:${naipe.cor}">${naipe.label}</div>
-    `;
-    canvas.appendChild(header);
-
-    // ── Banda TIER 1 ──
-    const tier = document.createElement('div');
-    tier.className = 'arvore-tier-band';
-    tier.style.cssText = `background: linear-gradient(90deg, transparent, ${naipe.cor}22, transparent);border-color:${naipe.cor}33;`;
-    tier.textContent = 'TIER  1';
-    canvas.appendChild(tier);
-
-    // ── Grid de 4 colunas ──
-    const grid = document.createElement('div');
-    grid.className = 'arvore-grid';
-
-    colunas.forEach(col => {
-      const colEl = document.createElement('div');
-      colEl.className = 'arvore-coluna';
-
-      const colHeader = document.createElement('div');
-      colHeader.className = 'arvore-col-header';
-      colHeader.style.cssText = `color:${naipe.cor};border-bottom:1px solid ${naipe.cor}33;`;
-      colHeader.innerHTML = `<span>${col.icone}</span><span>${col.label}</span>`;
-      colEl.appendChild(colHeader);
-
-      col.nos.forEach(no => {
-        const comprado = comprados.includes(no.id);
-        const noEl = document.createElement('div');
-        noEl.className = 'arvore-no' + (comprado ? ' comprado' : '');
-        noEl.style.cssText = comprado
-          ? `border-color:${naipe.cor}88;background:${naipe.cor}15;color:${naipe.cor};`
-          : '';
-        noEl.innerHTML = `
-          <div class="arvore-no-icone">${col.icone}</div>
-          <div class="arvore-no-label">${no.label}</div>
-          <div class="arvore-no-custo">${comprado ? '✓' : no.custo + ' PT'}</div>
-        `;
-        if (!comprado) {
-          noEl.addEventListener('click', () => abrirPopupNo(no));
-        }
-        colEl.appendChild(noEl);
-      });
-
-      grid.appendChild(colEl);
-    });
-
-    canvas.appendChild(grid);
-
-    // ── Espaço reservado para Tier 2 ──
-    const tier2 = document.createElement('div');
-    tier2.className = 'arvore-tier-futuro';
-    tier2.style.cssText = `border-color:${naipe.cor}22;color:${naipe.cor}44;`;
-    tier2.textContent = 'TIER 2 — EM BREVE';
-    canvas.appendChild(tier2);
-  }
-
-  // ── Seletor inicial — cruz com linhas SVG + 4 ícones cardinais ───────────
-  function renderSeletorNaipe(canvas) {
-    const CX = 400, CY = 400;
-
-    // SVG com linhas da cruz
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '800');
-    svg.setAttribute('height', '800');
+    svg.setAttribute('width', '2000');
+    svg.setAttribute('height', '2000');
     svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
-
-    Object.values(ATLAS_NAIPES).forEach(naipe => {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', CX);
-      line.setAttribute('y1', CY);
-      line.setAttribute('x2', naipe.iconeX);
-      line.setAttribute('y2', naipe.iconeY);
-      line.setAttribute('stroke', naipe.cor);
-      line.setAttribute('stroke-width', '1.5');
-      line.setAttribute('opacity', '0.25');
-      svg.appendChild(line);
-    });
     canvas.appendChild(svg);
 
-    // Nó central
+    const comprados = p.atlasComprados || [];
+
+    // Cruz: linhas do centro para os 4 ícones de naipe
+    Object.entries(ATLAS_NAIPES).forEach(([id, n]) => {
+      const ix = CX + 200 * n.mainDir[0];
+      const iy = CY + 200 * n.mainDir[1];
+      svgLinha(svg, CX, CY, ix, iy, n.cor, p.naipe === id ? 0.45 : 0.13);
+    });
+
+    // Linhas e nós da árvore do naipe ativo (desenhados antes dos ícones)
+    let t1Node = null;
+    if (p.naipe) {
+      const { nos, linhas } = gerarNosArvore(p.naipe);
+      const naipe = ATLAS_NAIPES[p.naipe];
+
+      linhas.forEach(l => svgLinha(svg, l.x1, l.y1, l.x2, l.y2, naipe.cor, l.op, l.dashed));
+
+      nos.forEach(no => {
+        if (no.tipo === 't1') {
+          t1Node = no;
+          const div = document.createElement('div');
+          div.className = 'atlas-no-t1';
+          div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
+          div.innerHTML = `<div class="atlas-no-t1-circulo">T1</div><div class="atlas-naipe-label">TIER 1</div>`;
+          div.addEventListener('click', () => abrirPopupT1(naipe));
+          canvas.appendChild(div);
+
+        } else if (no.tipo === 'categoria') {
+          const div = document.createElement('div');
+          div.className = 'atlas-no-cat';
+          div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
+          div.innerHTML = `<div class="atlas-no-cat-circulo">${no.icone}</div><div class="atlas-naipe-label">${no.label}</div>`;
+          canvas.appendChild(div);
+
+        } else {
+          if (no.tipo === 't2') {
+            const div = document.createElement('div');
+            div.className = 'atlas-no-t2';
+            div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
+            div.innerHTML = `<div class="atlas-no-t2-circulo">T2</div>`;
+            canvas.appendChild(div);
+          } else {
+            const comprado = comprados.includes(no.id);
+            const icone    = no.tipo === 'passiva' ? '◈' : '⚔';
+            const div = document.createElement('div');
+            div.className = 'atlas-no-skill' + (comprado ? ' comprado' : '');
+            div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipe.cor};`;
+            div.innerHTML = `<div class="atlas-no-skill-circulo">${comprado ? '✓' : icone}</div>`;
+            if (!comprado) div.addEventListener('click', () => abrirPopupNo(no));
+            canvas.appendChild(div);
+          }
+        }
+      });
+    }
+
+    // Ícones de naipe (4 cardinais) — sobre as linhas
+    Object.entries(ATLAS_NAIPES).forEach(([id, n]) => {
+      const ix = CX + 200 * n.mainDir[0];
+      const iy = CY + 200 * n.mainDir[1];
+      const ativo   = p.naipe === id;
+      const inativo = !!p.naipe && !ativo;
+      const div = document.createElement('div');
+      div.className = 'atlas-naipe-icone';
+      div.style.cssText = `left:${ix}px;top:${iy}px;--naipe-cor:${n.cor};opacity:${inativo ? 0.22 : 1};`;
+      div.innerHTML = `
+        <div class="atlas-naipe-circulo${ativo ? ' ativo' : ''}">${n.label.split(' ')[0]}</div>
+        <div class="atlas-naipe-label">${n.label.split(' ').slice(1).join(' ')}</div>
+      `;
+      if (!p.naipe) div.addEventListener('click', () => abrirPopupNaipe(id));
+      canvas.appendChild(div);
+    });
+
+    // Nó central ✦
     const centro = document.createElement('div');
     centro.className = 'atlas-seletor-centro';
     centro.style.cssText = `left:${CX}px;top:${CY}px;`;
     centro.textContent = '✦';
     canvas.appendChild(centro);
 
-    // 4 ícones cardinais
-    Object.entries(ATLAS_NAIPES).forEach(([id, naipe]) => {
-      const div = document.createElement('div');
-      div.className = 'atlas-naipe-icone';
-      div.style.cssText = `left:${naipe.iconeX}px;top:${naipe.iconeY}px;--naipe-cor:${naipe.cor};`;
-      div.innerHTML = `
-        <div class="atlas-naipe-circulo">${naipe.label.split(' ')[0]}</div>
-        <div class="atlas-naipe-label">${naipe.label.split(' ').slice(1).join(' ')}</div>
-      `;
-      div.addEventListener('click', () => abrirPopupNaipe(id));
-      canvas.appendChild(div);
-    });
+    // Scroll
+    setTimeout(() => {
+      if (t1Node) {
+        area.scrollLeft = t1Node.x - area.clientWidth  / 2;
+        area.scrollTop  = t1Node.y - area.clientHeight / 2;
+      } else {
+        area.scrollLeft = CX - area.clientWidth  / 2;
+        area.scrollTop  = CY - area.clientHeight / 2;
+      }
+    }, 0);
+
+    initScroll(area);
   }
+
+  // ── Popup de naipe ────────────────────────────────────────────────────────
 
   function abrirPopupNaipe(naipeId) {
     fecharPopup();
@@ -580,18 +620,42 @@ const STATUS = (() => {
     overlay.querySelector('#btn-comprar-naipe').addEventListener('click', () => comprarNaipe(naipeId));
   }
 
+  function abrirPopupT1(naipe) {
+    fecharPopup();
+    const screen  = document.getElementById('screen-status');
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div id="status-popup-titulo" style="color:${naipe.cor}">TIER 1 — ${naipe.label}</div>
+        <div class="popup-detalhe-desc">
+          Primeira camada da árvore de habilidades.<br><br>
+          <strong style="color:${naipe.cor}">H1</strong> — Habilidades básicas · 2 pts<br>
+          <strong style="color:${naipe.cor}">H2</strong> — Habilidades intermediárias · 3 pts<br>
+          <strong style="color:${naipe.cor}">H3</strong> — Habilidades avançadas · 4 pts<br>
+          <strong style="color:${naipe.cor}">P</strong> &nbsp;— Passivas automáticas · 2 pts
+        </div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-fechar">ENTENDIDO</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+  }
+
+  // ── Compras ───────────────────────────────────────────────────────────────
+
   function comprarNaipe(naipeId) {
     if (PLAYER_STATE.pontos < CUSTO_NAIPE) {
       const el = document.getElementById('status-topbar-pontos');
-      if (el) {
-        el.classList.add('sem-pontos');
-        setTimeout(() => el.classList.remove('sem-pontos'), 600);
-      }
+      if (el) { el.classList.add('sem-pontos'); setTimeout(() => el.classList.remove('sem-pontos'), 600); }
       return;
     }
     const p = PLAYER_STATE.personagens[charIdx];
     PLAYER_STATE.pontos -= CUSTO_NAIPE;
-    p.naipe     = naipeId;
+    p.naipe      = naipeId;
     p.naipeAtivo = naipeId;
 
     const naipe = ATLAS_NAIPES[naipeId];
@@ -614,10 +678,7 @@ const STATUS = (() => {
   function comprarNo(no) {
     if (PLAYER_STATE.pontos < no.custo) {
       const el = document.getElementById('status-topbar-pontos');
-      if (el) {
-        el.classList.add('sem-pontos');
-        setTimeout(() => el.classList.remove('sem-pontos'), 600);
-      }
+      if (el) { el.classList.add('sem-pontos'); setTimeout(() => el.classList.remove('sem-pontos'), 600); }
       return;
     }
     PLAYER_STATE.pontos -= no.custo;
@@ -633,24 +694,24 @@ const STATUS = (() => {
     renderAtlas();
   }
 
-  function initScroll() {
-    const area = document.getElementById('status-atlas-area');
-    if (!area) return;
-    let isDragging = false, startX, startY, scrollLeft, scrollTop;
+  // ── Drag-to-scroll ────────────────────────────────────────────────────────
+
+  function initScroll(area) {
+    if (!area || area._scrollBound) return;
+    area._scrollBound = true;
+    let drag = false, sx, sy, sl, st;
     area.addEventListener('mousedown', e => {
-      isDragging = true;
-      startX = e.pageX - area.offsetLeft;
-      startY = e.pageY - area.offsetTop;
-      scrollLeft = area.scrollLeft;
-      scrollTop  = area.scrollTop;
+      drag = true;
+      sx = e.pageX - area.offsetLeft; sy = e.pageY - area.offsetTop;
+      sl = area.scrollLeft;           st = area.scrollTop;
     });
-    area.addEventListener('mouseleave', () => isDragging = false);
-    area.addEventListener('mouseup',    () => isDragging = false);
+    area.addEventListener('mouseleave', () => drag = false);
+    area.addEventListener('mouseup',    () => drag = false);
     area.addEventListener('mousemove', e => {
-      if (!isDragging) return;
+      if (!drag) return;
       e.preventDefault();
-      area.scrollLeft = scrollLeft - (e.pageX - area.offsetLeft - startX);
-      area.scrollTop  = scrollTop  - (e.pageY - area.offsetTop  - startY);
+      area.scrollLeft = sl - (e.pageX - area.offsetLeft - sx);
+      area.scrollTop  = st - (e.pageY - area.offsetTop  - sy);
     });
   }
 
