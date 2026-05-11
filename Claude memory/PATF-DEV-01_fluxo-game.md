@@ -6,18 +6,33 @@
 ## Fluxo Principal (Jogo Real)
 
 ```
-Login Firebase
+Home — Login Google / Firebase
     ↓
-Criação de Personagens (seleção dos 3)
-    ↓
-Tutorial (5 etapas — personagens ganham forma aqui)
-    ↓
+Verifica estado do jogador
+    │
+    ├── Conta nova
+    │       ↓
+    │   Criação de Personagens (seleção dos 3)
+    │       ↓
+    │   Tutorial (5 etapas — personagens ganham forma aqui)
+    │       ↓
+    │   Tela Principal
+    │
+    └── Conta existente
+            ↓
+        Tela Principal (direto)
+
 Tela Principal
     ├── Survivor (batalha PvE)
     ├── PvP (batalha PvP)
     ├── Status (árvore Atlas + habilidades + passivas)
     └── Equipamentos (equipamentos + relíquias)
 ```
+
+> A bifurcação "conta nova vs existente" é uma checagem única
+> sobre o `PLAYER_STATE` (ex: `onboardingCompleto` ou
+> `personagens.length > 0`). As telas em si não conhecem essa
+> lógica — só o roteador de cenas decide o ponto de entrada.
 
 ---
 
@@ -38,10 +53,27 @@ Tela Principal
 > Fluxo de teste pula login Firebase e tutorial.
 > Acessado via aba TESTES na tela Start.
 >
-> **Estratégia de desenvolvimento:** todo o jogo será construído
-> no fluxo Teste — tela por tela, funcional e jogável.
-> Quando completo, cada tela será reposicionada no lugar
-> correto do fluxo real.
+> **Estratégia de desenvolvimento (definida 2026-05-11):**
+> todo o jogo será construído **tela por tela** no fluxo Teste —
+> cada uma funcional e jogável antes da próxima começar.
+>
+> Durante o desenvolvimento:
+> - Sem Firebase. `PLAYER_STATE` vive em memória (e/ou
+>   `localStorage`) através de uma função `carregarEstado()`
+>   isolada, que no futuro será trocada por chamadas Firebase
+>   sem mexer no resto do jogo.
+> - Sem Login. O jogador "entra" já no fluxo de Teste.
+> - Cada tela é uma unidade independente: recebe estado, renderiza,
+>   devolve estado. Não conhece o roteador.
+>
+> Quando todas as telas estiverem prontas e testadas, o trabalho
+> final é só "ligar os fios":
+> 1. Adicionar a tela **Home** com login Google/Firebase.
+> 2. Trocar `carregarEstado()` por chamadas Firebase reais.
+> 3. Adicionar o roteador que decide conta nova vs existente.
+>
+> Nenhuma tela precisa ser reescrita nessa migração — só
+> reposicionada no fluxo real.
 
 ---
 
@@ -147,4 +179,4 @@ const CHAR_POOL = [
 
 ---
 
-*Última atualização: 2026-05-10 — fluxo real corrigido, estratégia de desenvolvimento no fluxo Teste definida*
+*Última atualização: 2026-05-11 — bifurcação conta nova / existente no fluxo real, estratégia de desenvolvimento detalhada (mock local, sem Firebase/Login durante o build, telas como unidades independentes)*
