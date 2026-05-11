@@ -19,42 +19,54 @@ Leitura: A → B significa A tem **vantagem** sobre B.
 
 ---
 
-## Efeito Mecânico da Vantagem
+## Regra Geral
 
-> *A definir com Carlos*
-
-**Quando atacante tem vantagem sobre o alvo:**
-- [ ] Efeito: ???
-- [ ] Magnitude: ???
-- [ ] Aplica em: ataque base / habilidades / ambos?
-
-**Quando atacante tem desvantagem:**
-- [ ] Penalidade ou apenas sem bônus?
-
-**Quando naipes são iguais ou sem relação no ciclo:**
-- [ ] Neutro (sem bônus/penalidade)
+- Sem relação no ciclo (naipes iguais ou sem vantagem/desvantagem) → **neutro**, sem bônus ou penalidade.
+- Desvantagem → **sem penalidade explícita** — o adversário é que recebe o bônus.
+- Cada naipe tem seu próprio **tipo de efeito** — não é um sistema único, cada um funciona diferente.
 
 ---
 
-## Papel de Cada Naipe em Combate
+## Mecânica de Cada Naipe
 
-> *A definir com Carlos*
+### ♥ Copas — "O Tank Enraivecido"
 
-### ♥ Copas
-- Papel: ???
-- Identidade: ???
+**Referência de design:** Tank que fica com raiva quando briga com Paus.
+
+**Gatilho:** ♥ causa OU recebe dano de ♣  
+**Beneficiário:** sempre ♥  
+**Efeito:** ATQ e DEF atuais finais são **×2**  
+**Duração:** 2 turnos  
+**Acumulativo:** não — não pode duplicar o bônus já ativo  
+**Renovável:** sim — se o efeito já está ativo e ocorre nova interação com ♣, o contador reseta para 2 turnos  
+
+> Identidade: normalmente um tank (alta DEF), mas o confronto com ♣ o transforma em ameaça ofensiva também.
+
+---
 
 ### ♣ Paus
-- Papel: ???
-- Identidade: ???
+> *A definir*
+
+---
 
 ### ♦ Ouro
-- Papel: ???
-- Identidade: ???
+> *A definir*
 
-### ♠ Espadas
-- Papel: ???
-- Identidade: ???
+---
+
+### ♠ Espadas — "O Detonador"
+
+**Referência de design:** Scrapper vs Bruiser (Marvel Avengers Alliance).
+
+**Gatilho:** ♠ causa dano em um alvo ♥  
+**Beneficiário:** o dano causado por ♠  
+**Efeito:** dano final (após todos os cálculos) é **×2**  
+**Duração:** não aplicável — é um multiplicador por hit, sempre ativo  
+**Acumulativo:** não se aplica  
+**Renovável:** não se aplica  
+**Em área (AoE):** cada alvo ♥ individualmente recebe ×2 no cálculo final. Alvos não-♥ tomam dano normal.  
+
+> Identidade: especialista em eliminar Copas. Puro multiplicador de dano — sem buff, sem duração, sem estado. A engine só checa: "alvo é ♥? ×2."
 
 ---
 
