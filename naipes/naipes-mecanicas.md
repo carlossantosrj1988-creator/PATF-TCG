@@ -49,8 +49,14 @@ Leitura: A → B significa A tem **vantagem** sobre B.
 
 ---
 
-### ♦ Ouro
-> *A definir*
+### ♦ Ouro — "A Rodada Extra"
+
+**Gatilho:** ♦ causa OU recebe dano de ♠  
+**Beneficiário:** sempre ♦  
+**Efeito:** ganha uma **rodada extra**  
+**Regras da rodada extra:** dependem da engine de combate — mesmo mecanismo do ★ Coringa  
+
+> ⚠️ Mecânica parcial — o comportamento completo ("o que é uma rodada extra") só pode ser finalizado após a engine de turnos estar construída.
 
 ---
 
