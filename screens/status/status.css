@@ -301,6 +301,94 @@
   color: #8866ff;
 }
 
+/* ── Seletor de naipe — ícones cardinais ── */
+.atlas-naipe-icone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.atlas-naipe-circulo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--naipe-cor);
+  background: color-mix(in srgb, var(--naipe-cor) 12%, #0d0d1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--naipe-cor);
+  transition: transform 0.15s, background 0.2s;
+}
+
+.atlas-naipe-icone:hover .atlas-naipe-circulo {
+  transform: scale(1.12);
+  background: color-mix(in srgb, var(--naipe-cor) 22%, #0d0d1a);
+}
+
+.atlas-naipe-label {
+  font-size: 0.6rem;
+  color: var(--naipe-cor);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* ── Popup de naipe ── */
+.atlas-naipe-popup-simbolo {
+  font-size: 2.4rem;
+  text-align: center;
+}
+
+.atlas-naipe-popup-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.72rem;
+}
+
+.atlas-naipe-popup-tag {
+  font-size: 0.55rem;
+  letter-spacing: 2px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.atlas-naipe-popup-tag.vantagem    { background: #1a3a1a; color: #4caf50; }
+.atlas-naipe-popup-tag.desvantagem { background: #3a1a1a; color: #e05555; }
+
+.atlas-naipe-popup-bonus {
+  font-size: 0.72rem;
+  color: #c9a84c;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 8px 0 4px;
+  border-top: 1px solid #ffffff0d;
+}
+
+#btn-comprar-naipe {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #ffffff15;
+  background: transparent;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s;
+}
+
+#btn-comprar-naipe:hover {
+  background: #1a1a2a;
+}
+
 /* ── Árvore Atlas ── */
 .atlas-no {
   position: absolute;
@@ -374,6 +462,118 @@
 .sem-pontos {
   animation: shake 0.3s ease;
   color: #cc4444 !important;
+}
+
+/* ── Árvore expandida ── */
+.arvore-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 16px;
+}
+
+.arvore-header-simbolo { font-size: 1.6rem; }
+
+.arvore-header-nome {
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.arvore-tier-band {
+  margin: 0 24px 0;
+  padding: 6px 16px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 0.55rem;
+  letter-spacing: 6px;
+  color: #888;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.arvore-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px 24px;
+}
+
+.arvore-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arvore-col-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 10px;
+  font-size: 0.55rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.arvore-col-header span:first-child { font-size: 1rem; }
+
+.arvore-no {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 8px;
+  border: 1px dashed #ffffff12;
+  background: #0d0d1a;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+
+.arvore-no:hover:not(.comprado) {
+  border-color: #ffffff30;
+  background: #13131f;
+}
+
+.arvore-no.comprado { cursor: default; }
+
+.arvore-no-icone {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.arvore-no.comprado .arvore-no-icone { color: inherit; }
+
+.arvore-no-label {
+  font-size: 0.6rem;
+  color: #555;
+  letter-spacing: 1px;
+}
+
+.arvore-no.comprado .arvore-no-label { color: inherit; opacity: 0.9; }
+
+.arvore-no-custo {
+  font-size: 0.55rem;
+  color: #444;
+  letter-spacing: 1px;
+}
+
+.arvore-no.comprado .arvore-no-custo { color: inherit; }
+
+.arvore-tier-futuro {
+  margin: 8px 24px 24px;
+  padding: 12px;
+  border: 1px dashed;
+  border-radius: 6px;
+  font-size: 0.55rem;
+  letter-spacing: 6px;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 /* ── Popup ── */

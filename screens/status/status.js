@@ -1,38 +1,97 @@
 const STATUS = (() => {
   let charIdx = 0;
 
+  // ── Naipes — posições cardinais, vantagem/desvantagem, bônus ──────────────
   const ATLAS_NAIPES = {
-    espadas: { label: '♠ ESPADAS', cor: '#5599cc', x: 400, y: 80  },
-    copas:   { label: '♥ COPAS',   cor: '#e05555', x: 80,  y: 400 },
-    ouro:    { label: '♦ OURO',    cor: '#f0c030', x: 720, y: 400 },
-    paus:    { label: '♣ PAUS',    cor: '#4caf50', x: 400, y: 720 },
+    copas:   { label: '♥ COPAS',   cor: '#e05555', iconeX: 400, iconeY: 100, direcao: 'cima',     vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
+    espadas: { label: '♠ ESPADAS', cor: '#5599cc', iconeX: 700, iconeY: 400, direcao: 'direita',  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
+    ouro:    { label: '♦ OURO',    cor: '#f0c030', iconeX: 400, iconeY: 700, direcao: 'baixo',    vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
+    paus:    { label: '♣ PAUS',    cor: '#4caf50', iconeX: 100, iconeY: 400, direcao: 'esquerda', vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
   };
 
+  const CUSTO_NAIPE = 1;
+
+  // ── Nós da árvore — 18 por naipe (H1×5 + H2×5 + H3×5 + Passivas×3) ───────
   const ATLAS_NOS = [
-    { id: 'centro', x: 400, y: 400, label: '',        tipo: 'centro',     custo: 0, naipe: null,      desbloqueado: true  },
+    // ── Copas ────────────────────────────────────────────────────────────────
+    { id: 'cop_h1_1', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'cop_h1_2', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'cop_h1_3', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'cop_h1_4', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'cop_h1_5', naipe: 'copas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'cop_h2_1', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'cop_h2_2', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'cop_h2_3', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'cop_h2_4', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'cop_h2_5', naipe: 'copas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'cop_h3_1', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'cop_h3_2', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'cop_h3_3', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'cop_h3_4', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'cop_h3_5', naipe: 'copas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'cop_p1',   naipe: 'copas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'cop_p2',   naipe: 'copas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'cop_p3',   naipe: 'copas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
 
-    { id: 'esp_1',  x: 400, y: 280, label: 'ATQ +2',  tipo: 'atributo',   custo: 1, naipe: 'espadas', desbloqueado: false },
-    { id: 'esp_2',  x: 320, y: 200, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'espadas', desbloqueado: false, categoria: 1 },
-    { id: 'esp_3',  x: 480, y: 200, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'espadas', desbloqueado: false },
+    // ── Espadas ──────────────────────────────────────────────────────────────
+    { id: 'esp_h1_1', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'esp_h1_2', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'esp_h1_3', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'esp_h1_4', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'esp_h1_5', naipe: 'espadas', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'esp_h2_1', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'esp_h2_2', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'esp_h2_3', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'esp_h2_4', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'esp_h2_5', naipe: 'espadas', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'esp_h3_1', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'esp_h3_2', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'esp_h3_3', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'esp_h3_4', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'esp_h3_5', naipe: 'espadas', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'esp_p1',   naipe: 'espadas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'esp_p2',   naipe: 'espadas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'esp_p3',   naipe: 'espadas', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
 
-    { id: 'cop_1',  x: 280, y: 400, label: 'DEF +2',  tipo: 'atributo',   custo: 1, naipe: 'copas',   desbloqueado: false },
-    { id: 'cop_2',  x: 200, y: 320, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'copas',   desbloqueado: false, categoria: 1 },
-    { id: 'cop_3',  x: 200, y: 480, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'copas',   desbloqueado: false },
+    // ── Ouro ─────────────────────────────────────────────────────────────────
+    { id: 'our_h1_1', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'our_h1_2', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'our_h1_3', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'our_h1_4', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'our_h1_5', naipe: 'ouro', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'our_h2_1', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'our_h2_2', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'our_h2_3', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'our_h2_4', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'our_h2_5', naipe: 'ouro', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'our_h3_1', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'our_h3_2', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'our_h3_3', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'our_h3_4', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'our_h3_5', naipe: 'ouro', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'our_p1',   naipe: 'ouro', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'our_p2',   naipe: 'ouro', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'our_p3',   naipe: 'ouro', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
 
-    { id: 'our_1',  x: 520, y: 400, label: 'INC +2',  tipo: 'atributo',   custo: 1, naipe: 'ouro',    desbloqueado: false },
-    { id: 'our_2',  x: 600, y: 320, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'ouro',    desbloqueado: false, categoria: 1 },
-    { id: 'our_3',  x: 600, y: 480, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'ouro',    desbloqueado: false },
-
-    { id: 'pau_1',  x: 400, y: 520, label: 'PVS +2',  tipo: 'atributo',   custo: 1, naipe: 'paus',    desbloqueado: false },
-    { id: 'pau_2',  x: 320, y: 600, label: 'H1',      tipo: 'habilidade', custo: 2, naipe: 'paus',    desbloqueado: false, categoria: 1 },
-    { id: 'pau_3',  x: 480, y: 600, label: 'PASSIVA', tipo: 'passiva',    custo: 2, naipe: 'paus',    desbloqueado: false },
-  ];
-
-  const ATLAS_CONEXOES = [
-    ['centro', 'esp_1'], ['esp_1', 'esp_2'], ['esp_1', 'esp_3'],
-    ['centro', 'cop_1'], ['cop_1', 'cop_2'], ['cop_1', 'cop_3'],
-    ['centro', 'our_1'], ['our_1', 'our_2'], ['our_1', 'our_3'],
-    ['centro', 'pau_1'], ['pau_1', 'pau_2'], ['pau_1', 'pau_3'],
+    // ── Paus ─────────────────────────────────────────────────────────────────
+    { id: 'pau_h1_1', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-1', descricao: '' },
+    { id: 'pau_h1_2', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-2', descricao: '' },
+    { id: 'pau_h1_3', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-3', descricao: '' },
+    { id: 'pau_h1_4', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-4', descricao: '' },
+    { id: 'pau_h1_5', naipe: 'paus', tipo: 'habilidade', categoria: 1, custo: 2, label: 'H1-5', descricao: '' },
+    { id: 'pau_h2_1', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-1', descricao: '' },
+    { id: 'pau_h2_2', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-2', descricao: '' },
+    { id: 'pau_h2_3', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-3', descricao: '' },
+    { id: 'pau_h2_4', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-4', descricao: '' },
+    { id: 'pau_h2_5', naipe: 'paus', tipo: 'habilidade', categoria: 2, custo: 3, label: 'H2-5', descricao: '' },
+    { id: 'pau_h3_1', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-1', descricao: '' },
+    { id: 'pau_h3_2', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-2', descricao: '' },
+    { id: 'pau_h3_3', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-3', descricao: '' },
+    { id: 'pau_h3_4', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-4', descricao: '' },
+    { id: 'pau_h3_5', naipe: 'paus', tipo: 'habilidade', categoria: 3, custo: 4, label: 'H3-5', descricao: '' },
+    { id: 'pau_p1',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-1', descricao: '' },
+    { id: 'pau_p2',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-2', descricao: '' },
+    { id: 'pau_p3',   naipe: 'paus', tipo: 'passiva',    categoria: null, custo: 2, label: 'P-3', descricao: '' },
   ];
 
   function init() {
@@ -183,6 +242,40 @@ const STATUS = (() => {
     if (overlay) overlay.remove();
   }
 
+  function abrirPopupNo(no) {
+    fecharPopup();
+    const screen  = document.getElementById('screen-status');
+    const naipe   = ATLAS_NAIPES[no.naipe];
+    const icone   = no.tipo === 'habilidade' ? '⚔' : '◈';
+    const catLabel = no.tipo === 'habilidade'
+      ? ['', 'HAB BÁSICA', 'HAB INTERMEDIÁRIA', 'HAB AVANÇADA'][no.categoria] || ''
+      : 'PASSIVA';
+    const descricao = no.descricao || 'Descrição em breve.';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div id="status-popup-titulo">${catLabel}</div>
+        <div class="popup-detalhe-icone" style="color:${naipe.cor}">${icone}</div>
+        <div class="popup-detalhe-nome" style="color:${naipe.cor}">${no.label}</div>
+        <div class="popup-detalhe-naipe" style="color:${naipe.cor}88">${naipe.label}</div>
+        <div class="popup-detalhe-desc">${descricao}</div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-fechar">FECHAR</button>
+          <button id="btn-comprar-no" style="color:${naipe.cor};border-color:${naipe.cor}66;">COMPRAR — ${no.custo} PT</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+    overlay.querySelector('#btn-comprar-no').addEventListener('click', () => {
+      comprarNo(no);
+      document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
+    });
+  }
+
   function abrirPopupSlot(tipo, slotIdx) {
     fecharPopup();
     const screen = document.getElementById('screen-status');
@@ -309,62 +402,184 @@ const STATUS = (() => {
   }
 
   function renderAtlas() {
+    const area   = document.getElementById('status-atlas-area');
     const canvas = document.getElementById('status-atlas-canvas');
-    if (!canvas) return;
-    const comprados = PLAYER_STATE.personagens[charIdx].atlasComprados || [];
+    if (!canvas || !area) return;
+    const p = PLAYER_STATE.personagens[charIdx];
     canvas.innerHTML = '';
 
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '800');
-    svg.setAttribute('height', '800');
-    svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+    if (!p.naipe) {
+      canvas.style.cssText = 'position:relative;width:800px;height:800px;margin:auto;';
+      area.style.overflow  = 'auto';
+      renderSeletorNaipe(canvas);
+    } else {
+      canvas.style.cssText = 'position:relative;width:100%;min-height:100%;';
+      area.style.overflow  = 'auto';
+      renderArvoreNaipe(canvas, p.naipe);
+    }
+  }
 
-    ATLAS_CONEXOES.forEach(([paiId, filhoId]) => {
-      const pai   = ATLAS_NOS.find(n => n.id === paiId);
-      const filho = ATLAS_NOS.find(n => n.id === filhoId);
-      if (!pai || !filho) return;
-      const ativa = comprados.includes(paiId);
-      const cor   = ativa && filho.naipe ? ATLAS_NAIPES[filho.naipe].cor : '#ffffff0d';
-      const line  = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', pai.x);
-      line.setAttribute('y1', pai.y);
-      line.setAttribute('x2', filho.x);
-      line.setAttribute('y2', filho.y);
-      line.setAttribute('stroke', cor);
-      line.setAttribute('stroke-width', '1.5');
-      line.setAttribute('opacity', ativa ? '0.4' : '1');
-      svg.appendChild(line);
+  // ── Árvore expandida — 4 colunas verticais ───────────────────────────────
+  function renderArvoreNaipe(canvas, naipeId) {
+    const naipe     = ATLAS_NAIPES[naipeId];
+    const comprados = PLAYER_STATE.personagens[charIdx].atlasComprados || [];
+    const nos       = ATLAS_NOS.filter(n => n.naipe === naipeId);
+
+    const h1  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 1);
+    const h2  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 2);
+    const h3  = nos.filter(n => n.tipo === 'habilidade' && n.categoria === 3);
+    const pas = nos.filter(n => n.tipo === 'passiva');
+
+    const colunas = [
+      { label: 'HAB BÁSICA',      icone: '⚔', nos: h1  },
+      { label: 'HAB INTERMEDIÁRIA', icone: '⚡', nos: h2  },
+      { label: 'HAB AVANÇADA',    icone: '💥', nos: h3  },
+      { label: 'PASSIVAS',        icone: '◈', nos: pas },
+    ];
+
+    // ── Cabeçalho do naipe ──
+    const header = document.createElement('div');
+    header.className = 'arvore-header';
+    header.style.cssText = `border-bottom: 1px solid ${naipe.cor}33;`;
+    header.innerHTML = `
+      <div class="arvore-header-simbolo" style="color:${naipe.cor}">${naipe.label.split(' ')[0]}</div>
+      <div class="arvore-header-nome" style="color:${naipe.cor}">${naipe.label}</div>
+    `;
+    canvas.appendChild(header);
+
+    // ── Banda TIER 1 ──
+    const tier = document.createElement('div');
+    tier.className = 'arvore-tier-band';
+    tier.style.cssText = `background: linear-gradient(90deg, transparent, ${naipe.cor}22, transparent);border-color:${naipe.cor}33;`;
+    tier.textContent = 'TIER  1';
+    canvas.appendChild(tier);
+
+    // ── Grid de 4 colunas ──
+    const grid = document.createElement('div');
+    grid.className = 'arvore-grid';
+
+    colunas.forEach(col => {
+      const colEl = document.createElement('div');
+      colEl.className = 'arvore-coluna';
+
+      const colHeader = document.createElement('div');
+      colHeader.className = 'arvore-col-header';
+      colHeader.style.cssText = `color:${naipe.cor};border-bottom:1px solid ${naipe.cor}33;`;
+      colHeader.innerHTML = `<span>${col.icone}</span><span>${col.label}</span>`;
+      colEl.appendChild(colHeader);
+
+      col.nos.forEach(no => {
+        const comprado = comprados.includes(no.id);
+        const noEl = document.createElement('div');
+        noEl.className = 'arvore-no' + (comprado ? ' comprado' : '');
+        noEl.style.cssText = comprado
+          ? `border-color:${naipe.cor}88;background:${naipe.cor}15;color:${naipe.cor};`
+          : '';
+        noEl.innerHTML = `
+          <div class="arvore-no-icone">${col.icone}</div>
+          <div class="arvore-no-label">${no.label}</div>
+          <div class="arvore-no-custo">${comprado ? '✓' : no.custo + ' PT'}</div>
+        `;
+        if (!comprado) {
+          noEl.addEventListener('click', () => abrirPopupNo(no));
+        }
+        colEl.appendChild(noEl);
+      });
+
+      grid.appendChild(colEl);
     });
 
-    canvas.appendChild(svg);
+    canvas.appendChild(grid);
 
-    ATLAS_NOS.forEach(no => {
-      const comprado   = comprados.includes(no.id);
-      const disponivel = !comprado && (
-        no.id === 'centro' ||
-        ATLAS_CONEXOES.some(([pai, filho]) => filho === no.id && comprados.includes(pai))
-      );
-      const estado   = comprado ? 'comprado' : disponivel ? 'disponivel' : 'bloqueado';
-      const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
-      const icone    = no.tipo === 'centro'      ? '✦'
-                     : no.tipo === 'habilidade'  ? '⚔'
-                     : no.tipo === 'passiva'     ? '◈'
-                     : '+';
+    // ── Espaço reservado para Tier 2 ──
+    const tier2 = document.createElement('div');
+    tier2.className = 'arvore-tier-futuro';
+    tier2.style.cssText = `border-color:${naipe.cor}22;color:${naipe.cor}44;`;
+    tier2.textContent = 'TIER 2 — EM BREVE';
+    canvas.appendChild(tier2);
+  }
 
+  // ── Seletor inicial — 4 ícones cardinais ─────────────────────────────────
+  function renderSeletorNaipe(canvas) {
+    Object.entries(ATLAS_NAIPES).forEach(([id, naipe]) => {
       const div = document.createElement('div');
-      div.className = `atlas-no ${estado} ${no.tipo}`;
-      div.style.cssText = `left:${no.x}px;top:${no.y}px;--naipe-cor:${naipeCor};`;
+      div.className = 'atlas-naipe-icone';
+      div.style.cssText = `left:${naipe.iconeX}px;top:${naipe.iconeY}px;--naipe-cor:${naipe.cor};`;
       div.innerHTML = `
-        <div class="atlas-no-circulo">${icone}</div>
-        <div class="atlas-no-label">${no.label}</div>
+        <div class="atlas-naipe-circulo">${naipe.label.split(' ')[0]}</div>
+        <div class="atlas-naipe-label">${naipe.label.split(' ').slice(1).join(' ')}</div>
       `;
-
-      if (disponivel && no.id !== 'centro') {
-        div.addEventListener('click', () => comprarNo(no));
-      }
-
+      div.addEventListener('click', () => abrirPopupNaipe(id));
       canvas.appendChild(div);
     });
+  }
+
+  function abrirPopupNaipe(naipeId) {
+    fecharPopup();
+    const screen  = document.getElementById('screen-status');
+    const naipe   = ATLAS_NAIPES[naipeId];
+    const vantNaipe = ATLAS_NAIPES[naipe.vantagem];
+    const desvNaipe = ATLAS_NAIPES[naipe.desvantagem];
+    const bonusTexto = naipe.bonusCampo && naipe.bonusValor > 0
+      ? `+${naipe.bonusValor} ${naipe.bonusCampo.toUpperCase()}`
+      : 'Bônus a definir';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div class="atlas-naipe-popup-simbolo" style="color:${naipe.cor}">${naipe.label.split(' ')[0]}</div>
+        <div id="status-popup-titulo" style="color:${naipe.cor}">${naipe.label}</div>
+        <div class="atlas-naipe-popup-linha">
+          <span class="atlas-naipe-popup-tag vantagem">VANTAGEM</span>
+          <span style="color:${vantNaipe.cor}">${vantNaipe.label}</span>
+        </div>
+        <div class="atlas-naipe-popup-linha">
+          <span class="atlas-naipe-popup-tag desvantagem">DESVANTAGEM</span>
+          <span style="color:${desvNaipe.cor}">${desvNaipe.label}</span>
+        </div>
+        <div class="atlas-naipe-popup-bonus">${bonusTexto}</div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-fechar">CANCELAR</button>
+          <button id="btn-comprar-naipe" style="color:${naipe.cor};border-color:${naipe.cor}66;">DEFINIR NAIPE — ${CUSTO_NAIPE} PT</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+    overlay.querySelector('#btn-comprar-naipe').addEventListener('click', () => comprarNaipe(naipeId));
+  }
+
+  function comprarNaipe(naipeId) {
+    if (PLAYER_STATE.pontos < CUSTO_NAIPE) {
+      const el = document.getElementById('status-topbar-pontos');
+      if (el) {
+        el.classList.add('sem-pontos');
+        setTimeout(() => el.classList.remove('sem-pontos'), 600);
+      }
+      return;
+    }
+    const p = PLAYER_STATE.personagens[charIdx];
+    PLAYER_STATE.pontos -= CUSTO_NAIPE;
+    p.naipe     = naipeId;
+    p.naipeAtivo = naipeId;
+
+    const naipe = ATLAS_NAIPES[naipeId];
+    if (naipe.bonusCampo && naipe.bonusValor > 0) {
+      p[naipe.bonusCampo] = (p[naipe.bonusCampo] || 0) + naipe.bonusValor;
+    }
+
+    if (typeof salvarEstado === 'function') salvarEstado();
+
+    const pontosEl = document.getElementById('status-topbar-pontos-valor');
+    if (pontosEl) pontosEl.textContent = PLAYER_STATE.pontos;
+
+    const painelEsq = document.getElementById('status-painel-esq');
+    if (painelEsq) painelEsq.replaceWith(renderPainelEsq());
+
+    fecharPopup();
+    renderAtlas();
   }
 
   function comprarNo(no) {
@@ -380,24 +595,12 @@ const STATUS = (() => {
     const p = PLAYER_STATE.personagens[charIdx];
     if (!p.atlasComprados) p.atlasComprados = [];
     p.atlasComprados.push(no.id);
-
-    let naipeDefinido = false;
-    if (no.tipo === 'atributo' && no.naipe && !p.naipe) {
-      p.naipe = no.naipe;
-      p.naipeAtivo = no.naipe;
-      naipeDefinido = true;
-    }
-
     if (typeof salvarEstado === 'function') salvarEstado();
 
     const pontosEl = document.getElementById('status-topbar-pontos-valor');
     if (pontosEl) pontosEl.textContent = PLAYER_STATE.pontos;
 
-    if (naipeDefinido) {
-      const painelEsq = document.getElementById('status-painel-esq');
-      if (painelEsq) painelEsq.replaceWith(renderPainelEsq());
-    }
-
+    fecharPopup();
     renderAtlas();
   }
 
