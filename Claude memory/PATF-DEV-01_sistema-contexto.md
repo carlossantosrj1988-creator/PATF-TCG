@@ -6,7 +6,7 @@
 
 ## Por Que Este Documento Existe
 
-O projeto PATF TCG é construído em sessões intercaladas — às vezes no chat web/mobile (com o Claude estrategista), às vezes no Claude Code (executor no repositório). Para que qualquer instância de Claude entre em qualquer sessão sem perder o fio, o contexto vive no repositório, **organizado de forma modular**.
+O projeto PATF TCG é construído em sessões — hoje **predominantemente conversa direta dentro do Claude Code** (planejamento + execução no mesmo lugar), e às vezes ainda no chat web/mobile como estrategista que entrega prompt pro Code (fluxo herdado da sessão 002, válido mas opcional). Para que qualquer instância de Claude entre em qualquer sessão sem perder o fio, o contexto vive no repositório, **organizado de forma modular**.
 
 Sem este sistema, dois problemas aparecem:
 - O contexto cresce até virar um arquivo monolítico impossível de carregar
@@ -113,7 +113,9 @@ Um arquivo **por sessão de trabalho**. Registra o que rolou, o que foi decidido
 
 1. Claude Code lê a pasta `Claude memory/` ao iniciar
 2. Carlos pode pedir foco específico: *"leia apenas as últimas 3 sessões"*
-3. Claude Code executa o prompt recebido com o contexto carregado
+3. A sessão pode rodar em dois modos:
+   - **Conversa direta** (modo padrão a partir da sessão 003): Carlos discute, decide e executa direto com o Code. Code planeja, pergunta, analisa, executa e commita na mesma conversa.
+   - **Prompt recebido** (fluxo da sessão 002, opcional): Carlos cola um prompt mastigado pelo chat estrategista; Code executa.
 
 ---
 
@@ -153,3 +155,5 @@ Um arquivo **por sessão de trabalho**. Registra o que rolou, o que foi decidido
 ---
 
 *Documento estável. Atualizar apenas se o próprio sistema de contexto mudar.*
+
+*Última revisão: 2026-05-11 — sessão 003 incorporou conversa direta no Claude Code como modo padrão; fluxo "prompt mastigado" da sessão 002 mantido como alternativo.*
