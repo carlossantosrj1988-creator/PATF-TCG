@@ -147,7 +147,7 @@ Após construir e validar, você explica de forma simples. O Carlos precisa ente
 - ❌ Nunca `%`, `vh`, `vw` ou pixels sem referência a borda ou centro.
 
 ### Zonas reservadas (universais)
-- ⚙ engrenagem: `position: fixed; top: 16px; right: 16px; z-index: 1000` — não sobrepor. Topbars devem reservar `padding-right: 60px` ou mais.
+- ⚙ engrenagem: vive **dentro do `#game-container`** (criado em `renderer.js` no boot). `position: absolute; top: 16px; right: 16px; z-index: 1000` — escala junto com o canvas. Toda topbar/cabeçalho que tenha conteúdo no canto direito (pontos, coin, contador) deve reservar `padding-right: 60px` ou mais para não colidir. O painel `#options-panel` que abre ao clicar continua no `<body>` (fixed) — só o botão fica no canvas.
 
 ### Onde isto vive no código
 - `screens/renderer/renderer.js` — `BASE_H = 720`, `BASE_W_MIN = 1280`, `BASE_W` recalculado em cada `applyScale()`.

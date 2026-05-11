@@ -81,7 +81,7 @@ html {
 }
 
 #btn-options {
-    position: fixed;
+    position: absolute;
     top: 16px;
     right: 16px;
     font-size: 1.8rem;
