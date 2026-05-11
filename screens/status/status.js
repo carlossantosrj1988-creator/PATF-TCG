@@ -473,9 +473,6 @@ const STATUS = (() => {
     return { nos: resultado, linhas };
   }
 
-    return { nos: resultado, linhas };
-  }
-
   function renderAtlas() {
     const area   = document.getElementById('status-atlas-area');
     const canvas = document.getElementById('status-atlas-canvas');
