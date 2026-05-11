@@ -119,19 +119,166 @@ const STATUS = (() => {
   function renderPainelDir() {
     const painel = document.createElement('div');
     painel.id = 'status-painel-dir';
-    painel.innerHTML = `
-      <div class="status-dir-label">HABILIDADES</div>
-      <div class="status-slot-habilidade">VAZIO</div>
-      <div class="status-slot-habilidade">VAZIO</div>
-      <div class="status-slot-habilidade">VAZIO</div>
-      <div class="status-dir-label" style="margin-top:8px;">PASSIVAS</div>
-      <div class="status-slot-passiva">VAZIO</div>
-      <div class="status-slot-passiva">VAZIO</div>
-    `;
-    painel.querySelectorAll('.status-slot-habilidade, .status-slot-passiva').forEach(el => {
-      el.addEventListener('click', () => console.log('slot clicado'));
+    const p = PLAYER_STATE.personagens[charIdx] || {};
+    const habilidades = p.habilidades || [null, null, null];
+    const passivas    = p.passivas    || [null, null];
+
+    let habHTML = '<div class="status-dir-label">HABILIDADES</div>';
+    habilidades.forEach((id, i) => {
+      const no = id ? ATLAS_NOS.find(n => n.id === id) : null;
+      const naipeCor = no?.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
+      habHTML += `
+        <div class="status-slot-habilidade ${no ? 'ocupado' : ''}" data-slot="${i}" data-tipo="habilidade">
+          ${no
+            ? `<div class="slot-h-nome" style="color:${naipeCor}">${no.label}</div>
+               <div class="slot-h-tipo" style="color:${naipeCor}88">${no.naipe ? no.naipe.toUpperCase() : ''}</div>`
+            : `<div class="slot-h-nome">HAB ${i + 1}</div>`
+          }
+        </div>
+      `;
     });
+
+    let pasHTML = '<div class="status-dir-label" style="margin-top:8px;">PASSIVAS</div>';
+    passivas.forEach((id, i) => {
+      const no = id ? ATLAS_NOS.find(n => n.id === id) : null;
+      const naipeCor = no?.naipe ? ATLAS_NAIPES[no.naipe].cor : '#8866ff';
+      pasHTML += `
+        <div class="status-slot-passiva ${no ? 'ocupado' : ''}" data-slot="${i}" data-tipo="passiva"
+             style="${no ? `color:${naipeCor};border-color:${naipeCor}66` : ''}">
+          ${no ? no.label : 'VAZIO'}
+        </div>
+      `;
+    });
+
+    painel.innerHTML = habHTML + pasHTML;
+
+    painel.querySelectorAll('[data-tipo]').forEach(el => {
+      el.addEventListener('click', () => {
+        const tipo    = el.dataset.tipo;
+        const slotIdx = parseInt(el.dataset.slot, 10);
+        const slots   = tipo === 'habilidade' ? habilidades : passivas;
+        const equipadoId = slots[slotIdx];
+        if (equipadoId) {
+          const no = ATLAS_NOS.find(n => n.id === equipadoId);
+          if (no) abrirPopupDetalhe(tipo, slotIdx, no);
+        } else {
+          abrirPopupSlot(tipo, slotIdx);
+        }
+      });
+    });
+
     return painel;
+  }
+
+  function fecharPopup() {
+    const overlay = document.getElementById('status-popup-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  function abrirPopupSlot(tipo, slotIdx) {
+    fecharPopup();
+    const screen = document.getElementById('screen-status');
+    const p = PLAYER_STATE.personagens[charIdx];
+    const comprados = p.atlasComprados || [];
+    const slotsAtuais = tipo === 'habilidade' ? p.habilidades : p.passivas;
+
+    let disponiveis = ATLAS_NOS.filter(n =>
+      n.tipo === tipo &&
+      comprados.includes(n.id) &&
+      !slotsAtuais.includes(n.id)
+    );
+
+    if (tipo === 'habilidade') {
+      const categoriaSlot = slotIdx + 1;
+      disponiveis = disponiveis.filter(n => n.categoria === categoriaSlot);
+    }
+
+    const tituloTipo = tipo === 'habilidade'
+      ? `HABILIDADE ${slotIdx + 1} — DISPONÍVEIS`
+      : `PASSIVA ${slotIdx + 1} — DISPONÍVEIS`;
+
+    let listaHTML = '';
+    if (disponiveis.length === 0) {
+      const msg = tipo === 'habilidade'
+        ? `Nenhuma habilidade categoria ${slotIdx + 1} disponível.`
+        : 'Nenhuma passiva disponível.';
+      listaHTML = `<div class="popup-vazio">${msg}</div>`;
+    } else {
+      disponiveis.forEach(no => {
+        const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
+        const icone = tipo === 'habilidade' ? '⚔' : '◈';
+        listaHTML += `
+          <div class="popup-item" data-id="${no.id}">
+            <div class="popup-item-icone" style="color:${naipeCor}">${icone}</div>
+            <div class="popup-item-info">
+              <div class="popup-item-nome">${no.label}</div>
+              <div class="popup-item-detalhe" style="color:${naipeCor}">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div id="status-popup-titulo">${tituloTipo}</div>
+        <div id="status-popup-lista">${listaHTML}</div>
+        <button id="status-popup-fechar">FECHAR</button>
+      </div>
+    `;
+    screen.appendChild(overlay);
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+
+    overlay.querySelectorAll('.popup-item[data-id]').forEach(item => {
+      item.addEventListener('click', () => {
+        slotsAtuais[slotIdx] = item.dataset.id;
+        if (typeof salvarEstado === 'function') salvarEstado();
+        fecharPopup();
+        document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
+      });
+    });
+  }
+
+  function abrirPopupDetalhe(tipo, slotIdx, no) {
+    fecharPopup();
+    const screen = document.getElementById('screen-status');
+    const p = PLAYER_STATE.personagens[charIdx];
+    const slotsAtuais = tipo === 'habilidade' ? p.habilidades : p.passivas;
+    const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
+    const icone    = tipo === 'habilidade' ? '⚔' : '◈';
+    const tituloTipo = tipo === 'habilidade'
+      ? `HABILIDADE ${slotIdx + 1}`
+      : `PASSIVA ${slotIdx + 1}`;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div id="status-popup-titulo">${tituloTipo}</div>
+        <div class="popup-detalhe-icone" style="color:${naipeCor}">${icone}</div>
+        <div class="popup-detalhe-nome" style="color:${naipeCor}">${no.label}</div>
+        <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
+        <div class="popup-detalhe-desc">Descrição em breve.</div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-remover">REMOVER</button>
+          <button id="status-popup-fechar">FECHAR</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+    overlay.querySelector('#status-popup-remover').addEventListener('click', () => {
+      slotsAtuais[slotIdx] = null;
+      if (typeof salvarEstado === 'function') salvarEstado();
+      fecharPopup();
+      document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
+    });
   }
 
   function trocarChar(idx) {

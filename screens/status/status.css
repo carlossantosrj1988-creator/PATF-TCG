@@ -357,3 +357,188 @@
   animation: shake 0.3s ease;
   color: #cc4444 !important;
 }
+
+/* ── Popup ── */
+#status-popup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#status-popup-box {
+  background: #0d1117;
+  border: 1px solid #ffffff18;
+  border-radius: 16px;
+  padding: 24px 20px;
+  width: 360px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  z-index: 51;
+  box-sizing: border-box;
+}
+
+#status-popup-titulo {
+  font-size: 0.65rem;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+#status-popup-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.popup-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ffffff10;
+  background: #0d0d1a;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.popup-item:hover {
+  border-color: #c9a84c44;
+  background: #1a1400;
+}
+
+.popup-item-icone {
+  font-size: 1rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.popup-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-item-nome {
+  font-size: 0.72rem;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.popup-item-detalhe {
+  font-size: 0.6rem;
+  color: #555;
+  letter-spacing: 1px;
+}
+
+.popup-vazio {
+  font-size: 0.7rem;
+  color: #333;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+#status-popup-fechar {
+  align-self: flex-end;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #ffffff15;
+  background: transparent;
+  color: #666;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s, color 0.2s;
+}
+
+#status-popup-fechar:hover {
+  background: #1a1a2a;
+  color: #aaa;
+}
+
+/* ── Popup de detalhe (slot ocupado) ── */
+.popup-detalhe-icone {
+  font-size: 2rem;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.popup-detalhe-nome {
+  font-size: 0.95rem;
+  color: #fff;
+  letter-spacing: 3px;
+  text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.popup-detalhe-naipe {
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.popup-detalhe-desc {
+  font-size: 0.72rem;
+  color: #8899aa;
+  line-height: 1.7;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.popup-detalhe-acoes {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+#status-popup-remover {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #cc444466;
+  background: transparent;
+  color: #cc4444;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: background 0.2s, color 0.2s;
+}
+
+#status-popup-remover:hover {
+  background: #cc444422;
+  color: #ff6666;
+}
+
+/* ── Slots ocupados — conteúdo interno ── */
+.slot-h-nome {
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.slot-h-tipo {
+  font-size: 0.55rem;
+  letter-spacing: 2px;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.status-slot-habilidade.ocupado,
+.status-slot-passiva.ocupado {
+  flex-direction: column;
+  gap: 2px;
+}
