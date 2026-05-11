@@ -88,6 +88,8 @@
       <div class="options-section" id="tab-testes">
         <p class="options-label">PERSONAGENS</p>
         <div class="res-btn" id="btn-reset-time" style="color:#e05555;border-color:#552222;">↺ RESETAR TIME</div>
+        <p class="options-label">PONTOS</p>
+        <div class="res-btn" id="btn-add-pontos">+ 20 PONTOS DE TESTE</div>
       </div>
     </div>
   </div>
@@ -181,6 +183,13 @@
       panel.classList.remove('open');
       window.irParaTela('start-screen');
       gameState = 'start-screen';
+    });
+
+    document.getElementById('btn-add-pontos').addEventListener('click', function () {
+      PLAYER_STATE.pontos += 20;
+      if (typeof salvarEstado === 'function') salvarEstado();
+      const el = document.getElementById('status-topbar-pontos-valor') || document.getElementById('tutorial-pontos-valor');
+      if (el) el.textContent = PLAYER_STATE.pontos;
     });
 
     // ── Navegação central ─────────────────────────────────────────────────────
