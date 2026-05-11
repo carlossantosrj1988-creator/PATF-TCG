@@ -3,10 +3,10 @@ const STATUS = (() => {
 
   // ── Naipes — posições cardinais, vantagem/desvantagem, bônus ──────────────
   const ATLAS_NAIPES = {
-    copas:   { label: '♥ COPAS',   cor: '#e05555', iconeX: 400, iconeY: 100, direcao: 'cima',     vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
-    espadas: { label: '♠ ESPADAS', cor: '#5599cc', iconeX: 700, iconeY: 400, direcao: 'direita',  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
-    ouro:    { label: '♦ OURO',    cor: '#f0c030', iconeX: 400, iconeY: 700, direcao: 'baixo',    vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
-    paus:    { label: '♣ PAUS',    cor: '#4caf50', iconeX: 100, iconeY: 400, direcao: 'esquerda', vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
+    copas:   { label: '♥ COPAS',   cor: '#e05555', iconeX: 400, iconeY: 200, direcao: 'cima',     vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
+    espadas: { label: '♠ ESPADAS', cor: '#5599cc', iconeX: 600, iconeY: 400, direcao: 'direita',  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
+    ouro:    { label: '♦ OURO',    cor: '#f0c030', iconeX: 400, iconeY: 600, direcao: 'baixo',    vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
+    paus:    { label: '♣ PAUS',    cor: '#4caf50', iconeX: 200, iconeY: 400, direcao: 'esquerda', vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
   };
 
   const CUSTO_NAIPE = 1;
@@ -499,8 +499,37 @@ const STATUS = (() => {
     canvas.appendChild(tier2);
   }
 
-  // ── Seletor inicial — 4 ícones cardinais ─────────────────────────────────
+  // ── Seletor inicial — cruz com linhas SVG + 4 ícones cardinais ───────────
   function renderSeletorNaipe(canvas) {
+    const CX = 400, CY = 400;
+
+    // SVG com linhas da cruz
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '800');
+    svg.setAttribute('height', '800');
+    svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+
+    Object.values(ATLAS_NAIPES).forEach(naipe => {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', CX);
+      line.setAttribute('y1', CY);
+      line.setAttribute('x2', naipe.iconeX);
+      line.setAttribute('y2', naipe.iconeY);
+      line.setAttribute('stroke', naipe.cor);
+      line.setAttribute('stroke-width', '1.5');
+      line.setAttribute('opacity', '0.25');
+      svg.appendChild(line);
+    });
+    canvas.appendChild(svg);
+
+    // Nó central
+    const centro = document.createElement('div');
+    centro.className = 'atlas-seletor-centro';
+    centro.style.cssText = `left:${CX}px;top:${CY}px;`;
+    centro.textContent = '✦';
+    canvas.appendChild(centro);
+
+    // 4 ícones cardinais
     Object.entries(ATLAS_NAIPES).forEach(([id, naipe]) => {
       const div = document.createElement('div');
       div.className = 'atlas-naipe-icone';
