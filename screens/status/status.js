@@ -242,6 +242,40 @@ const STATUS = (() => {
     if (overlay) overlay.remove();
   }
 
+  function abrirPopupNo(no) {
+    fecharPopup();
+    const screen  = document.getElementById('screen-status');
+    const naipe   = ATLAS_NAIPES[no.naipe];
+    const icone   = no.tipo === 'habilidade' ? '⚔' : '◈';
+    const catLabel = no.tipo === 'habilidade'
+      ? ['', 'HAB BÁSICA', 'HAB INTERMEDIÁRIA', 'HAB AVANÇADA'][no.categoria] || ''
+      : 'PASSIVA';
+    const descricao = no.descricao || 'Descrição em breve.';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'status-popup-overlay';
+    overlay.innerHTML = `
+      <div id="status-popup-box">
+        <div id="status-popup-titulo">${catLabel}</div>
+        <div class="popup-detalhe-icone" style="color:${naipe.cor}">${icone}</div>
+        <div class="popup-detalhe-nome" style="color:${naipe.cor}">${no.label}</div>
+        <div class="popup-detalhe-naipe" style="color:${naipe.cor}88">${naipe.label}</div>
+        <div class="popup-detalhe-desc">${descricao}</div>
+        <div class="popup-detalhe-acoes">
+          <button id="status-popup-fechar">FECHAR</button>
+          <button id="btn-comprar-no" style="color:${naipe.cor};border-color:${naipe.cor}66;">COMPRAR — ${no.custo} PT</button>
+        </div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
+    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+    overlay.querySelector('#btn-comprar-no').addEventListener('click', () => {
+      comprarNo(no);
+      document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
+    });
+  }
+
   function abrirPopupSlot(tipo, slotIdx) {
     fecharPopup();
     const screen = document.getElementById('screen-status');
