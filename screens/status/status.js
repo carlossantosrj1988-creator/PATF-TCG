@@ -3,15 +3,8 @@
 const STATUS = (() => {
   let charIdx = 0;
 
-  // ── Naipes — direções cardinais no canvas 2000×2000 ───────────────────────
+  // ── Canvas 2000×2000, centro (1000,1000) ─────────────────────────────────
   const CX = 1000, CY = 1000;
-
-  const ATLAS_NAIPES = {
-    copas:   { label: '♥ COPAS',   cor: '#e05555', mainDir: [0,-1], perpDir: [1,0],  vantagem: 'paus',    desvantagem: 'espadas', bonusCampo: null, bonusValor: 0 },
-    espadas: { label: '♠ ESPADAS', cor: '#5599cc', mainDir: [1,0],  perpDir: [0,1],  vantagem: 'copas',   desvantagem: 'ouro',    bonusCampo: null, bonusValor: 0 },
-    ouro:    { label: '♦ OURO',    cor: '#f0c030', mainDir: [0,1],  perpDir: [1,0],  vantagem: 'espadas', desvantagem: 'paus',    bonusCampo: null, bonusValor: 0 },
-    paus:    { label: '♣ PAUS',    cor: '#4caf50', mainDir: [-1,0], perpDir: [0,1],  vantagem: 'ouro',    desvantagem: 'copas',   bonusCampo: null, bonusValor: 0 },
-  };
 
   const CUSTO_NAIPE = 1;
 
@@ -168,7 +161,7 @@ const STATUS = (() => {
     const painel = document.createElement('div');
     painel.id = 'status-painel-esq';
     const p = PLAYER_STATE.personagens[charIdx] || {};
-    const naipeInfo = p.naipe ? ATLAS_NAIPES[p.naipe] : null;
+    const naipeInfo = p.naipe ? NAIPES_DATA[p.naipe] : null;
     const naipeSlotStyle = naipeInfo
       ? `color:${naipeInfo.cor};border-color:${naipeInfo.cor}55;background:${naipeInfo.cor}12;border-style:solid;`
       : '';
@@ -204,7 +197,7 @@ const STATUS = (() => {
     let habHTML = '<div class="status-dir-label">HABILIDADES</div>';
     habilidades.forEach((id, i) => {
       const no = id ? ATLAS_NOS.find(n => n.id === id) : null;
-      const naipeCor = no?.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
+      const naipeCor = no?.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
       habHTML += `
         <div class="status-slot-habilidade ${no ? 'ocupado' : ''}" data-slot="${i}" data-tipo="habilidade">
           ${no
@@ -219,7 +212,7 @@ const STATUS = (() => {
     let pasHTML = '<div class="status-dir-label" style="margin-top:8px;">PASSIVAS</div>';
     passivas.forEach((id, i) => {
       const no = id ? ATLAS_NOS.find(n => n.id === id) : null;
-      const naipeCor = no?.naipe ? ATLAS_NAIPES[no.naipe].cor : '#8866ff';
+      const naipeCor = no?.naipe ? NAIPES_DATA[no.naipe].cor : '#8866ff';
       pasHTML += `
         <div class="status-slot-passiva ${no ? 'ocupado' : ''}" data-slot="${i}" data-tipo="passiva"
              style="${no ? `color:${naipeCor};border-color:${naipeCor}66` : ''}">
@@ -258,7 +251,7 @@ const STATUS = (() => {
   function abrirPopupNo(no) {
     fecharPopup();
     const screen   = document.getElementById('screen-status');
-    const naipe    = ATLAS_NAIPES[no.naipe];
+    const naipe    = NAIPES_DATA[no.naipe];
     const icone    = no.tipo === 'habilidade' ? '⚔' : '◈';
     const catLabel = no.tipo === 'habilidade'
       ? ['', 'H1 — BÁSICA', 'H2 — INTERMEDIÁRIA', 'H3 — AVANÇADA'][no.categoria] || ''
@@ -322,7 +315,7 @@ const STATUS = (() => {
       listaHTML = `<div class="popup-vazio">${msg}</div>`;
     } else {
       disponiveis.forEach(no => {
-        const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
+        const naipeCor = no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
         const icone = tipo === 'habilidade' ? '⚔' : '◈';
         listaHTML += `
           <div class="popup-item" data-id="${no.id}">
@@ -365,7 +358,7 @@ const STATUS = (() => {
     const screen = document.getElementById('screen-status');
     const p = PLAYER_STATE.personagens[charIdx];
     const slotsAtuais = tipo === 'habilidade' ? p.habilidades : p.passivas;
-    const naipeCor = no.naipe ? ATLAS_NAIPES[no.naipe].cor : '#c9a84c';
+    const naipeCor = no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
     const icone    = tipo === 'habilidade' ? '⚔' : '◈';
     const tituloTipo = tipo === 'habilidade' ? `HABILIDADE ${slotIdx + 1}` : `PASSIVA ${slotIdx + 1}`;
 
@@ -431,7 +424,7 @@ const STATUS = (() => {
   }
 
   function gerarNosArvore(naipeId) {
-    const naipe = ATLAS_NAIPES[naipeId];
+    const naipe = NAIPES_DATA[naipeId];
     const [dx, dy] = naipe.mainDir;
     const [qx, qy] = naipe.perpDir;
     const naipeX = CX + 200 * dx, naipeY = CY + 200 * dy;
@@ -499,7 +492,7 @@ const STATUS = (() => {
     const comprados = p.atlasComprados || [];
 
     // Cruz: linhas do centro para os 4 ícones de naipe
-    Object.entries(ATLAS_NAIPES).forEach(([id, n]) => {
+    Object.entries(NAIPES_DATA).forEach(([id, n]) => {
       const ix = CX + 200 * n.mainDir[0];
       const iy = CY + 200 * n.mainDir[1];
       svgLinha(svg, CX, CY, ix, iy, n.cor, p.naipe === id ? 0.45 : 0.13);
@@ -509,7 +502,7 @@ const STATUS = (() => {
     let t1Node = null;
     if (p.naipe) {
       const { nos, linhas } = gerarNosArvore(p.naipe);
-      const naipe = ATLAS_NAIPES[p.naipe];
+      const naipe = NAIPES_DATA[p.naipe];
 
       linhas.forEach(l => svgLinha(svg, l.x1, l.y1, l.x2, l.y2, naipe.cor, l.op, l.dashed));
 
@@ -555,7 +548,7 @@ const STATUS = (() => {
     }
 
     // Ícones de naipe (4 cardinais) — sobre as linhas
-    Object.entries(ATLAS_NAIPES).forEach(([id, n]) => {
+    Object.entries(NAIPES_DATA).forEach(([id, n]) => {
       const ix = CX + 200 * n.mainDir[0];
       const iy = CY + 200 * n.mainDir[1];
       const ativo   = p.naipe === id;
@@ -597,12 +590,12 @@ const STATUS = (() => {
   function abrirPopupNaipe(naipeId) {
     fecharPopup();
     const screen  = document.getElementById('screen-status');
-    const naipe   = ATLAS_NAIPES[naipeId];
-    const vantNaipe = ATLAS_NAIPES[naipe.vantagem];
-    const desvNaipe = ATLAS_NAIPES[naipe.desvantagem];
-    const bonusTexto = naipe.bonusCampo && naipe.bonusValor > 0
-      ? `+${naipe.bonusValor} ${naipe.bonusCampo.toUpperCase()}`
-      : 'Bônus a definir';
+    const naipe   = NAIPES_DATA[naipeId];
+    const vantNaipe = NAIPES_DATA[naipe.vantagem];
+    const desvNaipe = NAIPES_DATA[naipe.desvantagem];
+    const bonusTexto = naipe.bonuses && naipe.bonuses.length > 0
+      ? naipe.bonuses.map(b => `+${b.valor} ${b.campo.toUpperCase()}`).join(' · ')
+      : 'Sem bônus';
 
     const overlay = document.createElement('div');
     overlay.id = 'status-popup-overlay';
@@ -669,10 +662,10 @@ const STATUS = (() => {
     p.naipe      = naipeId;
     p.naipeAtivo = naipeId;
 
-    const naipe = ATLAS_NAIPES[naipeId];
-    if (naipe.bonusCampo && naipe.bonusValor > 0) {
-      p[naipe.bonusCampo] = (p[naipe.bonusCampo] || 0) + naipe.bonusValor;
-    }
+    const naipe = NAIPES_DATA[naipeId];
+    (naipe.bonuses || []).forEach(b => {
+      p[b.campo] = (p[b.campo] || 0) + b.valor;
+    });
 
     if (typeof salvarEstado === 'function') salvarEstado();
 
