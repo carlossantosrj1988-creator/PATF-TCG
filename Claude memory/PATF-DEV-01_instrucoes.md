@@ -127,9 +127,31 @@ Após construir e validar, você explica de forma simples. O Carlos precisa ente
 
 ---
 
-## Regra de Interface (Canvas 1280×720)
+## Regra de Interface (Canvas Híbrido — BASE_H fixa, BASE_W dinâmica)
 
-> *Toda interface (tela nova, ajuste de tela existente, modal, pop-up, painel) é pensada sobre um canvas fixo de **1280×720**. Todo posicionamento, tamanho e margem é calculado em coordenadas desse canvas e depois convertido para as variáveis do sistema de renderização universal — **nunca chutar com %, vh/vw ou px sem referência**. Antes de posicionar qualquer elemento, considerar **zonas reservadas** por elementos universais (ex: ⚙ engrenagem no topo direito) para não sobrepor.*
+> *Toda interface (tela nova, ajuste de tela existente, modal, pop-up, painel) é pensada sobre um canvas onde a **altura é fixa em 720px** e a **largura é dinâmica**, calculada em runtime pelo `renderer.js` com `BASE_W = max(1280, round(720 × aspect_do_device))`. Em celulares 19.5:9 BASE_W chega a ~1574px; em 20:9 chega a ~1600px. Em telas 16:9 ou mais estreitas, BASE_W fica no mínimo 1280. O scaling usa `Math.min(scaleX, scaleY)` então **nada é cortado** — bordas pretas podem aparecer só quando o device é mais estreito que 16:9.*
+
+### O que isso significa na prática
+
+**Eixo Y — pixels livres**
+- Pode hardcodar `top`, `bottom`, `height` em pixels (`top: 96px`, `height: 52px`, etc).
+- Altura total disponível sempre é 720px.
+
+**Eixo X — apenas ancoragem ou centralização proporcional**
+- ✅ `left: 0` / `right: 0` — ancora na borda, funciona em qualquer BASE_W.
+- ✅ Painéis com `width: 220px` ancorados em `left: 0` ou `right: 0`.
+- ✅ Centralização: `left: 50%; transform: translateX(-50%)`.
+- ✅ Containers `position: absolute; left: 0; right: 0` com filho `margin: 0 auto; width: 800px`.
+- ❌ Nunca usar coordenada X hardcoded central (`left: 640px` assumindo metade de 1280).
+- ❌ Nunca usar `width: 1280px` em container root (vai sobrar espaço nas laterais).
+- ❌ Nunca `%`, `vh`, `vw` ou pixels sem referência a borda ou centro.
+
+### Zonas reservadas (universais)
+- ⚙ engrenagem: `position: fixed; top: 16px; right: 16px; z-index: 1000` — não sobrepor. Topbars devem reservar `padding-right: 60px` ou mais.
+
+### Onde isto vive no código
+- `screens/renderer/renderer.js` — `BASE_H = 720`, `BASE_W_MIN = 1280`, `BASE_W` recalculado em cada `applyScale()`.
+- CSS variables expostas pelo renderer: `--base-w`, `--base-h`, `--scale` (disponíveis em `document.documentElement` se alguma tela precisar).
 
 ---
 

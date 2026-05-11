@@ -59,7 +59,7 @@ README.md
 - **Etapa por etapa** — cada entrega é testável isoladamente
 - **Nome do arquivo = sua função** — sem misturar responsabilidades
 - **CSS separado por responsabilidade** — cada arquivo cuida do seu escopo
-- **CSS calculado contra container base 1280×720px** — todos os elementos dimensionados para caber sem transbordar
+- **CSS calculado contra container híbrido — altura 720px fixa, largura dinâmica (min 1280px, expande conforme aspect ratio do device)**. Y livre em pixels; X só por ancoragem (`left:0`/`right:0`) ou centralização (`left:50% + translateX(-50%)`). Detalhes em `PATF-DEV-01_instrucoes.md` → "Regra de Interface"
 - **Nada entra no Index antes de estar pronto e testado**
 - **Ampliar arquitetura conforme necessidade** — se surgir novo escopo, cria nova pasta/arquivo
 
@@ -191,7 +191,10 @@ README.md
 | 2026-05-07 | Refatorações feitas manualmente pelo Carlos no GitHub após receber arquivo novo |
 | 2026-05-07 | CSS calculado contra container base 1280×720px — regra válida para todas as telas |
 | 2026-05-10 | Fluxo TESTE completo funcionando: Start → Seleção (3 rodadas) → Time montado |
+| 2026-05-11 | Renderer migrado para `Math.min` (letterbox) — nada mais é cortado em telas wide |
+| 2026-05-11 | `BASE_W` agora é dinâmico: `max(1280, round(720 × aspect_device))` — telas 19.5:9/20:9 preenchem sem bordas pretas |
+| 2026-05-11 | Regra de Interface atualizada: BASE_H 720 fixa, BASE_W dinâmica. Y livre em px; X só por ancoragem (`left:0`/`right:0`) ou centralização proporcional |
 
 ---
 
-*Última atualização: 2026-05-10 — fluxo de seleção completo, CSS calculado contra 1280×720, fluxo de entrega por arquivo definido*
+*Última atualização: 2026-05-11 — renderer híbrido (BASE_H fixa, BASE_W dinâmica), tela de Status com Atlas + popups de habilidade/passiva*
