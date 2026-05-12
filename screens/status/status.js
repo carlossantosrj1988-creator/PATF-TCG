@@ -8,6 +8,25 @@ const STATUS = (() => {
 
   const CUSTO_NAIPE = 1;
 
+  const CUSTO_PROGRESSIVO = {
+    h1: [2,  4,  8,  16,  32],
+    h2: [3,  6,  12, 24,  48],
+    h3: [5,  10, 20, 40,  80],
+    pa: [15, 30, 60],
+  };
+
+  function custoProximaCompra(no, personagem) {
+    const catKey = no.tipo === 'passiva' ? 'pa' : `h${no.categoria}`;
+    const tabela = CUSTO_PROGRESSIVO[catKey] || [no.custo];
+    const comprados = personagem.atlasComprados || [];
+    const jaComprados = ATLAS_NOS.filter(n =>
+      n.tipo === no.tipo &&
+      n.categoria === no.categoria &&
+      comprados.includes(n.id)
+    ).length;
+    return tabela[Math.min(jaComprados, tabela.length - 1)];
+  }
+
   // ── Nós da árvore — 18 por naipe (H1×5 + H2×5 + H3×5 + Passivas×3) ───────
   const ATLAS_NOS = [
     // ── Copas ────────────────────────────────────────────────────────────────
@@ -252,6 +271,8 @@ const STATUS = (() => {
     fecharPopup();
     const screen   = document.getElementById('screen-status');
     const naipe    = NAIPES_DATA[no.naipe];
+    const p        = PLAYER_STATE.personagens[charIdx];
+    const custo    = custoProximaCompra(no, p);
     const icone    = no.tipo === 'habilidade' ? '⚔' : '◈';
     const catLabel = no.tipo === 'habilidade'
       ? ['', 'H1 — BÁSICA', 'H2 — INTERMEDIÁRIA', 'H3 — AVANÇADA'][no.categoria] || ''
@@ -264,7 +285,7 @@ const STATUS = (() => {
       <div id="status-popup-box">
         <div class="popup-topo-row">
           <span class="popup-cat-badge">${catLabel}</span>
-          <span class="popup-custo-badge">${no.custo} PT</span>
+          <span class="popup-custo-badge">${custo} PT</span>
         </div>
         <div class="popup-detalhe-icone" style="color:${naipe.cor}">${icone}</div>
         <div class="popup-detalhe-nome" style="color:${naipe.cor}">${no.label}</div>
@@ -280,7 +301,7 @@ const STATUS = (() => {
     overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
     overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
     overlay.querySelector('#btn-comprar-no').addEventListener('click', () => {
-      comprarNo(no);
+      comprarNo(no, custo);
       document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
     });
   }
@@ -659,25 +680,25 @@ const STATUS = (() => {
       h1: {
         icone: '⚔',
         titulo: 'H1 — HABILIDADES BÁSICAS',
-        custo: '2 PT cada',
+        custo: CUSTO_PROGRESSIVO.h1.join(' → ') + ' PT',
         desc: 'Habilidades de entrada de qualquer build. Disponíveis no início do turno e geralmente sem recarga — você pode contar com elas toda rodada. São o ponto de partida da sua estratégia.',
       },
       h2: {
         icone: '⚡',
         titulo: 'H2 — HABILIDADES INTERMEDIÁRIAS',
-        custo: '3 PT cada',
+        custo: CUSTO_PROGRESSIVO.h2.join(' → ') + ' PT',
         desc: 'Mais versáteis e poderosas que as básicas. Ideais para combos e situações específicas. Costumam ter recarga após uso — use no momento certo.',
       },
       h3: {
         icone: '💥',
         titulo: 'H3 — HABILIDADES ESPECIAIS',
-        custo: '4 PT cada',
+        custo: CUSTO_PROGRESSIVO.h3.join(' → ') + ' PT',
         desc: 'As mais impactantes da árvore. Definem o estilo da sua build. Geralmente bloqueadas no primeiro turno e com recarga pesada — mas quando ativam, mudam o rumo da batalha.',
       },
       pa: {
         icone: '◈',
         titulo: 'PASSIVAS',
-        custo: '2 PT cada',
+        custo: CUSTO_PROGRESSIVO.pa.join(' → ') + ' PT',
         desc: 'Não precisam de ativação. Enquanto equipadas nos slots de passiva, funcionam automaticamente durante a batalha conforme a descrição.',
       },
     };
@@ -736,13 +757,14 @@ const STATUS = (() => {
     renderAtlas();
   }
 
-  function comprarNo(no) {
-    if (PLAYER_STATE.pontos < no.custo) {
+  function comprarNo(no, custo) {
+    if (custo === undefined) custo = custoProximaCompra(no, PLAYER_STATE.personagens[charIdx]);
+    if (PLAYER_STATE.pontos < custo) {
       const el = document.getElementById('status-topbar-pontos');
       if (el) { el.classList.add('sem-pontos'); setTimeout(() => el.classList.remove('sem-pontos'), 600); }
       return;
     }
-    PLAYER_STATE.pontos -= no.custo;
+    PLAYER_STATE.pontos -= custo;
     const p = PLAYER_STATE.personagens[charIdx];
     if (!p.atlasComprados) p.atlasComprados = [];
     p.atlasComprados.push(no.id);
