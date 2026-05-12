@@ -171,7 +171,7 @@ const STATUS = (() => {
 
     screen.appendChild(renderPainelDir());
 
-    renderAtlas();
+    renderAtlas(true);
   }
 
   // ── Painel esquerdo ───────────────────────────────────────────────────────
@@ -279,6 +279,7 @@ const STATUS = (() => {
       : 'PASSIVA';
     const descricao = no.descricao || 'Sem descrição ainda.';
 
+    const semPontos = PLAYER_STATE.pontos < custo;
     const overlay = document.createElement('div');
     overlay.id = 'status-popup-overlay';
     overlay.innerHTML = `
@@ -293,7 +294,11 @@ const STATUS = (() => {
         <div class="popup-detalhe-desc">${descricao}</div>
         <div class="popup-detalhe-acoes">
           <button id="status-popup-fechar">FECHAR</button>
-          <button id="btn-comprar-no" style="color:${naipe.cor};border-color:${naipe.cor}66;">COMPRAR</button>
+          <button id="btn-comprar-no"
+            ${semPontos ? 'disabled' : ''}
+            style="${semPontos ? '' : `color:${naipe.cor};border-color:${naipe.cor}66;`}">
+            ${semPontos ? 'SEM PONTOS' : 'COMPRAR'}
+          </button>
         </div>
       </div>
     `;
@@ -419,7 +424,7 @@ const STATUS = (() => {
     });
     document.getElementById('status-painel-esq').replaceWith(renderPainelEsq());
     document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
-    renderAtlas();
+    renderAtlas(true);
   }
 
   function voltar() {
@@ -495,7 +500,7 @@ const STATUS = (() => {
     return { nos: resultado, linhas };
   }
 
-  function renderAtlas() {
+  function renderAtlas(autoScroll = false) {
     const area   = document.getElementById('status-atlas-area');
     const canvas = document.getElementById('status-atlas-canvas');
     if (!canvas || !area) return;
@@ -593,16 +598,18 @@ const STATUS = (() => {
     centro.textContent = '✦';
     canvas.appendChild(centro);
 
-    // Scroll
-    setTimeout(() => {
-      if (t1Node) {
-        area.scrollLeft = t1Node.x - area.clientWidth  / 2;
-        area.scrollTop  = t1Node.y - area.clientHeight / 2;
-      } else {
-        area.scrollLeft = CX - area.clientWidth  / 2;
-        area.scrollTop  = CY - area.clientHeight / 2;
-      }
-    }, 0);
+    // Scroll automático só quando explicitamente solicitado
+    if (autoScroll) {
+      setTimeout(() => {
+        if (t1Node) {
+          area.scrollLeft = t1Node.x - area.clientWidth  / 2;
+          area.scrollTop  = t1Node.y - area.clientHeight / 2;
+        } else {
+          area.scrollLeft = CX - area.clientWidth  / 2;
+          area.scrollTop  = CY - area.clientHeight / 2;
+        }
+      }, 0);
+    }
 
     initScroll(area);
   }
@@ -653,13 +660,18 @@ const STATUS = (() => {
     overlay.id = 'status-popup-overlay';
     overlay.innerHTML = `
       <div id="status-popup-box">
-        <div id="status-popup-titulo" style="color:${naipe.cor}">TIER 1 — ${naipe.label}</div>
+        <div class="popup-topo-row">
+          <span class="popup-cat-badge" style="color:${naipe.cor};border-color:${naipe.cor}44;">TIER 1</span>
+          <span class="popup-custo-badge">ATIVO</span>
+        </div>
+        <div class="popup-detalhe-icone" style="color:${naipe.cor};font-size:1rem;letter-spacing:2px;">T1</div>
+        <div class="popup-detalhe-naipe" style="color:${naipe.cor}99">${naipe.label}</div>
         <div class="popup-detalhe-desc">
-          Primeira camada da árvore de habilidades.<br><br>
-          <strong style="color:${naipe.cor}">H1</strong> — Habilidades básicas · 2 pts<br>
-          <strong style="color:${naipe.cor}">H2</strong> — Habilidades intermediárias · 3 pts<br>
-          <strong style="color:${naipe.cor}">H3</strong> — Habilidades avançadas · 4 pts<br>
-          <strong style="color:${naipe.cor}">P</strong> &nbsp;— Passivas automáticas · 2 pts
+          Desbloqueado ao escolher o naipe.<br><br>
+          Dá acesso a todas as <strong style="color:${naipe.cor}">habilidades</strong> e
+          <strong style="color:${naipe.cor}">passivas</strong> deste naipe.<br><br>
+          Clique nos nós <strong style="color:${naipe.cor}">H1 · H2 · H3 · P</strong>
+          para ver detalhes e custos de cada categoria.
         </div>
         <div class="popup-detalhe-acoes">
           <button id="status-popup-fechar">ENTENDIDO</button>
@@ -754,7 +766,7 @@ const STATUS = (() => {
     if (painelEsq) painelEsq.replaceWith(renderPainelEsq());
 
     fecharPopup();
-    renderAtlas();
+    renderAtlas(true);
   }
 
   function comprarNo(no, custo) {
