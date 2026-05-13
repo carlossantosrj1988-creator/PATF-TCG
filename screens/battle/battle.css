@@ -1,0 +1,279 @@
+/* screens/battle/battle.css
+   Layout: topbar 52px | campo 488px | painel 180px = 720px total
+   X: ancoragem left/right ou centralização — nunca coordenada fixa central */
+
+/* ── Tela de batalha ─────────────────────────────────────────────────────── */
+
+#screen-battle {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: none;
+  background: #09090f;
+  z-index: 100;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOPBAR — iniciativa (52px)
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: #0d0d1a;
+  border-bottom: 1px solid #ffffff12;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.battle-ini-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid #ffffff18;
+  padding: 0 10px;
+  gap: 1px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.battle-ini-slot.ativo {
+  opacity: 1;
+  border-color: #c9a84c;
+  background: #c9a84c15;
+}
+
+.battle-ini-slot[data-lado="inimigo"]       { border-color: #cc444438; }
+.battle-ini-slot[data-lado="inimigo"].ativo { border-color: #cc4444; background: #cc444415; }
+
+.ini-naipe { font-size: 13px; line-height: 1; }
+.ini-nome  { font-size: 8px; color: #8899aa; letter-spacing: 1px; text-transform: uppercase; }
+.ini-valor { font-size: 10px; color: #c9a84c; font-weight: 700; }
+
+.battle-ini-slot[data-lado="inimigo"] .ini-valor { color: #cc7777; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CAMPO — área de batalha (488px)
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-field {
+  position: absolute;
+  top: 52px; left: 0; right: 0;
+  height: 488px;
+  display: flex;
+}
+
+.battle-field-lado {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px 24px;
+}
+
+#battle-field-divisor {
+  width: 1px;
+  align-self: stretch;
+  background: #ffffff0d;
+  margin: 32px 0;
+}
+
+/* ── Slot de personagem ── */
+
+.battle-char-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.battle-char-slot:hover { transform: translateY(-2px); }
+
+.battle-char-grad {
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  background: #1e1e2e;
+  border: 1px solid #ffffff18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-char-naipe { font-size: 30px; opacity: 0.35; }
+
+.battle-char-nome {
+  font-size: 9px;
+  color: #c9a84c;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-char-hp-bar {
+  width: 84px;
+  height: 4px;
+  background: #ffffff12;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.battle-char-hp-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.battle-char-slot[data-lado="jogador"] .battle-char-hp-fill { background: #55cc88; }
+.battle-char-slot[data-lado="inimigo"] .battle-char-hp-fill { background: #cc5555; }
+
+.battle-char-hp-txt {
+  font-size: 9px;
+  color: #66778888;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PAINEL DE AÇÃO (180px)
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 180px;
+  background: #0d0d1a;
+  border-top: 1px solid #ffffff12;
+  display: flex;
+}
+
+#battle-panel-left {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+#battle-panel-sep {
+  width: 1px;
+  align-self: stretch;
+  background: #ffffff0d;
+  margin: 16px 0;
+}
+
+#battle-panel-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 16px;
+  overflow-x: auto;
+}
+
+/* ── Botões de ação ── */
+
+.battle-btn-acao {
+  width: 100%;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid #ffffff20;
+  border-radius: 6px;
+  color: #c9a84c;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.battle-btn-acao:hover {
+  background: #c9a84c15;
+  border-color: #c9a84c50;
+}
+
+.battle-btn-debug {
+  width: 100%;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid #cc444435;
+  border-radius: 6px;
+  color: #cc444499;
+  font-size: 9px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.battle-btn-debug:hover { background: #cc444412; }
+
+/* ── Cartas da mão ── */
+
+.battle-carta {
+  flex-shrink: 0;
+  width: 54px;
+  height: 78px;
+  background: #16162a;
+  border: 1px solid #ffffff18;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.battle-carta:hover {
+  transform: translateY(-6px);
+  border-color: #c9a84c70;
+}
+
+.carta-valor { font-size: 12px; font-weight: 700; color: #cccccc; }
+
+.battle-carta[data-naipe="♥"] .carta-valor,
+.battle-carta[data-naipe="♦"] .carta-valor { color: #e05555; }
+.battle-carta[data-naipe="♠"] .carta-valor { color: #5588cc; }
+.battle-carta[data-naipe="♣"] .carta-valor { color: #55aa77; }
+
+.battle-mao-vazia { color: #ffffff20; font-size: 20px; margin: auto; }
+
+/* ── Painel — turno do inimigo ── */
+
+.battle-inimigo-turno {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.battle-inimigo-turno-titulo {
+  font-size: 10px;
+  color: #cc7777;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.battle-inimigo-turno-sub {
+  font-size: 9px;
+  color: #66778888;
+  letter-spacing: 1px;
+}
