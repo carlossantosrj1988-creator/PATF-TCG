@@ -9,7 +9,7 @@
   top: 0; left: 0;
   width: 100%; height: 100%;
   display: none;
-  background: #09090f;
+  background: radial-gradient(ellipse at 50% 35%, #0c0c20 0%, #060610 60%, #020208 100%);
   z-index: 100;
 }
 
@@ -21,44 +21,80 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 52px;
-  background: #0d0d1a;
-  border-bottom: 1px solid #ffffff12;
+  background: linear-gradient(180deg, #09091a 0%, #09091a99 100%);
+  border-bottom: 1px solid #ffffff0d;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  gap: 8px;
-  overflow-x: auto;
 }
+
+/* ── Seções da topbar ── */
+
+.battle-topbar-esq {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+}
+
+.battle-topbar-centro {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.battle-topbar-dir {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 18px;
+}
+
+.topbar-turno     { font-size: 8px; letter-spacing: 3px; color: #ffffff35; text-transform: uppercase; font-weight: 700; }
+.topbar-deck      { font-size: 10px; color: #c9a84c60; letter-spacing: 1px; }
+.topbar-deck-label { font-size: 8px; letter-spacing: 2px; color: #ffffff22; text-transform: uppercase; }
+.topbar-deck-ini  { font-size: 10px; color: #cc777755; letter-spacing: 1px; }
+
+/* ── Slots de iniciativa ── */
 
 .battle-ini-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 68px;
+  min-width: 56px;
   height: 38px;
   border-radius: 6px;
-  border: 1px solid #ffffff18;
-  padding: 0 10px;
+  border: 1px solid #ffffff10;
+  padding: 0 8px;
   gap: 1px;
-  opacity: 0.5;
+  opacity: 0.4;
   flex-shrink: 0;
+  transition: opacity 0.25s;
 }
 
 .battle-ini-slot.ativo {
   opacity: 1;
-  border-color: #c9a84c;
-  background: #c9a84c15;
+  border-color: #ffffff28;
 }
 
-.battle-ini-slot[data-lado="inimigo"]       { border-color: #cc444438; }
-.battle-ini-slot[data-lado="inimigo"].ativo { border-color: #cc4444; background: #cc444415; }
+.battle-ini-slot[data-lado="inimigo"]       { border-color: #cc444425; }
+.battle-ini-slot[data-lado="inimigo"].ativo { border-color: #cc444460; }
 
 .ini-naipe { font-size: 13px; line-height: 1; }
-.ini-nome  { font-size: 8px; color: #8899aa; letter-spacing: 1px; text-transform: uppercase; }
-.ini-valor { font-size: 10px; color: #c9a84c; font-weight: 700; }
+.ini-nome  { font-size: 7px; color: #8899aa88; letter-spacing: 1px; text-transform: uppercase; }
+.ini-valor { font-size: 9px; color: #c9a84c70; font-weight: 700; }
 
-.battle-ini-slot[data-lado="inimigo"] .ini-valor { color: #cc7777; }
+.battle-ini-slot.ativo .ini-valor                    { color: #c9a84c; }
+.battle-ini-slot[data-lado="inimigo"].ativo .ini-valor { color: #cc7777; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    CAMPO — área de batalha (488px)
@@ -96,17 +132,17 @@
 .battle-char-slot:hover { transform: translateY(-2px); }
 
 .battle-char-grad {
-  width: 84px;
-  height: 84px;
+  width: 100px;
+  height: 120px;
   border-radius: 10px;
-  background: #1e1e2e;
+  background: #1e1e2e; /* JS sobrescreve com gradiente do naipe */
   border: 1px solid #ffffff18;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.battle-char-naipe { font-size: 30px; opacity: 0.35; }
+.battle-char-naipe { font-size: 44px; opacity: 0.45; }
 
 .battle-char-nome {
   font-size: 9px;

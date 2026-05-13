@@ -22,6 +22,15 @@ const BATTLE = (() => {
   // Arquivo definitivo de monstros vem em sessão futura (enemy-ai/monstros.js).
   // Por enquanto cada etapa do tutorial tem um inimigo placeholder.
 
+  // Gradiente e borda por naipe — aplicados inline nos slots do campo e na topbar
+  const GRAD_NAIPE = {
+    '♥': { bg: 'linear-gradient(160deg, #4a0808, #180303)', borda: '#6b000055' },
+    '♣': { bg: 'linear-gradient(160deg, #083a08, #030f03)', borda: '#1a5c1a55' },
+    '♦': { bg: 'linear-gradient(160deg, #3a2800, #120e00)', borda: '#7a5c0055' },
+    '♠': { bg: 'linear-gradient(160deg, #080e28, #030510)', borda: '#1a2a4a55' },
+  };
+  const GRAD_NEUTRO = { bg: 'linear-gradient(160deg, #1e1e2e, #0d0d18)', borda: '#ffffff18' };
+
   const INIMIGOS_TUTORIAL = [
     { id: 'goblin',    label: 'Goblin',    naipe: '♣', atq: 4, def: 2, inc: 2, pvs: 40  },
     { id: 'orc',       label: 'Orc',       naipe: '♠', atq: 5, def: 3, inc: 1, pvs: 60  },
@@ -116,27 +125,57 @@ const BATTLE = (() => {
   // ══════════════════════════════════════════════════════════════════════════
 
   function _criarTopbar() {
-    const bar = document.createElement('div');
+    const bar    = document.createElement('div');
     bar.id = 'battle-topbar';
 
     const estado = COMBAT.estado;
+    const turno  = Math.max(1, estado.turno);
+    const jogador0 = estado.combatentes.find(c => c.lado === 'jogador');
+    const inimigo0 = estado.combatentes.find(c => c.lado === 'inimigo');
+
+    // ── Esquerda: turno + deck do jogador ──
+    const esq = document.createElement('div');
+    esq.className = 'battle-topbar-esq';
+    esq.innerHTML = `
+      <span class="topbar-turno">TURNO ${turno}</span>
+      <span class="topbar-deck">🂠 ${jogador0?.baralho.length ?? 0}</span>
+    `;
+
+    // ── Centro: iniciativa centralizada ──
+    const centro = document.createElement('div');
+    centro.className = 'battle-topbar-centro';
+
     estado.ordem.forEach((c, i) => {
-      const ativo   = (i === estado.indiceAtual);
-      const valIni  = c.cartaIniciativa
+      const ativo  = (i === estado.indiceAtual);
+      const valIni = c.cartaIniciativa
         ? DECK.valorIniciativa(c.cartaIniciativa) + c.inc
         : c.inc;
+      const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
 
       const slot = document.createElement('div');
       slot.className = 'battle-ini-slot' + (ativo ? ' ativo' : '');
       slot.dataset.lado = c.lado;
+      if (ativo) slot.style.background = bg;
+
       slot.innerHTML = `
         <div class="ini-naipe">${c.naipe ?? '?'}</div>
         <div class="ini-nome">${c.nome.substring(0, 7)}</div>
         <div class="ini-valor">${valIni}</div>
       `;
-      bar.appendChild(slot);
+      centro.appendChild(slot);
     });
 
+    // ── Direita: deck do inimigo ──
+    const dir = document.createElement('div');
+    dir.className = 'battle-topbar-dir';
+    dir.innerHTML = `
+      <span class="topbar-deck-label">INIMIGO</span>
+      <span class="topbar-deck-ini">🂠 ${inimigo0?.baralho.length ?? 0}</span>
+    `;
+
+    bar.appendChild(esq);
+    bar.appendChild(centro);
+    bar.appendChild(dir);
     return bar;
   }
 
@@ -168,6 +207,7 @@ const dir = document.createElement('div');
   }
 
   function _criarCharSlot(c) {
+    const { bg, borda } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
     const hpPct = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
 
     const slot = document.createElement('div');
@@ -175,7 +215,7 @@ const dir = document.createElement('div');
     slot.dataset.id   = c.id;
     slot.dataset.lado = c.lado;
     slot.innerHTML = `
-      <div class="battle-char-grad">
+      <div class="battle-char-grad" style="background:${bg};border-color:${borda};">
         <span class="battle-char-naipe">${c.naipe ?? '?'}</span>
       </div>
       <div class="battle-char-nome">${c.nome}</div>
