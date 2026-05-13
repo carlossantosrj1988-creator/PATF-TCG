@@ -266,7 +266,7 @@ Boa sorte.`,
   // ── Entrar em uma etapa ───────────────────────────────────────────────────
 
   function entrarEtapa(idx) {
-    mostrarBatalhaPlaceholder(idx);
+    BATTLE.init(idx, () => concluirEtapa(idx));
   }
 
   // ── Placeholder de batalha ────────────────────────────────────────────────
