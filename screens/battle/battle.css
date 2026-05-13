@@ -81,12 +81,6 @@
   padding: 20px 24px;
 }
 
-#battle-field-divisor {
-  width: 1px;
-  align-self: stretch;
-  background: #ffffff0d;
-  margin: 32px 0;
-}
 
 /* ── Slot de personagem ── */
 
@@ -161,24 +155,87 @@
   display: flex;
 }
 
-#battle-panel-left {
-  width: 300px;
+/* ── Etapa 1: dois botões grandes (50 / 50) ── */
+
+.battle-panel-btn-grande {
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  position: relative;
+}
+
+/* separador central como pseudo-elemento — evita criar elemento extra */
+#battle-btn-habilidades::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 20%; bottom: 20%;
+  width: 1px;
+  background: #ffffff12;
+}
+
+#battle-btn-habilidades          { color: #c9a84c; }
+#battle-btn-habilidades:hover    { background: #c9a84c10; }
+
+#battle-btn-passar               { color: #8899aa; }
+#battle-btn-passar:hover         { background: #ffffff08; }
+#battle-btn-passar.confirmando   { color: #55cc88; background: #55cc8812; }
+
+/* ── Etapa 2: habilidades (esq) + cartas (dir) ── */
+
+#battle-panel-habs {
+  width: 38%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
-  padding: 16px 20px;
+  gap: 6px;
+  padding: 12px 18px;
+  border-right: 1px solid #ffffff12;
 }
 
-#battle-panel-sep {
-  width: 1px;
-  align-self: stretch;
-  background: #ffffff0d;
-  margin: 16px 0;
+.battle-btn-hab {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid #ffffff18;
+  border-radius: 6px;
+  color: #c9a84c;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.12s, border-color 0.12s;
 }
 
-#battle-panel-right {
+.battle-btn-hab:hover              { background: #c9a84c15; border-color: #c9a84c50; }
+.battle-btn-hab.vazio              { color: #ffffff25; border-color: #ffffff10; cursor: default; }
+.battle-btn-hab.vazio:hover        { background: transparent; border-color: #ffffff10; }
+
+.battle-btn-voltar {
+  padding: 4px 12px;
+  background: transparent;
+  border: none;
+  color: #66778866;
+  font-size: 9px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: color 0.12s;
+}
+
+.battle-btn-voltar:hover { color: #8899aa; }
+
+#battle-panel-cartas {
   flex: 1;
   display: flex;
   align-items: center;
@@ -186,46 +243,6 @@
   padding: 0 16px;
   overflow-x: auto;
 }
-
-/* ── Botões de ação ── */
-
-.battle-btn-acao {
-  width: 100%;
-  padding: 9px 14px;
-  background: transparent;
-  border: 1px solid #ffffff20;
-  border-radius: 6px;
-  color: #c9a84c;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.battle-btn-acao:hover {
-  background: #c9a84c15;
-  border-color: #c9a84c50;
-}
-
-.battle-btn-debug {
-  width: 100%;
-  padding: 6px 14px;
-  background: transparent;
-  border: 1px solid #cc444435;
-  border-radius: 6px;
-  color: #cc444499;
-  font-size: 9px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.battle-btn-debug:hover { background: #cc444412; }
 
 /* ── Cartas da mão ── */
 
@@ -243,37 +260,48 @@
   transition: transform 0.12s, border-color 0.12s;
 }
 
-.battle-carta:hover {
-  transform: translateY(-6px);
-  border-color: #c9a84c70;
-}
+.battle-carta:hover              { transform: translateY(-6px); border-color: #c9a84c70; }
 
-.carta-valor { font-size: 12px; font-weight: 700; color: #cccccc; }
+.carta-valor                     { font-size: 12px; font-weight: 700; color: #cccccc; }
 
 .battle-carta[data-naipe="♥"] .carta-valor,
 .battle-carta[data-naipe="♦"] .carta-valor { color: #e05555; }
 .battle-carta[data-naipe="♠"] .carta-valor { color: #5588cc; }
 .battle-carta[data-naipe="♣"] .carta-valor { color: #55aa77; }
 
-.battle-mao-vazia { color: #ffffff20; font-size: 20px; margin: auto; }
+.battle-mao-vazia                { color: #ffffff20; font-size: 20px; margin: auto; }
 
-/* ── Painel — turno do inimigo ── */
+/* ── Turno do inimigo ── */
 
 .battle-inimigo-turno {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.battle-inimigo-turno-titulo {
-  font-size: 10px;
-  color: #cc7777;
-  letter-spacing: 3px;
-  font-weight: 700;
-}
+.battle-inimigo-turno-titulo     { font-size: 11px; color: #cc7777; letter-spacing: 3px; font-weight: 700; }
+.battle-inimigo-turno-sub        { font-size: 9px; color: #66778866; letter-spacing: 1px; }
 
-.battle-inimigo-turno-sub {
-  font-size: 9px;
-  color: #66778888;
+/* ── Botão debug flutuante ── */
+
+#battle-btn-debug-vencer {
+  position: absolute;
+  bottom: 188px;
+  left: 12px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid #cc444428;
+  border-radius: 4px;
+  color: #cc444460;
+  font-size: 8px;
   letter-spacing: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  z-index: 200;
+  transition: color 0.12s, border-color 0.12s;
 }
+
+#battle-btn-debug-vencer:hover   { color: #cc4444aa; border-color: #cc444460; }

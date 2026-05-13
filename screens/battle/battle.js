@@ -34,16 +34,20 @@ const BATTLE = (() => {
   // ESTADO
   // ══════════════════════════════════════════════════════════════════════════
 
-  let _onVitoria   = null;
-  let _aguardando  = false; // evita cliques duplos enquanto espera turno inimigo
+  let _onVitoria        = null;
+  let _aguardando       = false;  // evita double-fire no turno do inimigo
+  let _estadoPainel     = 'etapa1'; // 'etapa1' | 'habilidades'
+  let _passarConfirmando = false;
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════════════════════════════════════
 
   function init(etapaIdx, onVitoria) {
-    _onVitoria  = onVitoria;
-    _aguardando = false;
+    _onVitoria         = onVitoria;
+    _aguardando        = false;
+    _estadoPainel      = 'etapa1';
+    _passarConfirmando = false;
 
     const inimigo = INIMIGOS_TUTORIAL[etapaIdx] ?? INIMIGOS_TUTORIAL[0];
 
@@ -91,10 +95,13 @@ const BATTLE = (() => {
     }
     screen.innerHTML = '';
     screen.style.display = 'block';
+    _estadoPainel      = 'etapa1';
+    _passarConfirmando = false;
 
     screen.appendChild(_criarTopbar());
     screen.appendChild(_criarCampo());
     screen.appendChild(_criarPainel());
+    screen.appendChild(_criarBtnDebug());
 
     // Se o turno atual é do inimigo, agenda a ação automática
     const atual = COMBAT.combatenteAtual();
@@ -145,10 +152,7 @@ const BATTLE = (() => {
     esq.id = 'battle-field-left';
     esq.className = 'battle-field-lado';
 
-    const div = document.createElement('div');
-    div.id = 'battle-field-divisor';
-
-    const dir = document.createElement('div');
+const dir = document.createElement('div');
     dir.id = 'battle-field-right';
     dir.className = 'battle-field-lado';
 
@@ -159,7 +163,6 @@ const BATTLE = (() => {
     }
 
     campo.appendChild(esq);
-    campo.appendChild(div);
     campo.appendChild(dir);
     return campo;
   }
@@ -188,69 +191,130 @@ const BATTLE = (() => {
   // PAINEL
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Re-renderiza só o painel (sem recriar o campo e topbar).
+  function _renderizarPainel() {
+    const screen = document.getElementById('screen-battle');
+    if (!screen) return;
+    const velho = document.getElementById('battle-panel');
+    if (velho) velho.remove();
+    screen.appendChild(_criarPainel());
+  }
+
   function _criarPainel() {
     const painel = document.createElement('div');
     painel.id = 'battle-panel';
 
     const atual = COMBAT.combatenteAtual();
-    const ehJogador = atual?.lado === 'jogador';
 
-    // ── Lado esquerdo ──
-    const esq = document.createElement('div');
-    esq.id = 'battle-panel-left';
-
-    if (ehJogador) {
-      esq.innerHTML = `
-        <button class="battle-btn-acao" id="battle-btn-habilidades">⚔ HABILIDADES</button>
-        <button class="battle-btn-acao" id="battle-btn-passar">⏭ PASSAR A RODADA</button>
-        <button class="battle-btn-debug" id="battle-btn-vencer">[ VENCER — DEBUG ]</button>
-      `;
-      esq.querySelector('#battle-btn-passar').addEventListener('click', _passarRodada);
-      esq.querySelector('#battle-btn-vencer').addEventListener('click', _vencer);
-      // Habilidades: a implementar em sessão futura
-      esq.querySelector('#battle-btn-habilidades').addEventListener('click', () => {});
-    } else {
-      // Turno do inimigo — painel informativo
-      esq.innerHTML = `
+    // ── Turno do inimigo ──
+    if (!atual || atual.lado === 'inimigo') {
+      painel.innerHTML = `
         <div class="battle-inimigo-turno">
           <div class="battle-inimigo-turno-titulo">⚔ TURNO DO INIMIGO</div>
           <div class="battle-inimigo-turno-sub">${atual?.nome ?? ''} está agindo...</div>
         </div>
-        <button class="battle-btn-debug" id="battle-btn-vencer">[ VENCER — DEBUG ]</button>
       `;
-      esq.querySelector('#battle-btn-vencer').addEventListener('click', _vencer);
+      return painel;
     }
 
-    // ── Separador ──
-    const sep = document.createElement('div');
-    sep.id = 'battle-panel-sep';
+    // ── Etapa 1: dois botões grandes (50/50) ──
+    if (_estadoPainel === 'etapa1') {
+      const btnHab = document.createElement('button');
+      btnHab.id        = 'battle-btn-habilidades';
+      btnHab.className = 'battle-panel-btn-grande';
+      btnHab.textContent = '⚔ HABILIDADES';
+      btnHab.addEventListener('click', () => {
+        _estadoPainel = 'habilidades';
+        _renderizarPainel();
+      });
 
-    // ── Lado direito — cartas da mão ──
-    const dir = document.createElement('div');
-    dir.id = 'battle-panel-right';
+      const btnPassar = document.createElement('button');
+      btnPassar.id        = 'battle-btn-passar';
+      btnPassar.className = 'battle-panel-btn-grande';
+      btnPassar.textContent = '⏭ PASSAR A RODADA';
+      btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
 
-    const mao = (ehJogador && atual) ? atual.mao : [];
+      painel.appendChild(btnHab);
+      painel.appendChild(btnPassar);
+      return painel;
+    }
+
+    // ── Etapa 2: habilidades (esq) + cartas (dir) ──
+    painel.appendChild(_criarPainelHabs(atual));
+    painel.appendChild(_criarPainelCartas(atual));
+    return painel;
+  }
+
+  // ── Painel esquerdo de habilidades ──
+  function _criarPainelHabs(combatente) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+
+    const habs = combatente.habilidades ?? [null, null, null];
+    habs.forEach((hab, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'battle-btn-hab' + (!hab ? ' vazio' : '');
+      btn.textContent = hab ? hab.nome : `— SLOT ${i + 1} VAZIO —`;
+      // Seleção de habilidade: fluxo de carta + alvo — sessão futura
+      div.appendChild(btn);
+    });
+
+    const voltar = document.createElement('button');
+    voltar.className   = 'battle-btn-voltar';
+    voltar.textContent = '← VOLTAR';
+    voltar.addEventListener('click', () => {
+      _estadoPainel = 'etapa1';
+      _renderizarPainel();
+    });
+    div.appendChild(voltar);
+
+    return div;
+  }
+
+  // ── Painel direito de cartas ──
+  function _criarPainelCartas(combatente) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-cartas';
+
+    const mao = combatente?.mao ?? [];
     if (mao.length > 0) {
       mao.forEach(carta => {
         const el = document.createElement('div');
-        el.className = 'battle-carta';
+        el.className    = 'battle-carta';
         el.dataset.naipe = carta.naipe ?? '';
-        el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
-        dir.appendChild(el);
+        el.innerHTML    = `<span class="carta-valor">${carta.label}</span>`;
+        div.appendChild(el);
       });
     } else {
-      dir.innerHTML = `<div class="battle-mao-vazia">—</div>`;
+      div.innerHTML = `<div class="battle-mao-vazia">—</div>`;
     }
 
-    painel.appendChild(esq);
-    painel.appendChild(sep);
-    painel.appendChild(dir);
-    return painel;
+    return div;
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   // TURNO
   // ══════════════════════════════════════════════════════════════════════════
+
+  // Confirmação no próprio botão: 1º clique muda visual, 2º clique executa.
+  function _handlePassar(btn) {
+    if (!_passarConfirmando) {
+      _passarConfirmando = true;
+      btn.textContent = '⏭ CONFIRMAR?';
+      btn.classList.add('confirmando');
+      // Auto-cancela em 3s se não houver 2º clique
+      setTimeout(() => {
+        if (_passarConfirmando) {
+          _passarConfirmando = false;
+          btn.textContent = '⏭ PASSAR A RODADA';
+          btn.classList.remove('confirmando');
+        }
+      }, 3000);
+    } else {
+      _passarConfirmando = false;
+      _passarRodada();
+    }
+  }
 
   function _passarRodada() {
     const c = COMBAT.combatenteAtual();
@@ -262,6 +326,14 @@ const BATTLE = (() => {
     COMBAT.avancarCombatente();
     _aguardando = false;
     _renderizar();
+  }
+
+  function _criarBtnDebug() {
+    const btn = document.createElement('button');
+    btn.id          = 'battle-btn-debug-vencer';
+    btn.textContent = '[ vencer ]';
+    btn.addEventListener('click', _vencer);
+    return btn;
   }
 
   // Inimigo passa a rodada automaticamente (IA real vem em sessão futura).
