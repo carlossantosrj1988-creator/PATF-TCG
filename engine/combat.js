@@ -73,7 +73,7 @@ const COMBAT = (() => {
       def:             origem.def,
       inc:             origem.inc,
       pvs:             origem.pvs,
-      hp:              origem.pvs,
+      hp:              origem.hpAtual ?? origem.pvs,
       habilidades:     origem.habilidades ? [...origem.habilidades] : [],
       passivas:        origem.passivas    ? [...origem.passivas]    : [],
       cooldowns:       {},

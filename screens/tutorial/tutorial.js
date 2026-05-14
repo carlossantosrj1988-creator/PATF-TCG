@@ -110,6 +110,8 @@ Boa sorte.`,
     etapasConcluidas = [];
     aguardandoStatus = false;
 
+    TUTORIAL_MAP.init();
+
     if (!document.getElementById('screen-tutorial')) {
       const el = document.createElement('div');
       el.id = 'screen-tutorial';
@@ -173,7 +175,7 @@ Boa sorte.`,
 
     PLAYER_STATE.personagens.forEach(p => {
       const hpMax  = p.pvs;
-      const hpAtual = p.hpAtual ?? hpMax;
+      const hpAtual = TUTORIAL_MAP.state.hp[p.poolId]?.cur ?? p.hpAtual ?? hpMax;
       const pct    = Math.max(0, Math.min(100, (hpAtual / hpMax) * 100));
 
       painel.innerHTML += `
@@ -266,7 +268,7 @@ Boa sorte.`,
   // ── Entrar em uma etapa ───────────────────────────────────────────────────
 
   function entrarEtapa(idx) {
-    BATTLE.init(idx, () => concluirEtapa(idx));
+    TUTORIAL_MAP.entrarEtapa(idx, () => concluirEtapa(idx));
   }
 
   // ── Placeholder de batalha ────────────────────────────────────────────────
