@@ -55,7 +55,7 @@ Tudo que construirmos aqui é a fundação do Survivor completo.
 ### Pós-batalha
 - HP de cada personagem salvo no estado
 - Mortos: `hp.cur = 0`, excluídos das próximas batalhas
-- Vitória em etapa de recuperação: cura 100% HP de todos os vivos OU revive 1 personagem morto (escolha do jogador)
+- Vitória em etapa de recuperação: popup com 2 opções — CURAR 1 (escolhe 1 vivo → HP 100%) ou REVIVER 1 (escolhe 1 morto → volta com HP 100%). REVIVER fica desabilitado se não houver mortos.
 - Vitória no Boss: tutorial concluído
 
 ---
@@ -92,7 +92,7 @@ ETAPA 5 — boss        → Dragão   ♠  (INIMIGOS_TUTORIAL[4]) + tela de conc
       ↓
 [RESULTADO]                 ← vitória ou derrota
   - Vitória: salva HP → volta ao mapa (próxima etapa desbloqueada)
-  - Recuperação: popup de escolha → CURAR TODOS (100% HP) ou REVIVER (1 personagem morto)
+  - Recuperação: popup → escolhe CURAR 1 (vivo, HP 100%) ou REVIVER 1 (morto, HP 100%)
   - Boss: tela de conclusão do tutorial
   - Derrota: volta ao mapa (etapa não avança, HP como ficou)
 ```
