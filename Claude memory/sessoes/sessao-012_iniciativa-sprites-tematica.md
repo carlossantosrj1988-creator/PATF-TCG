@@ -108,8 +108,38 @@ Grid layout 4x3, white background, clear spacing between frames, same character 
 
 ### Alternativas exploradas
 - **Pixilart.com** — comunidade de pixel art, sem geração IA no plano gratuito. Útil para buscar referências
-- **Pixel Studio** (app mobile) — editor de pixel art com timeline de animação, frames e camadas. Escolhido para animação
+- **Pixel Studio** (app mobile) — editor de pixel art com timeline de animação, frames e camadas
 - **Aseprite** — desktop only, não viável no celular
+
+### ✅ Pipeline definitivo — PixelLab.ai
+
+Descoberto no final da sessão. Resolve todos os problemas anteriores.
+
+**Fluxo completo em um lugar só, funciona no celular:**
+
+1. **Character Creator** — gera o sprite base com:
+   - Descrição em texto livre (sem limite apertado de caracteres)
+   - Filtros visuais: Template Humanoid, Camera Sidescroller, Canvas 48×48
+   - Proporções por slider: Head Size, Arms Length, Legs Length, **Shoulder Width** (2.0x pro wrestler), Hip Width
+   - Quick Presets (Heroic como base)
+   - Advanced: AI Freedom 0, Single color black outline, Flat shading, Low detail
+   - Resultado: sprite 68×68px pixel art com fundo transparente, 4 direções
+
+2. **Add Animation** — adiciona animações ao sprite gerado:
+   - Breathing Idle, Fight Stance Idle (8 frames)
+   - Jumping, Running, Walking, Crouching, Kicking, Punching, Reactions
+   - **Custom Animation V3** — descrição livre + frame count configurável
+   - Custo: 1 geração por direção
+
+3. **Editor integrado** — Aseprite no navegador:
+   - Camadas, timeline, ferramentas completas
+   - Remove Background, Pixel AI Correction integrados
+   - Ajuste fino frame a frame
+
+**Resultado do Vigor gerado:**
+- Careca, bigode grosso, suspensório V, peito nu, calça verde militar — reconhecível de cara
+- Vista lateral (East) muito boa, vista de costas (South) menos precisa
+- Qualidade muito superior ao Leonardo para pixel art de verdade
 
 ---
 
