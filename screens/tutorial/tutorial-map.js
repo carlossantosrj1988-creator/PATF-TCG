@@ -44,7 +44,7 @@ const TUTORIAL_MAP = (() => {
 
   // ── Entrar em etapa ───────────────────────────────────────────────────────
 
-  function entrarEtapa(etapaIdx, onConcluida) {
+  function entrarEtapa(etapaIdx, pontos, onConcluida, onDerrota) {
     // Injeta HP salvo em cada personagem antes de passar para a batalha
     for (const p of PLAYER_STATE.personagens) {
       const salvo = TUTORIAL_STATE.hp[p.poolId];
@@ -52,9 +52,16 @@ const TUTORIAL_MAP = (() => {
     }
 
     _mostrarTransicao(etapaIdx, () => {
-      BATTLE.init(etapaIdx, () => {
-        _salvarHP();
-        _afterBattle(etapaIdx, onConcluida);
+      BATTLE.init(etapaIdx, {
+        pontos,
+        onVitoria: () => {
+          _salvarHP();
+          _afterBattle(etapaIdx, onConcluida);
+        },
+        onDerrota: () => {
+          _resetarHP();   // time volta com HP cheio — etapa fica jogável de novo
+          onDerrota();
+        },
       });
       // BATTLE.init() é síncrono — screen-battle já existe; aplica fade-in
       const bs = document.getElementById('screen-battle');
@@ -63,6 +70,15 @@ const TUTORIAL_MAP = (() => {
         setTimeout(() => bs.classList.remove('battle-entering'), 500);
       }
     });
+  }
+
+  // ── Reset de HP — usado ao perder uma etapa (retry limpo) ─────────────────
+
+  function _resetarHP() {
+    for (const p of PLAYER_STATE.personagens) {
+      TUTORIAL_STATE.hp[p.poolId] = { cur: p.pvs, max: p.pvs };
+      p.hpAtual = p.pvs;
+    }
   }
 
   // ── Salva HP atual do combate de volta para TUTORIAL_STATE ────────────────
