@@ -673,11 +673,21 @@ const BATTLE = (() => {
   }
 
   function _criarBtnDebug() {
-    const btn = document.createElement('button');
-    btn.id          = 'battle-btn-debug-vencer';
-    btn.textContent = '[ vencer ]';
-    btn.addEventListener('click', _vencer);
-    return btn;
+    const frag = document.createDocumentFragment();
+
+    const vencer = document.createElement('button');
+    vencer.id          = 'battle-btn-debug-vencer';
+    vencer.textContent = '[ vencer ]';
+    vencer.addEventListener('click', _vencer);
+    frag.appendChild(vencer);
+
+    const perder = document.createElement('button');
+    perder.id          = 'battle-btn-debug-perder';
+    perder.textContent = '[ perder ]';
+    perder.addEventListener('click', () => _fimDeBatalha('derrota'));
+    frag.appendChild(perder);
+
+    return frag;
   }
 
   // Inimigo passa a rodada automaticamente (IA real vem em sessão futura).
