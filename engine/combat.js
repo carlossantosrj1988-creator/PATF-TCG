@@ -53,17 +53,21 @@ const COMBAT = (() => {
 
   function estadoVazio() {
     return {
-      turno:        0,
-      fase:         null,   // 'pre_combate'|'iniciativa'|'combate'|'fim'
-      ordem:        [],     // referências a combatentes, ordenados por iniciativa
-      indiceAtual:  -1,     // quem está agindo agora em ordem[]
-      combatentes:  [],     // lista completa
-      log:          [],     // entradas de log para a UI: { tipo, texto, dados }
+      turno:             0,
+      fase:              null,
+      ordem:             [],
+      indiceAtual:       -1,
+      combatentes:       [],
+      log:               [],
+      // Deck compartilhado do time jogador (todos os personagens compartilham)
+      baralhoJogador:    [],
+      maoJogador:        [],
+      descarteJogador:   [],
     };
   }
 
   function criarCombatente(origem, lado, idExtra = '') {
-    const baralho = DECK.embaralhar(DECK.criarBaralho());
+    const baralho = lado === 'inimigo' ? DECK.embaralhar(DECK.criarBaralho()) : [];
     return {
       id:              `${lado}_${origem.id ?? idExtra}`,
       nome:            origem.nome ?? origem.label ?? '???',
@@ -100,6 +104,9 @@ const COMBAT = (() => {
     for (let i = 0; i < inimigos.length; i++) {
       BATTLE_STATE.combatentes.push(criarCombatente(inimigos[i], 'inimigo', i));
     }
+
+    // Baralho compartilhado do time jogador
+    BATTLE_STATE.baralhoJogador = DECK.embaralhar(DECK.criarBaralho());
 
     BATTLE_STATE.fase = 'pre_combate';
     return BATTLE_STATE;
@@ -152,12 +159,17 @@ const COMBAT = (() => {
     BATTLE_STATE.ordem = BATTLE_STATE.ordem.filter(c => c.hp > 0);
     BATTLE_STATE.indiceAtual = 0;
 
-    // Cada combatente compra 1 carta no início do turno
+    let jogadoresVivos = 0;
     for (const c of BATTLE_STATE.combatentes) {
-      if (_estaVivo(c)) _comprarCarta(c, 1);
+      if (_estaVivo(c)) {
+        if (c.lado === 'inimigo') _comprarCarta(c, 1);
+        else jogadoresVivos++;
+      }
       c.acaoExtra    = false;
       c.perdeuRodada = false;
     }
+    // Compra 1 carta por jogador vivo para a mão compartilhada
+    if (jogadoresVivos > 0) _comprarCarta({ lado: 'jogador' }, jogadoresVivos);
 
     _log('turno', `Turno ${BATTLE_STATE.turno} iniciado`);
   }
@@ -289,14 +301,23 @@ const COMBAT = (() => {
   }
 
   function _comprarCarta(combatente, n) {
-    if (combatente.baralho.length < n) {
-      // Reembaralha o descarte de volta ao baralho
-      combatente.baralho = DECK.embaralhar([...combatente.descarte]);
-      combatente.descarte = [];
+    if (combatente.lado === 'jogador') {
+      if (BATTLE_STATE.baralhoJogador.length < n) {
+        BATTLE_STATE.baralhoJogador = DECK.embaralhar([...BATTLE_STATE.descarteJogador]);
+        BATTLE_STATE.descarteJogador = [];
+      }
+      const { cartas, resto } = DECK.comprar(BATTLE_STATE.baralhoJogador, n);
+      BATTLE_STATE.maoJogador    = BATTLE_STATE.maoJogador.concat(cartas);
+      BATTLE_STATE.baralhoJogador = resto;
+    } else {
+      if (combatente.baralho.length < n) {
+        combatente.baralho = DECK.embaralhar([...combatente.descarte]);
+        combatente.descarte = [];
+      }
+      const { cartas, resto } = DECK.comprar(combatente.baralho, n);
+      combatente.mao    = combatente.mao.concat(cartas);
+      combatente.baralho = resto;
     }
-    const { cartas, resto } = DECK.comprar(combatente.baralho, n);
-    combatente.mao    = combatente.mao.concat(cartas);
-    combatente.baralho = resto;
   }
 
   function _log(tipo, texto, dados = {}) {

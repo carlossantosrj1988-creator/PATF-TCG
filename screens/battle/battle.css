@@ -545,11 +545,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: 22px;
   background: radial-gradient(ellipse at 50% 40%, #0c0c22 0%, #060610 100%);
   z-index: 10;
   font-family: sans-serif;
   animation: ini-tela-in 0.35s ease;
+  padding: 32px 24px;
+  box-sizing: border-box;
 }
 
 @keyframes ini-tela-in {
@@ -574,44 +576,48 @@
 }
 
 .battle-ini-sub {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: #8899aa;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
+  text-align: center;
 }
 
-/* ── Painéis por personagem ── */
+/* ── Linhas de personagens ── */
 
-#battle-ini-paineis {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.battle-ini-char-painel {
+#battle-ini-chars {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.battle-ini-char-row {
+  display: flex;
+  align-items: center;
   gap: 12px;
   background: #0d0f1a;
   border: 1px solid #ffffff14;
-  border-radius: 12px;
-  padding: 16px;
-  width: 240px;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.battle-ini-char-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.battle-ini-char-row:hover {
+  background: #111426;
+  border-color: #ffffff25;
 }
 
-.battle-ini-char-naipe {
-  font-size: 1.5rem;
+.bic-naipe {
+  font-size: 1.4rem;
   filter: drop-shadow(0 1px 6px currentColor);
   line-height: 1;
+  flex-shrink: 0;
 }
 
-.battle-ini-char-nome {
-  font-size: 0.7rem;
+.bic-nome {
+  font-size: 0.68rem;
   color: #ccc;
   letter-spacing: 2px;
   font-weight: bold;
@@ -619,40 +625,66 @@
   flex: 1;
 }
 
-.battle-ini-char-inc {
-  font-size: 0.6rem;
+.bic-inc {
+  font-size: 0.58rem;
   color: #c9a84c;
   letter-spacing: 1px;
   background: #1a1500;
   border: 1px solid #c9a84c33;
   border-radius: 4px;
-  padding: 2px 5px;
+  padding: 2px 6px;
+  flex-shrink: 0;
 }
 
-/* ── Grade de cartas ── */
+.bic-slot {
+  min-width: 140px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  letter-spacing: 1.5px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
-.battle-ini-cartas {
+.bic-slot.vazio {
+  background: #0a0a14;
+  border: 1px dashed #ffffff18;
+  color: #ffffff30;
+}
+
+.bic-slot.atribuida {
+  background: #120f00;
+  border: 1px solid #c9a84c55;
+  color: #c9a84c;
+  font-weight: bold;
+}
+
+/* ── Mão compartilhada ── */
+
+#battle-ini-mao {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  max-width: 560px;
 }
 
 .battle-ini-carta {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 5px 8px;
-  border-radius: 6px;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: 1px solid #ffffff18;
   background: #111320;
   cursor: pointer;
   font-family: sans-serif;
-  min-width: 46px;
-  transition: border-color 0.15s, background 0.15s;
+  min-width: 48px;
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
 }
 
-.battle-ini-carta:hover {
+.battle-ini-carta:hover:not(.usada) {
   background: #1a1f38;
   border-color: #ffffff30;
 }
@@ -660,24 +692,19 @@
 .battle-ini-carta.selecionada {
   border-color: #c9a84c;
   background: #1a1500;
-  box-shadow: 0 0 8px #c9a84c33;
+  box-shadow: 0 0 10px #c9a84c44;
+}
+
+.battle-ini-carta.usada {
+  opacity: 0.28;
+  cursor: default;
 }
 
 .ini-carta-label {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: bold;
   letter-spacing: 1px;
   line-height: 1;
-}
-
-.ini-carta-total {
-  font-size: 0.55rem;
-  color: #445;
-  letter-spacing: 1px;
-}
-
-.battle-ini-carta.selecionada .ini-carta-total {
-  color: #c9a84c88;
 }
 
 /* ── Botão confirmar ── */

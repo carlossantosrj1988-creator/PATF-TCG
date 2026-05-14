@@ -76,10 +76,17 @@ const BATTLE = (() => {
   }
 
   function _distribuirMao(n) {
-    for (const c of COMBAT.estado.combatentes) {
-      const { cartas, resto } = DECK.comprar(c.baralho, n);
-      c.mao     = cartas;
-      c.baralho = resto;
+    // Time jogador: mão compartilhada
+    const estado = COMBAT.estado;
+    const { cartas, resto } = DECK.comprar(estado.baralhoJogador, n);
+    estado.maoJogador     = cartas;
+    estado.baralhoJogador = resto;
+
+    // Inimigos: cada um compra individualmente
+    for (const c of estado.combatentes.filter(x => x.lado === 'inimigo')) {
+      const { cartas: ci, resto: ri } = DECK.comprar(c.baralho, n);
+      c.mao     = ci;
+      c.baralho = ri;
     }
   }
 
@@ -89,7 +96,7 @@ const BATTLE = (() => {
 
   const _COR_INI = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
 
-  // Tela de seleção: 1 painel por personagem do jogador.
+  // Tela de seleção: char rows no topo + mão compartilhada embaixo.
   function _telaIniciativa() {
     let screen = document.getElementById('screen-battle');
     if (!screen) {
@@ -100,85 +107,121 @@ const BATTLE = (() => {
     screen.innerHTML = '';
     screen.style.display = 'block';
 
-    const jogadores = COMBAT.estado.combatentes.filter(c => c.lado === 'jogador');
-    const picks     = {}; // charId → { cartaIdx, carta }
+    const estado    = COMBAT.estado;
+    const jogadores = estado.combatentes.filter(c => c.lado === 'jogador');
+    const maoShared = estado.maoJogador; // mão compartilhada do time
+
+    // picks: charId → { idx (na maoShared), carta, btnEl }
+    const picks = {};
+    // carta selecionada no momento
+    let selected = null;
 
     const tela = document.createElement('div');
     tela.id = 'battle-ini-tela';
 
+    // ── Header ──
     const header = document.createElement('div');
     header.id = 'battle-ini-header';
     header.innerHTML = `
-      <div class="battle-ini-titulo">⚔ INICIATIVA</div>
-      <div class="battle-ini-sub">Escolha 1 carta por personagem — carta + INC define a ordem</div>
+      <div class="battle-ini-titulo">⚔ ESCOLHA DE INICIATIVA</div>
+      <div class="battle-ini-sub">Selecione uma carta e toque no personagem para atribuir</div>
     `;
     tela.appendChild(header);
 
-    const paineis = document.createElement('div');
-    paineis.id = 'battle-ini-paineis';
+    // ── Linhas de personagens ──
+    const charsDiv = document.createElement('div');
+    charsDiv.id = 'battle-ini-chars';
 
+    for (const c of jogadores) {
+      const cor = _COR_INI[c.naipe] ?? '#888';
+      const row = document.createElement('div');
+      row.className = 'battle-ini-char-row';
+      row.dataset.charId = c.id;
+      row.innerHTML = `
+        <span class="bic-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+        <span class="bic-nome">${c.nome}</span>
+        <span class="bic-inc">INC +${c.inc}</span>
+        <div class="bic-slot vazio">— escolha uma carta —</div>
+      `;
+
+      row.addEventListener('click', () => {
+        const slotEl = row.querySelector('.bic-slot');
+        if (selected) {
+          // Libera carta anterior deste char (se havia)
+          if (picks[c.id]) {
+            picks[c.id].btnEl.classList.remove('usada');
+          }
+          // Atribui carta selecionada
+          picks[c.id] = { idx: selected.idx, carta: selected.carta, btnEl: selected.btnEl };
+          selected.btnEl.classList.add('usada');
+          selected.btnEl.classList.remove('selecionada');
+
+          const corCarta = _COR_INI[selected.carta.naipe] ?? '#888';
+          slotEl.className = 'bic-slot atribuida';
+          slotEl.innerHTML = `<span style="color:${corCarta}">${selected.carta.label}</span>`;
+
+          selected = null;
+          _atualizarConfirmar();
+        } else if (picks[c.id]) {
+          // Libera carta deste char de volta à mão
+          picks[c.id].btnEl.classList.remove('usada');
+          delete picks[c.id];
+          slotEl.className = 'bic-slot vazio';
+          slotEl.textContent = '— escolha uma carta —';
+          _atualizarConfirmar();
+        }
+      });
+
+      charsDiv.appendChild(row);
+    }
+    tela.appendChild(charsDiv);
+
+    // ── Mão compartilhada ──
+    const maoDiv = document.createElement('div');
+    maoDiv.id = 'battle-ini-mao';
+
+    maoShared.forEach((carta, idx) => {
+      const cor = _COR_INI[carta.naipe] ?? '#888';
+      const btn = document.createElement('button');
+      btn.className = 'battle-ini-carta';
+      btn.dataset.idx = idx;
+      btn.innerHTML = `<span class="ini-carta-label" style="color:${cor}">${carta.label}</span>`;
+
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('usada')) return;
+        if (selected?.btnEl === btn) {
+          btn.classList.remove('selecionada');
+          selected = null;
+          return;
+        }
+        if (selected) selected.btnEl.classList.remove('selecionada');
+        selected = { idx, carta, btnEl: btn };
+        btn.classList.add('selecionada');
+      });
+
+      maoDiv.appendChild(btn);
+    });
+    tela.appendChild(maoDiv);
+
+    // ── Botão confirmar ──
     const btnConfirmar = document.createElement('button');
-    btnConfirmar.id        = 'battle-ini-btn-confirmar';
-    btnConfirmar.textContent = 'CONFIRMAR ORDEM';
-    btnConfirmar.disabled  = true;
+    btnConfirmar.id          = 'battle-ini-btn-confirmar';
+    btnConfirmar.textContent = 'CONFIRMAR INICIATIVA →';
+    btnConfirmar.disabled    = true;
     btnConfirmar.addEventListener('click', () => {
       if (Object.keys(picks).length < jogadores.length) return;
       tela.remove();
       _confirmarIniciativa(picks);
     });
-
-    for (const c of jogadores) {
-      paineis.appendChild(_criarPainelIniChar(c, picks, () => {
-        const prontos = Object.keys(picks).length >= jogadores.length;
-        btnConfirmar.disabled = !prontos;
-        btnConfirmar.classList.toggle('pronto', prontos);
-      }));
-    }
-
-    tela.appendChild(paineis);
     tela.appendChild(btnConfirmar);
+
     screen.appendChild(tela);
-  }
 
-  function _criarPainelIniChar(c, picks, onPick) {
-    const cor = _COR_INI[c.naipe] ?? '#888';
-
-    const painel = document.createElement('div');
-    painel.className = 'battle-ini-char-painel';
-
-    painel.innerHTML = `
-      <div class="battle-ini-char-info">
-        <span class="battle-ini-char-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
-        <span class="battle-ini-char-nome">${c.nome}</span>
-        <span class="battle-ini-char-inc">+${c.inc} INC</span>
-      </div>
-    `;
-
-    const cartasDiv = document.createElement('div');
-    cartasDiv.className = 'battle-ini-cartas';
-
-    c.mao.forEach((carta, idx) => {
-      const total   = DECK.valorIniciativa(carta) + c.inc;
-      const corCarta = _COR_INI[carta.naipe] ?? '#888';
-
-      const btn = document.createElement('button');
-      btn.className = 'battle-ini-carta';
-      btn.innerHTML = `
-        <span class="ini-carta-label" style="color:${corCarta}">${carta.label}</span>
-        <span class="ini-carta-total">= ${total}</span>
-      `;
-      btn.addEventListener('click', () => {
-        cartasDiv.querySelectorAll('.battle-ini-carta').forEach(b => b.classList.remove('selecionada'));
-        btn.classList.add('selecionada');
-        picks[c.id] = { cartaIdx: idx, carta };
-        onPick();
-      });
-
-      cartasDiv.appendChild(btn);
-    });
-
-    painel.appendChild(cartasDiv);
-    return painel;
+    function _atualizarConfirmar() {
+      const prontos = Object.keys(picks).length >= jogadores.length;
+      btnConfirmar.disabled = !prontos;
+      btnConfirmar.classList.toggle('pronto', prontos);
+    }
   }
 
   // Aplica picks do jogador, auto-aloca inimigo, calcula ordem e revela.
@@ -186,10 +229,12 @@ const BATTLE = (() => {
     const alocadas = new Map();
     const estado   = COMBAT.estado;
 
+    // Remove cartas escolhidas da mão compartilhada (índices decrescentes para não deslocar)
+    const idxsRemover = Object.values(picks).map(p => p.idx).sort((a, b) => b - a);
+    for (const idx of idxsRemover) {
+      estado.maoJogador.splice(idx, 1);
+    }
     for (const [charId, pick] of Object.entries(picks)) {
-      const c = estado.combatentes.find(x => x.id === charId);
-      if (!c) continue;
-      c.mao = c.mao.filter((_, i) => i !== pick.cartaIdx);
       alocadas.set(charId, pick.carta);
     }
 
@@ -296,12 +341,12 @@ const BATTLE = (() => {
     const jogador0 = estado.combatentes.find(c => c.lado === 'jogador');
     const inimigo0 = estado.combatentes.find(c => c.lado === 'inimigo');
 
-    // ── Esquerda: turno + deck do jogador ──
+    // ── Esquerda: turno + deck compartilhado do jogador ──
     const esq = document.createElement('div');
     esq.className = 'battle-topbar-esq';
     esq.innerHTML = `
       <span class="topbar-turno">TURNO ${turno}</span>
-      <span class="topbar-deck">🂠 ${jogador0?.baralho.length ?? 0}</span>
+      <span class="topbar-deck">🂠 ${estado.baralhoJogador.length}</span>
     `;
 
     // ── Centro: fila de iniciativa circular ──
@@ -545,7 +590,8 @@ const BATTLE = (() => {
     const div = document.createElement('div');
     div.id = 'battle-panel-cartas';
 
-    const mao = combatente?.mao ?? [];
+    // Jogadores usam a mão compartilhada do time
+    const mao = combatente?.lado === 'jogador' ? COMBAT.estado.maoJogador : (combatente?.mao ?? []);
     if (mao.length > 0) {
       mao.forEach(carta => {
         const el = document.createElement('div');
