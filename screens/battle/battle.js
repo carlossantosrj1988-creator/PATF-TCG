@@ -52,6 +52,9 @@ const BATTLE = (() => {
   // INIT
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
+  const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
+
   function init(etapaIdx, onVitoria) {
     _onVitoria         = onVitoria;
     _aguardando        = false;
@@ -65,7 +68,7 @@ const BATTLE = (() => {
     const personagens = PLAYER_STATE.personagens.map(p => ({
       ...p,
       id:    p.poolId,
-      naipe: (NAIPE_VISUAL[p.naipe] ?? NAIPE_VISUAL[p.naipeAtivo])?.simbolo ?? null,
+        naipe: _NAIPE_SIM[p.naipe] ?? _NAIPE_SIM[p.naipeAtivo] ?? null,
     }));
 
     COMBAT.init(personagens, [inimigo]);
