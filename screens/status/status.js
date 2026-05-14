@@ -268,6 +268,29 @@ const STATUS = (() => {
     if (overlay) overlay.remove();
   }
 
+  // Bloco de ficha técnica de uma habilidade — compartilhado pelos 3 popups.
+  function _fichaTecnicaHTML(dados) {
+    if (!dados) return '';
+    const ALVO_LABEL = { unico: 'Alvo único', inimigos: 'Inimigos', aliados: 'Aliados', self: 'Si próprio', todos: 'Todos' };
+    const ACAO_LABEL = { N: 'Normal', R: 'Rápida', F: 'Furtiva', L: 'Lenta' };
+    const linhas = [
+      ['PODER',   dados.efeitoPuro ? 'EFEITO' : String(dados.poder ?? 0)],
+      ['TIPO',    dados.tipo || '—'],
+      ['ALVO',    ALVO_LABEL[dados.alvo] || dados.alvo || '—'],
+      ['TURNO',   dados.turno === 'nao' ? 'NÃO' : 'SIM'],
+      ['RECARGA', String(dados.recarga ?? 0)],
+      ['AÇÃO',    ACAO_LABEL[dados.acao] || dados.acao || '—'],
+    ];
+    return `
+      <div style="margin:4px 0 10px;padding:8px 14px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff06;text-align:left;">
+        ${linhas.map(([l, v]) => `
+          <div style="display:flex;justify-content:space-between;font-size:11px;line-height:1.95;">
+            <span style="color:#8899aa;letter-spacing:1px;">${l}</span>
+            <span style="color:#e8e8f0;font-weight:600;">${v}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
   function abrirPopupNo(no) {
     fecharPopup();
     const screen   = document.getElementById('screen-status');
@@ -278,7 +301,12 @@ const STATUS = (() => {
     const catLabel = no.tipo === 'habilidade'
       ? ['', 'H1 — BÁSICA', 'H2 — INTERMEDIÁRIA', 'H3 — AVANÇADA'][no.categoria] || ''
       : 'PASSIVA';
-    const descricao = no.descricao || 'Sem descrição ainda.';
+    const dados     = no.tipo === 'habilidade'
+      ? HABILIDADES.getHabilidade(no.id)
+      : HABILIDADES.getPassiva(no.id);
+    const nome      = dados && dados.nome ? dados.nome : no.label;
+    const descricao = dados && dados.descricao ? dados.descricao : 'Sem descrição ainda.';
+    const fichaHTML = no.tipo === 'habilidade' ? _fichaTecnicaHTML(dados) : '';
 
     const semPontos = PLAYER_STATE.pontos < custo;
     const overlay = document.createElement('div');
@@ -290,8 +318,9 @@ const STATUS = (() => {
           <span class="popup-custo-badge">${custo} PT</span>
         </div>
         <div class="popup-detalhe-icone" style="color:${naipe.cor}">${icone}</div>
-        <div class="popup-detalhe-nome" style="color:${naipe.cor}">${no.label}</div>
+        <div class="popup-detalhe-nome" style="color:${naipe.cor}">${nome}</div>
         <div class="popup-detalhe-naipe" style="color:${naipe.cor}99">${naipe.label}</div>
+        ${fichaHTML}
         <div class="popup-detalhe-desc">${descricao}</div>
         <div class="popup-detalhe-acoes">
           <button id="status-popup-fechar">FECHAR</button>
@@ -330,54 +359,100 @@ const STATUS = (() => {
       disponiveis = disponiveis.filter(n => n.categoria === categoriaSlot);
     }
 
-    const tituloTipo = tipo === 'habilidade'
-      ? `HABILIDADE ${slotIdx + 1} — DISPONÍVEIS`
-      : `PASSIVA ${slotIdx + 1} — DISPONÍVEIS`;
-
-    let listaHTML = '';
-    if (disponiveis.length === 0) {
-      const msg = tipo === 'habilidade'
-        ? `Nenhuma habilidade categoria ${slotIdx + 1} disponível.`
-        : 'Nenhuma passiva disponível.';
-      listaHTML = `<div class="popup-vazio">${msg}</div>`;
-    } else {
-      disponiveis.forEach(no => {
-        const naipeCor = no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
-        const icone = tipo === 'habilidade' ? '⚔' : '◈';
-        listaHTML += `
-          <div class="popup-item" data-id="${no.id}">
-            <div class="popup-item-icone" style="color:${naipeCor}">${icone}</div>
-            <div class="popup-item-info">
-              <div class="popup-item-nome">${no.label}</div>
-              <div class="popup-item-detalhe" style="color:${naipeCor}">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
-            </div>
-          </div>
-        `;
-      });
-    }
+    const tituloBase = tipo === 'habilidade'
+      ? `HABILIDADE ${slotIdx + 1}`
+      : `PASSIVA ${slotIdx + 1}`;
+    const icone = tipo === 'habilidade' ? '⚔' : '◈';
 
     const overlay = document.createElement('div');
     overlay.id = 'status-popup-overlay';
-    overlay.innerHTML = `
-      <div id="status-popup-box">
-        <div id="status-popup-titulo">${tituloTipo}</div>
-        <div id="status-popup-lista">${listaHTML}</div>
-        <button id="status-popup-fechar">FECHAR</button>
-      </div>
-    `;
     screen.appendChild(overlay);
-
     overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
-    overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
 
-    overlay.querySelectorAll('.popup-item[data-id]').forEach(item => {
-      item.addEventListener('click', () => {
-        slotsAtuais[slotIdx] = item.dataset.id;
+    renderLista();
+
+    // ── Tela 1: lista rolável das habilidades/passivas disponíveis ──
+    function renderLista() {
+      let listaHTML = '';
+      if (disponiveis.length === 0) {
+        const msg = tipo === 'habilidade'
+          ? `Nenhuma habilidade categoria ${slotIdx + 1} disponível.`
+          : 'Nenhuma passiva disponível.';
+        listaHTML = `<div class="popup-vazio">${msg}</div>`;
+      } else {
+        disponiveis.forEach(no => {
+          const dados    = tipo === 'habilidade' ? HABILIDADES.getHabilidade(no.id) : HABILIDADES.getPassiva(no.id);
+          const naipeCor = no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
+          listaHTML += `
+            <div class="popup-item" data-id="${no.id}">
+              <div class="popup-item-icone" style="color:${naipeCor}">${icone}</div>
+              <div class="popup-item-info">
+                <div class="popup-item-nome">${dados.nome}</div>
+                <div class="popup-item-detalhe" style="color:${naipeCor}">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      overlay.innerHTML = `
+        <div id="status-popup-box">
+          <div id="status-popup-titulo">${tituloBase} — DISPONÍVEIS</div>
+          <div id="status-popup-lista">${listaHTML}</div>
+          <button id="status-popup-fechar">FECHAR</button>
+        </div>
+      `;
+      overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
+      overlay.querySelectorAll('.popup-item[data-id]').forEach(item => {
+        item.addEventListener('click', () => {
+          const no = ATLAS_NOS.find(n => n.id === item.dataset.id);
+          if (no) renderDetalhe(no);
+        });
+      });
+    }
+
+    // ── Tela 2: ficha completa + opção de equipar ──
+    function renderDetalhe(no) {
+      const naipeCor = no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
+      let blocoDados, descricao, nome;
+      if (tipo === 'habilidade') {
+        const dados = HABILIDADES.getHabilidade(no.id);
+        nome        = dados.nome;
+        descricao   = dados.descricao || 'Descrição em breve.';
+        blocoDados  = _fichaTecnicaHTML(dados);
+      } else {
+        const dados = HABILIDADES.getPassiva(no.id);
+        nome        = dados.nome;
+        descricao   = dados.descricao || 'Descrição em breve.';
+        blocoDados  = dados.gatilho
+          ? `<div style="margin:4px 0 10px;padding:8px 14px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff06;font-size:11px;color:#e8e8f0;">
+               <span style="color:#8899aa;letter-spacing:1px;">GATILHO</span> &nbsp; ${dados.gatilho}
+             </div>`
+          : '';
+      }
+
+      overlay.innerHTML = `
+        <div id="status-popup-box">
+          <div id="status-popup-titulo">${tituloBase}</div>
+          <div class="popup-detalhe-icone" style="color:${naipeCor}">${icone}</div>
+          <div class="popup-detalhe-nome" style="color:${naipeCor}">${nome}</div>
+          <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
+          ${blocoDados}
+          <div class="popup-detalhe-desc">${descricao}</div>
+          <div class="popup-detalhe-acoes">
+            <button id="status-popup-voltar">← VOLTAR</button>
+            <button id="status-popup-equipar" style="color:${naipeCor};border-color:${naipeCor}66;">EQUIPAR</button>
+          </div>
+        </div>
+      `;
+      overlay.querySelector('#status-popup-voltar').addEventListener('click', renderLista);
+      overlay.querySelector('#status-popup-equipar').addEventListener('click', () => {
+        slotsAtuais[slotIdx] = no.id;
         if (typeof salvarEstado === 'function') salvarEstado();
         fecharPopup();
         document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
       });
-    });
+    }
   }
 
   function abrirPopupDetalhe(tipo, slotIdx, slotValue) {
@@ -413,27 +488,7 @@ const STATUS = (() => {
     }
 
     // Ficha técnica — só para habilidades (passivas têm outro formato)
-    let fichaHTML = '';
-    if (tipo === 'habilidade' && dados) {
-      const ALVO_LABEL = { unico: 'Alvo único', inimigos: 'Inimigos', aliados: 'Aliados', self: 'Si próprio', todos: 'Todos' };
-      const ACAO_LABEL = { N: 'Normal', R: 'Rápida', F: 'Furtiva', L: 'Lenta' };
-      const linhas = [
-        ['PODER',   dados.efeitoPuro ? 'EFEITO' : String(dados.poder ?? 0)],
-        ['TIPO',    dados.tipo || '—'],
-        ['ALVO',    ALVO_LABEL[dados.alvo] || dados.alvo || '—'],
-        ['TURNO',   dados.turno === 'nao' ? 'NÃO' : 'SIM'],
-        ['RECARGA', String(dados.recarga ?? 0)],
-        ['AÇÃO',    ACAO_LABEL[dados.acao] || dados.acao || '—'],
-      ];
-      fichaHTML = `
-        <div style="margin:4px 0 10px;padding:8px 14px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff06;text-align:left;">
-          ${linhas.map(([l, v]) => `
-            <div style="display:flex;justify-content:space-between;font-size:11px;line-height:1.95;">
-              <span style="color:#8899aa;letter-spacing:1px;">${l}</span>
-              <span style="color:#e8e8f0;font-weight:600;">${v}</span>
-            </div>`).join('')}
-        </div>`;
-    }
+    const fichaHTML = tipo === 'habilidade' ? _fichaTecnicaHTML(dados) : '';
 
     const avisoBasico = ehBasico
       ? `<div style="margin:10px 0;padding:10px 12px;border:1px solid #c9a84c55;border-radius:8px;background:#c9a84c12;font-size:11px;color:#e0c060;line-height:1.5;">

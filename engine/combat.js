@@ -79,7 +79,14 @@ const COMBAT = (() => {
       inc:             origem.inc,
       pvs:             origem.pvs,
       hp:              origem.hpAtual ?? origem.pvs,
-      habilidades:     origem.habilidades ? [...origem.habilidades] : [],
+      // Slots resolvidos para os dados da habilidade — o combate registra
+      // o que está equipado em cada slot (não só o id).
+      habilidades:     origem.habilidades
+        ? origem.habilidades.map(s => {
+            const d = HABILIDADES.resolverHabilidade(s);
+            return d ? { ...d } : null;
+          })
+        : [],
       passivas:        origem.passivas    ? [...origem.passivas]    : [],
       cooldowns:       {},
       efeitos:         [],
