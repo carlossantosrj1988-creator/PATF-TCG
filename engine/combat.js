@@ -147,6 +147,9 @@ const COMBAT = (() => {
   // Chamado quando todos os combatentes da ordem agiram uma vez.
   function avancarTurno() {
     BATTLE_STATE.turno += 1;
+
+    // Remove mortos da fila (iniciativa permanece a mesma, apenas filtra)
+    BATTLE_STATE.ordem = BATTLE_STATE.ordem.filter(c => c.hp > 0);
     BATTLE_STATE.indiceAtual = 0;
 
     // Cada combatente compra 1 carta no início do turno

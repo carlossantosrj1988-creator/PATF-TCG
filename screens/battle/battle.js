@@ -43,10 +43,11 @@ const BATTLE = (() => {
   // ESTADO
   // ══════════════════════════════════════════════════════════════════════════
 
-  let _onVitoria        = null;
-  let _aguardando       = false;  // evita double-fire no turno do inimigo
-  let _estadoPainel     = 'etapa1'; // 'etapa1' | 'habilidades'
+  let _onVitoria         = null;
+  let _aguardando        = false;  // evita double-fire no turno do inimigo
+  let _estadoPainel      = 'etapa1'; // 'etapa1' | 'habilidades'
   let _passarConfirmando = false;
+  let _etapaAtual        = 0;  // índice da etapa atual (usado para detectar boss)
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
@@ -60,11 +61,10 @@ const BATTLE = (() => {
     _aguardando        = false;
     _estadoPainel      = 'etapa1';
     _passarConfirmando = false;
+    _etapaAtual        = etapaIdx;
 
     const inimigo = INIMIGOS_TUTORIAL[etapaIdx] ?? INIMIGOS_TUTORIAL[0];
 
-    // PLAYER_STATE.personagens usa poolId como id e naipe em português ('ouro', 'copas'…)
-    // Converte para o formato do battle: id = poolId, naipe = símbolo (♦ ♥ ♣ ♠)
     const personagens = PLAYER_STATE.personagens.map(p => {
       const sim = _NAIPE_SIM[p.naipe] ?? _NAIPE_SIM[p.naipeAtivo] ?? null;
       return { ...p, id: p.poolId, naipe: sim, naipeAtivo: sim };
@@ -72,30 +72,186 @@ const BATTLE = (() => {
 
     COMBAT.init(personagens, [inimigo]);
     _distribuirMao(10);
-    _alocarIniciativaAuto();
-    _renderizar();
+    _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
   }
 
-  // Cada combatente compra n cartas do próprio baralho.
   function _distribuirMao(n) {
     for (const c of COMBAT.estado.combatentes) {
       const { cartas, resto } = DECK.comprar(c.baralho, n);
-      c.mao    = cartas;
+      c.mao     = cartas;
       c.baralho = resto;
     }
   }
 
-  // Usa a primeira carta da mão de cada combatente como carta de iniciativa.
-  // A carta é removida da mão — combatentes ficam com n-1 cartas.
-  function _alocarIniciativaAuto() {
+  // ══════════════════════════════════════════════════════════════════════════
+  // INICIATIVA — fase de seleção → revelação → combate
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const _COR_INI = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
+
+  // Tela de seleção: 1 painel por personagem do jogador.
+  function _telaIniciativa() {
+    let screen = document.getElementById('screen-battle');
+    if (!screen) {
+      screen = document.createElement('div');
+      screen.id = 'screen-battle';
+      document.getElementById('game-container').appendChild(screen);
+    }
+    screen.innerHTML = '';
+    screen.style.display = 'block';
+
+    const jogadores = COMBAT.estado.combatentes.filter(c => c.lado === 'jogador');
+    const picks     = {}; // charId → { cartaIdx, carta }
+
+    const tela = document.createElement('div');
+    tela.id = 'battle-ini-tela';
+
+    const header = document.createElement('div');
+    header.id = 'battle-ini-header';
+    header.innerHTML = `
+      <div class="battle-ini-titulo">⚔ INICIATIVA</div>
+      <div class="battle-ini-sub">Escolha 1 carta por personagem — carta + INC define a ordem</div>
+    `;
+    tela.appendChild(header);
+
+    const paineis = document.createElement('div');
+    paineis.id = 'battle-ini-paineis';
+
+    const btnConfirmar = document.createElement('button');
+    btnConfirmar.id        = 'battle-ini-btn-confirmar';
+    btnConfirmar.textContent = 'CONFIRMAR ORDEM';
+    btnConfirmar.disabled  = true;
+    btnConfirmar.addEventListener('click', () => {
+      if (Object.keys(picks).length < jogadores.length) return;
+      tela.remove();
+      _confirmarIniciativa(picks);
+    });
+
+    for (const c of jogadores) {
+      paineis.appendChild(_criarPainelIniChar(c, picks, () => {
+        const prontos = Object.keys(picks).length >= jogadores.length;
+        btnConfirmar.disabled = !prontos;
+        btnConfirmar.classList.toggle('pronto', prontos);
+      }));
+    }
+
+    tela.appendChild(paineis);
+    tela.appendChild(btnConfirmar);
+    screen.appendChild(tela);
+  }
+
+  function _criarPainelIniChar(c, picks, onPick) {
+    const cor = _COR_INI[c.naipe] ?? '#888';
+
+    const painel = document.createElement('div');
+    painel.className = 'battle-ini-char-painel';
+
+    painel.innerHTML = `
+      <div class="battle-ini-char-info">
+        <span class="battle-ini-char-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+        <span class="battle-ini-char-nome">${c.nome}</span>
+        <span class="battle-ini-char-inc">+${c.inc} INC</span>
+      </div>
+    `;
+
+    const cartasDiv = document.createElement('div');
+    cartasDiv.className = 'battle-ini-cartas';
+
+    c.mao.forEach((carta, idx) => {
+      const total   = DECK.valorIniciativa(carta) + c.inc;
+      const corCarta = _COR_INI[carta.naipe] ?? '#888';
+
+      const btn = document.createElement('button');
+      btn.className = 'battle-ini-carta';
+      btn.innerHTML = `
+        <span class="ini-carta-label" style="color:${corCarta}">${carta.label}</span>
+        <span class="ini-carta-total">= ${total}</span>
+      `;
+      btn.addEventListener('click', () => {
+        cartasDiv.querySelectorAll('.battle-ini-carta').forEach(b => b.classList.remove('selecionada'));
+        btn.classList.add('selecionada');
+        picks[c.id] = { cartaIdx: idx, carta };
+        onPick();
+      });
+
+      cartasDiv.appendChild(btn);
+    });
+
+    painel.appendChild(cartasDiv);
+    return painel;
+  }
+
+  // Aplica picks do jogador, auto-aloca inimigo, calcula ordem e revela.
+  function _confirmarIniciativa(picks) {
     const alocadas = new Map();
-    for (const c of COMBAT.estado.combatentes) {
-      if (c.mao.length === 0) continue;
-      const [cartaIni, ...restaMao] = c.mao;
-      c.mao = restaMao;
+    const estado   = COMBAT.estado;
+
+    for (const [charId, pick] of Object.entries(picks)) {
+      const c = estado.combatentes.find(x => x.id === charId);
+      if (!c) continue;
+      c.mao = c.mao.filter((_, i) => i !== pick.cartaIdx);
+      alocadas.set(charId, pick.carta);
+    }
+
+    // Inimigo normal: carta de menor valor. Boss (etapa 5): carta de maior valor.
+    const ehBoss = _etapaAtual >= 4;
+    for (const c of estado.combatentes.filter(x => x.lado === 'inimigo')) {
+      if (!c.mao.length) continue;
+      let melhorIdx = 0;
+      c.mao.forEach((carta, i) => {
+        const v = DECK.valorIniciativa(carta);
+        const vB = DECK.valorIniciativa(c.mao[melhorIdx]);
+        if (ehBoss ? v > vB : v < vB) melhorIdx = i;
+      });
+      const cartaIni = c.mao[melhorIdx];
+      c.mao = c.mao.filter((_, i) => i !== melhorIdx);
       alocadas.set(c.id, cartaIni);
     }
+
     COMBAT.calcularIniciativa(alocadas);
+    _revelarOrdem();
+  }
+
+  // Overlay com a ordem final — cada entrada aparece em sequência; clique ou timeout avança.
+  function _revelarOrdem() {
+    const screen = document.getElementById('screen-battle');
+    const ordem  = COMBAT.estado.ordem;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'battle-ini-revelar';
+    overlay.innerHTML = `
+      <div id="battle-ini-rev-bg"></div>
+      <div id="battle-ini-rev-content">
+        <div id="battle-ini-rev-titulo">ORDEM DE INICIATIVA</div>
+        <div id="battle-ini-rev-lista"></div>
+        <div id="battle-ini-rev-hint">toque para avançar</div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+
+    const lista = overlay.querySelector('#battle-ini-rev-lista');
+
+    ordem.forEach((c, i) => {
+      setTimeout(() => {
+        const cor   = _COR_INI[c.naipe] ?? '#888';
+        const total = c.cartaIniciativa ? DECK.valorIniciativa(c.cartaIniciativa) + c.inc : c.inc;
+
+        const entrada = document.createElement('div');
+        entrada.className = 'battle-ini-rev-entrada' + (c.lado === 'inimigo' ? ' inimigo' : '');
+        entrada.innerHTML = `
+          <span class="rev-pos">#${i + 1}</span>
+          <span class="rev-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+          <span class="rev-nome">${c.nome}</span>
+          <span class="rev-carta">${c.cartaIniciativa?.label ?? '—'}</span>
+          <span class="rev-score">${total}</span>
+        `;
+        lista.appendChild(entrada);
+      }, 180 + i * 320);
+    });
+
+    const avançar = () => { overlay.remove(); _renderizar(); };
+    const timer   = setTimeout(avançar, 180 + ordem.length * 320 + 1600);
+    overlay.addEventListener('click', () => { clearTimeout(timer); avançar(); });
   }
 
   // ══════════════════════════════════════════════════════════════════════════
