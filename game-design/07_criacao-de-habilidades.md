@@ -6,11 +6,24 @@ Define **como** habilidades e passivas nascem, são nomeadas e registradas no PA
 
 ---
 
+## Identidade — Paródia e Homenagem
+
+O PATF TCG é um **jogo sério** — mecânica de verdade, profundidade real — mas com **temática de paródia e homenagem**. É um tributo a tudo que o criador curte: games, cultura pop, animes, desenhos.
+
+- As referências são **reconhecíveis, não cópias diretas** — o jogador sacou de onde veio, mas é coisa nova.
+- Vale para personagens, inimigos, cenários — e **vale para as habilidades**.
+- Esse poço de referências alimenta a nomenclatura: os nomes nascem dele.
+
+> Alinhado com a temática definida na sessão 012 — *Vampire Survivors* como referência de "jogo sério com sátira e homenagem", pixel art 8-bit, sistema de cosplay por naipe.
+
+---
+
 ## Princípio de Nomenclatura
 
 - **Não há sistema de equipamento.** O personagem não "tem uma espada e usa golpes de espada". Habilidades não são identidade de classe — são livres, qualquer personagem pode carregar qualquer habilidade do seu naipe.
 - Por isso o **nome pode ter sabor de arma ou elemento** — "Corte de Espadas", "Flecha Impactante", "Faísca Arcana" — sem prender o personagem a um arquétipo. O nome dá sabor, não restringe.
 - **Tom de referência:** feitiços e mágicas instantâneas de card games (Magic: The Gathering, Hearthstone) + habilidades de ARPG (Path of Exile, Torchlight Infinity, Diablo 2).
+- **Paródia e homenagem** (ver seção acima): o nome pode acenar para games, animes, desenhos e cultura pop que o criador curte — reconhecível, nunca cópia direta.
 - Nome curto, evocativo, que comunica a sensação da habilidade.
 
 ---
