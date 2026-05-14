@@ -1,0 +1,243 @@
+/* screens/tutorial/tutorial-map.css */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TELA DE TRANSIÇÃO (countdown antes da batalha)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+#tmap-transicao {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#tmap-trans-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, #0a1a2e 0%, #050810 100%);
+  animation: tmap-bg-fade 0.35s ease;
+}
+
+#tmap-trans-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  z-index: 1;
+  font-family: sans-serif;
+}
+
+#tmap-trans-rotulo {
+  font-size: 0.7rem;
+  color: #c9a84c;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+#tmap-trans-tipo {
+  font-size: 0.8rem;
+  color: #8899aa;
+  letter-spacing: 3px;
+}
+
+#tmap-trans-vs {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #ffffff22;
+  letter-spacing: 10px;
+}
+
+#tmap-trans-inimigo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(160deg, #1a1a2a, #0d0d18);
+  border: 1px solid #ffffff18;
+  border-radius: 14px;
+  padding: 20px 40px;
+}
+
+.tmap-card-naipe {
+  font-size: 2.8rem;
+  filter: drop-shadow(0 2px 10px currentColor);
+  line-height: 1;
+}
+
+.tmap-card-nome {
+  font-size: 0.9rem;
+  color: #ddd;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+#tmap-trans-countdown {
+  font-size: 5rem;
+  font-weight: 900;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  text-shadow: 0 0 32px #c9a84c88;
+  min-width: 80px;
+  text-align: center;
+}
+
+.tmap-countdown-pulse {
+  animation: tmap-pulse 0.85s ease-out forwards;
+}
+
+@keyframes tmap-pulse {
+  0%   { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1.0); opacity: 1.0; }
+}
+
+@keyframes tmap-bg-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   POPUP DE RECUPERAÇÃO (etapa 3: CURAR 1 / REVIVER 1)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+#tmap-popup-recuperacao {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+}
+
+#tmap-rec-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+#tmap-rec-box {
+  position: relative;
+  background: #0d1117;
+  border: 1px solid #5ac88044;
+  border-radius: 16px;
+  padding: 28px 24px;
+  width: 520px;
+  max-width: 90%;
+  z-index: 401;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: sans-serif;
+  animation: tmap-popup-in 0.25s ease;
+}
+
+@keyframes tmap-popup-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1.00); opacity: 1; }
+}
+
+.tmap-rec-tag {
+  font-size: 0.65rem;
+  color: #5ac880;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.tmap-rec-titulo {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 2px;
+}
+
+.tmap-rec-desc {
+  font-size: 0.75rem;
+  color: #8899aa;
+  line-height: 1.65;
+}
+
+#tmap-rec-opcoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.tmap-rec-sec {
+  flex: 1;
+  background: #0e1a0e;
+  border: 1px solid #5ac88033;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tmap-rec-sec.disabled {
+  background: #111118;
+  border-color: #ffffff0e;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.tmap-rec-sec-titulo {
+  font-size: 0.7rem;
+  color: #5ac880;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.tmap-rec-sec.disabled .tmap-rec-sec-titulo {
+  color: #445;
+}
+
+.tmap-rec-sec-sub {
+  font-size: 0.65rem;
+  color: #556;
+  letter-spacing: 1px;
+}
+
+.tmap-rec-chars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Botão de seleção de personagem (curar) */
+.tmap-rec-char-btn {
+  padding: 8px 12px;
+  border-radius: 7px;
+  border: 1px solid #5ac88055;
+  background: #0a1a0a;
+  color: #5ac880;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.tmap-rec-char-btn:hover {
+  background: #0d2a0d;
+  border-color: #5ac880;
+}
+
+/* Botão de seleção de personagem (reviver) */
+.tmap-rec-char-btn.reviver {
+  border-color: #7aade855;
+  background: #0a0c1a;
+  color: #7aade8;
+}
+
+.tmap-rec-char-btn.reviver:hover {
+  background: #0a0d2a;
+  border-color: #7aade8;
+}
