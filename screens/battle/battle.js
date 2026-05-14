@@ -594,10 +594,11 @@ const BATTLE = (() => {
     div.id = 'battle-panel-habs';
 
     const habs = combatente.habilidades ?? [null, null, null];
-    habs.forEach((hab, i) => {
+    habs.forEach((slotVal, i) => {
+      const dados = HABILIDADES.resolverHabilidade(slotVal);
       const btn = document.createElement('button');
-      btn.className = 'battle-btn-hab' + (!hab ? ' vazio' : '');
-      btn.textContent = hab ? hab.nome : `— SLOT ${i + 1} VAZIO —`;
+      btn.className = 'battle-btn-hab' + (!dados ? ' vazio' : '');
+      btn.textContent = dados ? dados.nome : `— SLOT ${i + 1} VAZIO —`;
       // Seleção de habilidade: fluxo de carta + alvo — sessão futura
       div.appendChild(btn);
     });
