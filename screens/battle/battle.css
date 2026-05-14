@@ -533,3 +533,256 @@
 }
 
 #battle-btn-debug-vencer:hover   { color: #cc4444aa; border-color: #cc444460; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FASE DE INICIATIVA — tela de seleção de cartas
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-ini-tela {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: radial-gradient(ellipse at 50% 40%, #0c0c22 0%, #060610 100%);
+  z-index: 10;
+  font-family: sans-serif;
+  animation: ini-tela-in 0.35s ease;
+}
+
+@keyframes ini-tela-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Cabeçalho ── */
+
+#battle-ini-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.battle-ini-titulo {
+  font-size: 0.7rem;
+  color: #c9a84c;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+.battle-ini-sub {
+  font-size: 0.72rem;
+  color: #8899aa;
+  letter-spacing: 2px;
+}
+
+/* ── Painéis por personagem ── */
+
+#battle-ini-paineis {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.battle-ini-char-painel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #0d0f1a;
+  border: 1px solid #ffffff14;
+  border-radius: 12px;
+  padding: 16px;
+  width: 240px;
+}
+
+.battle-ini-char-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.battle-ini-char-naipe {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 1px 6px currentColor);
+  line-height: 1;
+}
+
+.battle-ini-char-nome {
+  font-size: 0.7rem;
+  color: #ccc;
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.battle-ini-char-inc {
+  font-size: 0.6rem;
+  color: #c9a84c;
+  letter-spacing: 1px;
+  background: #1a1500;
+  border: 1px solid #c9a84c33;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+/* ── Grade de cartas ── */
+
+.battle-ini-cartas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.battle-ini-carta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #ffffff18;
+  background: #111320;
+  cursor: pointer;
+  font-family: sans-serif;
+  min-width: 46px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.battle-ini-carta:hover {
+  background: #1a1f38;
+  border-color: #ffffff30;
+}
+
+.battle-ini-carta.selecionada {
+  border-color: #c9a84c;
+  background: #1a1500;
+  box-shadow: 0 0 8px #c9a84c33;
+}
+
+.ini-carta-label {
+  font-size: 0.78rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.ini-carta-total {
+  font-size: 0.55rem;
+  color: #445;
+  letter-spacing: 1px;
+}
+
+.battle-ini-carta.selecionada .ini-carta-total {
+  color: #c9a84c88;
+}
+
+/* ── Botão confirmar ── */
+
+#battle-ini-btn-confirmar {
+  padding: 12px 44px;
+  border-radius: 10px;
+  border: 1px solid #c9a84c33;
+  background: transparent;
+  color: #c9a84c55;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 4px;
+  cursor: not-allowed;
+  font-family: sans-serif;
+  transition: all 0.25s;
+}
+
+#battle-ini-btn-confirmar.pronto {
+  border-color: #c9a84c;
+  background: #c9a84c;
+  color: #000;
+  cursor: pointer;
+}
+
+#battle-ini-btn-confirmar.pronto:hover {
+  background: #e0c060;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REVELAÇÃO DA ORDEM DE INICIATIVA
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-ini-revelar {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  cursor: pointer;
+  animation: ini-tela-in 0.4s ease;
+}
+
+#battle-ini-rev-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 14, 0.96);
+}
+
+#battle-ini-rev-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+  font-family: sans-serif;
+}
+
+#battle-ini-rev-titulo {
+  font-size: 0.7rem;
+  color: #c9a84c;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+#battle-ini-rev-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 340px;
+}
+
+.battle-ini-rev-entrada {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0d0f1a;
+  border: 1px solid #ffffff14;
+  border-radius: 10px;
+  padding: 10px 16px;
+  animation: rev-in 0.3s ease both;
+}
+
+.battle-ini-rev-entrada.inimigo {
+  background: #1a0d0d;
+  border-color: #cc333318;
+}
+
+@keyframes rev-in {
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+.rev-pos  { font-size: 0.6rem; color: #c9a84c; letter-spacing: 2px; font-weight: bold; width: 22px; }
+.rev-naipe{ font-size: 1.1rem; filter: drop-shadow(0 1px 4px currentColor); }
+.rev-nome { font-size: 0.7rem; color: #ddd; letter-spacing: 2px; flex: 1; text-transform: uppercase; }
+.rev-carta{ font-size: 0.7rem; color: #667; letter-spacing: 1px; min-width: 32px; text-align: right; }
+.rev-score{ font-size: 1rem; font-weight: 900; color: #c9a84c; letter-spacing: 2px; min-width: 28px; text-align: right; }
+
+#battle-ini-rev-hint {
+  font-size: 0.6rem;
+  color: #ffffff20;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
