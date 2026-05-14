@@ -64,15 +64,14 @@ README.md
 - **Ampliar arquitetura conforme necessidade** — se surgir novo escopo, cria nova pasta/arquivo
 
 ### Fluxo de Trabalho
-1. Carlos manda os arquivos do GitHub no início de cada sessão
+
+**Atual (Claude Code — padrão desde sessão 007):**
+1. Claude lê o CLAUDE.md + última sessão ao iniciar
 2. Definem juntos o plano da etapa
-3. Claude apresenta relatório do que vai fazer
-4. Carlos aprova ("ok" / "executa" / "pode ir")
-5. Claude constrói, valida e entrega **arquivo para baixar**
-6. Carlos substitui o arquivo antigo pelo novo no repositório
-7. Refatorações (remoções, trocas pontuais) → Carlos faz manualmente no GitHub após colocar o arquivo novo
-8. Carlos testa
-9. Avança para próxima etapa
+3. Claude edita arquivos diretamente no repositório local
+4. Commita e faz push para `claude/bora-pro-007-2Utst`
+5. Carlos testa no browser
+6. Avança para próxima etapa
 
 ### Regras Absolutas
 - Antes de qualquer implementação → apresentar relatório do que vai ser feito
@@ -89,10 +88,22 @@ README.md
 - Refatorações → Carlos faz manualmente no GitHub
 - Carlos manda prints para orientação e validação
 
-### Peso de Conversa
-- Claude monitora o peso da conversa
-- Se conversa estiver pesada antes de construir arquivo longo → avisa Carlos antes de começar
-- Nunca começar a construir sem contexto suficiente para terminar
+---
+
+## Referência Visual — Jogo Antigo
+
+O jogo anterior (`index_v2_87.html`) está em `referencia/` no repositório. É a base visual de onde extraímos referências de estética, gradientes e posicionamento.
+
+**O que já foi extraído (sessão 010):**
+- Paleta de naipe: `♥ #e06060 | ♣ #5ac880 | ♦ #e8c050 | ♠ #7aade8`
+- Fundo do campo: gradiente céu noturno multi-stop
+- Sistema JRPG de posicionamento: slots absolutos em % com escala por profundidade
+- Card do personagem: gradiente + naipe colorido + nome overlay
+- Slot ativo: borda dourada pulsando
+
+**Regra de uso:** extraímos só o visual — gradientes, cores, posicionamento, animações. A lógica do jogo antigo não entra. Cada extração é registrada no doc de sessão correspondente.
+
+**Como acessar:** `grep -n "termo" referencia/index_v2_87.html`
 
 ---
 
@@ -164,12 +175,25 @@ README.md
 - [x] `screens/select/select.css` — CSS calculado contra 1280×720, tudo cabe sem transbordar
 - [x] Fluxo TESTE completo: Start → Seleção → Time montado ✅
 
+### Etapas concluídas (continuação — sessões 007-010)
+- [x] `engine/deck.js` — baralho 54 cartas, embaralhar, comprar, valorIniciativa, valorDano
+- [x] `engine/damage.js` — calcularDano, calcularDefesa, resolverDano, vantagens de naipe
+- [x] `engine/combat.js` — BATTLE_STATE, criarCombatente, init, calcularIniciativa, avancarCombatente, 5 etapas de rodada
+- [x] `screens/battle/battle.css` + `battle.js` — tela de batalha completa: topbar 3 seções, campo JRPG, painel etapa1/etapa2, confirmação de passar rodada, turno do inimigo auto
+- [x] Visual campo: atmosfera (estrelas, névoa, glow central), fundo noturno, slots com gradiente de naipe
+- [x] Posicionamento JRPG: 3 posições por lado em diagonal com escala por profundidade
+- [x] `referencia/index_v2_87.html` adicionado ao repositório como biblioteca visual
+
 ### Foco atual
-- Próxima tela após seleção — a definir
+- Tela de batalha funcional e visualmente sólida ✅
+- Próximo: animação de slot ativo (bob), lógica de habilidades, barra HP colorida por %
 
 ### Próximas etapas
-- [ ] Definir e construir tela após seleção (tutorial ou tela principal)
-- [ ] Construir screens restantes com base na formulação aprovada
+- [ ] Animação bob no slot ativo (turno atual)
+- [ ] Habilidades: seleção de alvo + resolução de dano
+- [ ] HP bar colorida por % (verde → amarelo → vermelho)
+- [ ] enemy-ai/monstros.js — arquivo definitivo de inimigos
+- [ ] Passivas e itens
 
 ---
 
@@ -203,4 +227,10 @@ README.md
 
 ---
 
-*Última atualização: 2026-05-11 — sessão 003 fechada: tela de Status (fundação), canvas híbrido, ⚙ semi-universal*
+| 2026-05-13 | Engine base construída do zero: deck.js, damage.js, combat.js |
+| 2026-05-13 | Tela de batalha: layout JRPG, topbar 3 seções, painel etapa1/etapa2, turno inimigo auto |
+| 2026-05-14 | `referencia/index_v2_87.html` entra no repositório como biblioteca visual permanente |
+| 2026-05-14 | Campo migrado para posicionamento JRPG absoluto (% + escala por profundidade) — resolve overflow |
+| 2026-05-14 | Estratégia: jogo antigo = referência visual. Extraímos gradientes/posicionamento, não a lógica |
+
+*Última atualização: 2026-05-14 — sessão 010: referência visual do jogo antigo + layout JRPG no campo*
