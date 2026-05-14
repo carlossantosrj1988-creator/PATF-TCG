@@ -1,7 +1,7 @@
 /* screens/tutorial/tutorial-map.css */
 
 /* ════════════════════════════════════════════════════════════════════════════
-   TELA DE TRANSIÇÃO (countdown antes da batalha)
+   TELA DE TRANSIÇÃO: JOGADORES VS INIMIGO
    ════════════════════════════════════════════════════════════════════════════ */
 
 #tmap-transicao {
@@ -11,14 +11,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: tmap-fadein 0.5s ease forwards;
+}
+
+#tmap-transicao.tmap-fadeout {
+  animation: tmap-fadeout 0.5s ease forwards;
+}
+
+@keyframes tmap-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tmap-fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 #tmap-trans-bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 50% 40%, #0a1a2e 0%, #050810 100%);
-  animation: tmap-bg-fade 0.35s ease;
+  background: radial-gradient(ellipse at 50% 40%, #0a1a2e 0%, #050810 100%);
 }
 
 #tmap-trans-content {
@@ -26,9 +39,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 28px;
   z-index: 1;
   font-family: sans-serif;
+  width: 100%;
+  max-width: 700px;
+  padding: 0 32px;
+  box-sizing: border-box;
+}
+
+/* ── Cabeçalho ── */
+#tmap-trans-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 #tmap-trans-rotulo {
@@ -44,58 +69,100 @@
   letter-spacing: 3px;
 }
 
-#tmap-trans-vs {
-  font-size: 1.4rem;
-  font-weight: 900;
-  color: #ffffff22;
-  letter-spacing: 10px;
+/* ── Arena: time jogador | VS | time inimigo ── */
+#tmap-trans-arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
 }
 
-#tmap-trans-inimigo {
+#tmap-trans-time-jogador,
+#tmap-trans-time-inimigo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+#tmap-trans-time-jogador {
+  align-items: flex-end;
+}
+
+#tmap-trans-time-inimigo {
+  align-items: flex-start;
+}
+
+/* ── VS ── */
+#tmap-trans-vs {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ffffff28;
+  letter-spacing: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Card de personagem / inimigo ── */
+.tmap-trans-char-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: linear-gradient(160deg, #1a1a2a, #0d0d18);
   border: 1px solid #ffffff18;
-  border-radius: 14px;
-  padding: 20px 40px;
+  border-radius: 12px;
+  padding: 14px 20px;
+  width: 150px;
+  box-sizing: border-box;
+}
+
+.tmap-trans-char-card.inimigo {
+  background: linear-gradient(160deg, #1a0d0d, #0d0808);
+  border-color: #cc333318;
 }
 
 .tmap-card-naipe {
-  font-size: 2.8rem;
-  filter: drop-shadow(0 2px 10px currentColor);
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 8px currentColor);
   line-height: 1;
 }
 
 .tmap-card-nome {
-  font-size: 0.9rem;
+  font-size: 0.72rem;
   color: #ddd;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   font-weight: bold;
   text-transform: uppercase;
-}
-
-#tmap-trans-countdown {
-  font-size: 5rem;
-  font-weight: 900;
-  color: #c9a84c;
-  letter-spacing: 4px;
-  text-shadow: 0 0 32px #c9a84c88;
-  min-width: 80px;
   text-align: center;
 }
 
-.tmap-countdown-pulse {
-  animation: tmap-pulse 0.85s ease-out forwards;
+/* ── HP bar (dentro do card do jogador) ── */
+.tmap-card-hp-bar {
+  width: 100%;
+  height: 4px;
+  background: #0d0d0d;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
 }
 
-@keyframes tmap-pulse {
-  0%   { transform: scale(1.5); opacity: 0.5; }
-  100% { transform: scale(1.0); opacity: 1.0; }
+.tmap-card-hp-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
 }
 
-@keyframes tmap-bg-fade {
+.tmap-card-hp-fill.verde   { background: #5ac880; }
+.tmap-card-hp-fill.amarelo { background: #d0a040; }
+.tmap-card-hp-fill.vermelho{ background: #d04050; }
+
+/* ── Fade-in da tela de batalha após transição ── */
+.battle-entering {
+  animation: battle-fadein 0.5s ease forwards;
+}
+
+@keyframes battle-fadein {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
@@ -209,7 +276,6 @@
   margin-top: 4px;
 }
 
-/* Botão de seleção de personagem (curar) */
 .tmap-rec-char-btn {
   padding: 8px 12px;
   border-radius: 7px;
@@ -230,7 +296,6 @@
   border-color: #5ac880;
 }
 
-/* Botão de seleção de personagem (reviver) */
 .tmap-rec-char-btn.reviver {
   border-color: #7aade855;
   background: #0a0c1a;

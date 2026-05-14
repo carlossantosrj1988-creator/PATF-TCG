@@ -22,7 +22,8 @@ const TUTORIAL_MAP = (() => {
     { label: 'Dragão',    naipe: '♠' },
   ];
 
-  const _COR_NAIPE = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
+  const _COR_NAIPE  = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
+  const _NAIPE_SIM  = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
   // ── Estado persistente entre batalhas ─────────────────────────────────────
 
@@ -55,6 +56,12 @@ const TUTORIAL_MAP = (() => {
         _salvarHP();
         _afterBattle(etapaIdx, onConcluida);
       });
+      // BATTLE.init() é síncrono — screen-battle já existe; aplica fade-in
+      const bs = document.getElementById('screen-battle');
+      if (bs) {
+        bs.classList.add('battle-entering');
+        setTimeout(() => bs.classList.remove('battle-entering'), 500);
+      }
     });
   }
 
@@ -86,7 +93,7 @@ const TUTORIAL_MAP = (() => {
     }
   }
 
-  // ── Tela de transição (countdown + inimigo) ───────────────────────────────
+  // ── Tela de transição: jogadores VS inimigo (fade-in → display → fade-out) ─
 
   function _mostrarTransicao(etapaIdx, onFim) {
     const cfg     = _CONFIG[etapaIdx];
@@ -105,35 +112,50 @@ const TUTORIAL_MAP = (() => {
     el.innerHTML = `
       <div id="tmap-trans-bg"></div>
       <div id="tmap-trans-content">
-        <div id="tmap-trans-rotulo">${cfg.rotulo}</div>
-        <div id="tmap-trans-tipo">${tipoLabel}</div>
-        <div id="tmap-trans-vs">VS</div>
-        <div id="tmap-trans-inimigo">
-          <span class="tmap-card-naipe" style="color:${corIni}">${inimigo.naipe}</span>
-          <span class="tmap-card-nome">${inimigo.label}</span>
+        <div id="tmap-trans-header">
+          <span id="tmap-trans-rotulo">${cfg.rotulo}</span>
+          <span id="tmap-trans-tipo">${tipoLabel}</span>
         </div>
-        <div id="tmap-trans-countdown" class="tmap-countdown-pulse">3</div>
+        <div id="tmap-trans-arena">
+          <div id="tmap-trans-time-jogador"></div>
+          <div id="tmap-trans-vs">VS</div>
+          <div id="tmap-trans-time-inimigo">
+            <div class="tmap-trans-char-card inimigo">
+              <span class="tmap-card-naipe" style="color:${corIni}">${inimigo.naipe}</span>
+              <span class="tmap-card-nome">${inimigo.label}</span>
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
+    // Preenche cards dos personagens do jogador
+    const timeDiv = el.querySelector('#tmap-trans-time-jogador');
+    for (const p of PLAYER_STATE.personagens) {
+      const sim    = _NAIPE_SIM[p.naipeAtivo] ?? _NAIPE_SIM[p.naipe] ?? null;
+      const cor    = sim ? (_COR_NAIPE[sim] ?? '#888') : '#555';
+      const hpMax  = TUTORIAL_STATE.hp[p.poolId]?.max ?? p.pvs;
+      const hpCur  = TUTORIAL_STATE.hp[p.poolId]?.cur ?? p.pvs;
+      const pct    = Math.max(0, Math.round((hpCur / hpMax) * 100));
+      const hpCls  = pct > 60 ? 'verde' : pct > 30 ? 'amarelo' : 'vermelho';
+
+      const card = document.createElement('div');
+      card.className = 'tmap-trans-char-card';
+      card.innerHTML = `
+        <span class="tmap-card-naipe" style="color:${cor}">${sim ?? '?'}</span>
+        <span class="tmap-card-nome">${p.nome}</span>
+        <div class="tmap-card-hp-bar">
+          <div class="tmap-card-hp-fill ${hpCls}" style="width:${pct}%"></div>
+        </div>
+      `;
+      timeDiv.appendChild(card);
+    }
+
     screen.appendChild(el);
 
-    let count = 3;
-    const countEl = el.querySelector('#tmap-trans-countdown');
-
-    const tick = setInterval(() => {
-      count--;
-      if (count <= 0) {
-        clearInterval(tick);
-        el.remove();
-        onFim();
-      } else {
-        countEl.textContent = count;
-        countEl.classList.remove('tmap-countdown-pulse');
-        void countEl.offsetWidth; // força reflow para reiniciar a animação
-        countEl.classList.add('tmap-countdown-pulse');
-      }
-    }, 1000);
+    // Fade-out → remove → dispara onFim
+    setTimeout(() => el.classList.add('tmap-fadeout'), 2200);
+    setTimeout(() => { el.remove(); onFim(); }, 2700);
   }
 
   // ── Popup de recuperação ──────────────────────────────────────────────────
