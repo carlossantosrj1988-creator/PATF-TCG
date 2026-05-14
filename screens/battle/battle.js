@@ -141,29 +141,37 @@ const BATTLE = (() => {
       <span class="topbar-deck">🂠 ${jogador0?.baralho.length ?? 0}</span>
     `;
 
-    // ── Centro: iniciativa centralizada ──
+    // ── Centro: fila de iniciativa circular ──
     const centro = document.createElement('div');
     centro.className = 'battle-topbar-centro';
 
-    estado.ordem.forEach((c, i) => {
-      const ativo  = (i === estado.indiceAtual);
-      const valIni = c.cartaIniciativa
-        ? DECK.valorIniciativa(c.cartaIniciativa) + c.inc
-        : c.inc;
-      const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
+    const inner = document.createElement('div');
+    inner.className = 'battle-ini-inner';
 
-      const slot = document.createElement('div');
-      slot.className = 'battle-ini-slot' + (ativo ? ' ativo' : '');
-      slot.dataset.lado = c.lado;
-      if (ativo) slot.style.background = bg;
+    const idx    = estado.indiceAtual;
+    const ordem  = estado.ordem;
+    const feitos  = ordem.slice(0, idx);
+    const fila    = ordem.slice(idx); // fila[0] = ativo
 
-      slot.innerHTML = `
-        <div class="ini-naipe">${c.naipe ?? '?'}</div>
-        <div class="ini-nome">${c.nome.substring(0, 7)}</div>
-        <div class="ini-valor">${valIni}</div>
-      `;
-      centro.appendChild(slot);
+    // Fila (ativo + próximos)
+    fila.forEach((c, i) => {
+      const estado_ = i === 0 ? 'ativo' : 'proximo';
+      inner.appendChild(_criarIniSlot(c, estado_, idx + i + 1));
     });
+
+    // Separador
+    if (feitos.length > 0 && fila.length > 0) {
+      const sep = document.createElement('div');
+      sep.className = 'ini-separator';
+      inner.appendChild(sep);
+    }
+
+    // Feitos (invertidos — mais recente perto do separador)
+    [...feitos].reverse().forEach((c, i) => {
+      inner.appendChild(_criarIniSlot(c, 'feito', idx - i));
+    });
+
+    centro.appendChild(inner);
 
     // ── Direita: deck do inimigo ──
     const dir = document.createElement('div');
@@ -177,6 +185,23 @@ const BATTLE = (() => {
     bar.appendChild(centro);
     bar.appendChild(dir);
     return bar;
+  }
+
+  function _criarIniSlot(c, estado_, pos) {
+    const corNaipe = {
+      '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8',
+    }[c.naipe] ?? '#c9a84c';
+
+    const slot = document.createElement('div');
+    slot.className = `battle-ini-slot ${estado_}`;
+    slot.dataset.lado = c.lado;
+    slot.innerHTML = `
+      <div class="ini-avatar">
+        <span class="ini-naipe" style="color:${corNaipe}">${c.naipe ?? '?'}</span>
+        <span class="ini-pos">${pos}</span>
+      </div>
+    `;
+    return slot;
   }
 
   // ══════════════════════════════════════════════════════════════════════════
