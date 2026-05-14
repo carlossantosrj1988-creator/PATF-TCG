@@ -63,38 +63,122 @@
 .topbar-deck-label { font-size: 8px; letter-spacing: 2px; color: #ffffff22; text-transform: uppercase; }
 .topbar-deck-ini  { font-size: 10px; color: #cc777755; letter-spacing: 1px; }
 
-/* ── Slots de iniciativa ── */
+/* ── Fila de iniciativa ── */
 
+.battle-ini-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.battle-ini-inner::-webkit-scrollbar { display: none; }
+
+.ini-separator {
+  width: 1px;
+  height: 24px;
+  background: rgba(255,255,255,0.10);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* Slot circular */
 .battle-ini-slot {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  width: 32px;
+  cursor: default;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.ini-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  min-width: 56px;
-  height: 38px;
-  border-radius: 6px;
-  border: 1px solid #ffffff10;
-  padding: 0 8px;
-  gap: 1px;
-  opacity: 0.4;
+  position: relative;
   flex-shrink: 0;
-  transition: opacity 0.25s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  background: rgba(255,255,255,0.04);
 }
 
+.ini-naipe { font-size: 15px; line-height: 1; }
+
+/* Badge de posição */
+.ini-pos {
+  position: absolute;
+  top: -4px; right: -4px;
+  background: #0f1218;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  font-size: 7px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  padding: 0 3px;
+  line-height: 11px;
+  min-width: 11px;
+  text-align: center;
+}
+
+/* ── Estados ── */
+
+/* Ativo: elevado + glow dourado pulsando */
 .battle-ini-slot.ativo {
-  opacity: 1;
-  border-color: #ffffff28;
+  transform: translateY(-3px);
+}
+.battle-ini-slot.ativo[data-lado="jogador"] .ini-avatar {
+  border-color: rgba(201,168,76,0.8);
+  background: rgba(76,123,201,0.25);
+  box-shadow: 0 0 0 2px rgba(201,168,76,0.45), 0 4px 16px rgba(201,168,76,0.4);
+  animation: ini-pulse-gold 2s ease-in-out infinite;
+}
+.battle-ini-slot.ativo[data-lado="inimigo"] .ini-avatar {
+  border-color: rgba(224,96,96,0.8);
+  background: rgba(212,80,80,0.25);
+  box-shadow: 0 0 0 2px rgba(224,96,96,0.45), 0 4px 16px rgba(224,96,96,0.4);
+  animation: ini-pulse-red 2s ease-in-out infinite;
+}
+.battle-ini-slot.ativo .ini-pos {
+  background: #c9a84c;
+  color: #1a1000;
+  border-color: #c9a84c;
 }
 
-.battle-ini-slot[data-lado="inimigo"]       { border-color: #cc444425; }
-.battle-ini-slot[data-lado="inimigo"].ativo { border-color: #cc444460; }
+@keyframes ini-pulse-gold {
+  0%,100% { box-shadow: 0 0 0 2px rgba(201,168,76,0.45), 0 4px 14px rgba(201,168,76,0.3); }
+  50%      { box-shadow: 0 0 0 3px rgba(201,168,76,0.80), 0 4px 22px rgba(201,168,76,0.6); }
+}
+@keyframes ini-pulse-red {
+  0%,100% { box-shadow: 0 0 0 2px rgba(224,96,96,0.45), 0 4px 14px rgba(224,96,96,0.3); }
+  50%      { box-shadow: 0 0 0 3px rgba(224,96,96,0.80), 0 4px 22px rgba(224,96,96,0.6); }
+}
 
-.ini-naipe { font-size: 13px; line-height: 1; }
-.ini-nome  { font-size: 7px; color: #8899aa88; letter-spacing: 1px; text-transform: uppercase; }
-.ini-valor { font-size: 9px; color: #c9a84c70; font-weight: 700; }
+/* Próximo: levemente visível */
+.battle-ini-slot.proximo .ini-avatar {
+  border-color: rgba(255,255,255,0.22);
+  opacity: 0.75;
+}
+.battle-ini-slot[data-lado="jogador"].proximo .ini-avatar { background: rgba(76,123,201,0.10); }
+.battle-ini-slot[data-lado="inimigo"].proximo .ini-avatar { background: rgba(212,80,80,0.10); }
 
-.battle-ini-slot.ativo .ini-valor                    { color: #c9a84c; }
-.battle-ini-slot[data-lado="inimigo"].ativo .ini-valor { color: #cc7777; }
+/* Feito: acinzentado + menor */
+.battle-ini-slot.feito {
+  opacity: 0.45;
+}
+.battle-ini-slot.feito .ini-avatar {
+  filter: grayscale(0.7);
+  border-color: rgba(255,255,255,0.06);
+  transform: scale(0.85);
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    CAMPO — área de batalha (488px)   JRPG absolute-position layout
