@@ -134,12 +134,16 @@ const BATTLE = (() => {
 
     for (const c of jogadores) {
       const cor = _COR_INI[c.naipe] ?? '#888';
+      const { bg, borda } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
       const row = document.createElement('div');
       row.className = 'battle-ini-char-row';
       row.dataset.charId = c.id;
+      row.style.color = cor; // alimenta o ::before colorido
       row.innerHTML = `
-        <span class="bic-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
-        <span class="bic-nome">${c.nome}</span>
+        <div class="bic-card" style="background:${bg}; border-color:${borda};">
+          <span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+          <span class="bic-card-nome">${c.nome}</span>
+        </div>
         <span class="bic-inc">INC +${c.inc}</span>
         <div class="bic-slot vazio">— escolha uma carta —</div>
       `;
