@@ -156,9 +156,13 @@ const BATTLE = (() => {
           selected.btnEl.classList.add('usada');
           selected.btnEl.classList.remove('selecionada');
 
-          const corCarta = _COR_INI[selected.carta.naipe] ?? '#888';
+          const corCarta  = _COR_INI[selected.carta.naipe] ?? '#c9a84c';
+          const naipeAtrib = selected.carta.naipe ?? '★';
           slotEl.className = 'bic-slot atribuida';
-          slotEl.innerHTML = `<span style="color:${corCarta}">${selected.carta.label}</span>`;
+          slotEl.innerHTML = `
+            <span style="color:${corCarta}">${naipeAtrib}</span>
+            <strong>${selected.carta.valor}</strong>
+          `;
 
           selected = null;
           _atualizarConfirmar();
@@ -181,11 +185,15 @@ const BATTLE = (() => {
     maoDiv.id = 'battle-ini-mao';
 
     maoShared.forEach((carta, idx) => {
-      const cor = _COR_INI[carta.naipe] ?? '#888';
+      const cor   = _COR_INI[carta.naipe] ?? '#c9a84c';
+      const naipe = carta.naipe ?? '★';
       const btn = document.createElement('button');
       btn.className = 'battle-ini-carta';
       btn.dataset.idx = idx;
-      btn.innerHTML = `<span class="ini-carta-label" style="color:${cor}">${carta.label}</span>`;
+      btn.innerHTML = `
+        <span class="ini-carta-naipe-top" style="color:${cor}">${naipe}</span>
+        <span class="ini-carta-val">${carta.valor}</span>
+      `;
 
       btn.addEventListener('click', () => {
         if (btn.classList.contains('usada')) return;

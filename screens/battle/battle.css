@@ -545,18 +545,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
-  background: radial-gradient(ellipse at 50% 40%, #0c0c22 0%, #060610 100%);
+  gap: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(90,70,200,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(200,168,76,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, #0c0c22 0%, #060610 100%);
   z-index: 10;
   font-family: sans-serif;
-  animation: ini-tela-in 0.35s ease;
-  padding: 32px 24px;
+  animation: ini-tela-in 0.4s ease;
+  padding: 0 40px;
   box-sizing: border-box;
 }
 
 @keyframes ini-tela-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Cabeçalho ── */
@@ -566,18 +569,19 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  margin-bottom: 32px;
 }
 
 .battle-ini-titulo {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #c9a84c;
-  letter-spacing: 6px;
+  letter-spacing: 8px;
   text-transform: uppercase;
 }
 
 .battle-ini-sub {
-  font-size: 0.65rem;
-  color: #8899aa;
+  font-size: 0.62rem;
+  color: #8899aa88;
   letter-spacing: 1.5px;
   text-align: center;
 }
@@ -587,76 +591,104 @@
 #battle-ini-chars {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  max-width: 560px;
+  max-width: 700px;
+  margin-bottom: 24px;
 }
 
 .battle-ini-char-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #0d0f1a;
-  border: 1px solid #ffffff14;
-  border-radius: 10px;
-  padding: 10px 16px;
+  gap: 16px;
+  background: linear-gradient(135deg, #0f1020 0%, #0a0b18 100%);
+  border: 1px solid #ffffff10;
+  border-radius: 12px;
+  padding: 14px 20px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.battle-ini-char-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: currentColor;
+  opacity: 0.3;
+  border-radius: 12px 0 0 12px;
+  transition: opacity 0.2s;
 }
 
 .battle-ini-char-row:hover {
-  background: #111426;
-  border-color: #ffffff25;
+  background: linear-gradient(135deg, #131528 0%, #0d0e20 100%);
+  border-color: #ffffff20;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.battle-ini-char-row:hover::before {
+  opacity: 0.6;
 }
 
 .bic-naipe {
-  font-size: 1.4rem;
-  filter: drop-shadow(0 1px 6px currentColor);
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px currentColor);
   line-height: 1;
   flex-shrink: 0;
+  width: 36px;
+  text-align: center;
 }
 
 .bic-nome {
-  font-size: 0.68rem;
-  color: #ccc;
-  letter-spacing: 2px;
-  font-weight: bold;
+  font-size: 0.75rem;
+  color: #ddddee;
+  letter-spacing: 3px;
+  font-weight: 700;
   text-transform: uppercase;
   flex: 1;
 }
 
 .bic-inc {
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   color: #c9a84c;
-  letter-spacing: 1px;
-  background: #1a1500;
-  border: 1px solid #c9a84c33;
-  border-radius: 4px;
-  padding: 2px 6px;
+  letter-spacing: 1.5px;
+  background: rgba(201,168,76,0.10);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 5px;
+  padding: 3px 8px;
   flex-shrink: 0;
+  font-weight: 700;
 }
 
 .bic-slot {
-  min-width: 140px;
-  padding: 6px 12px;
-  border-radius: 6px;
+  min-width: 160px;
+  padding: 8px 16px;
+  border-radius: 8px;
   font-size: 0.62rem;
   letter-spacing: 1.5px;
   text-align: center;
   flex-shrink: 0;
+  transition: all 0.2s;
 }
 
 .bic-slot.vazio {
-  background: #0a0a14;
-  border: 1px dashed #ffffff18;
-  color: #ffffff30;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.22);
 }
 
 .bic-slot.atribuida {
-  background: #120f00;
-  border: 1px solid #c9a84c55;
+  background: rgba(201,168,76,0.10);
+  border: 1px solid rgba(201,168,76,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 900;
   color: #c9a84c;
-  font-weight: bold;
 }
 
 /* ── Mão compartilhada ── */
@@ -665,73 +697,96 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   width: 100%;
-  max-width: 560px;
+  max-width: 700px;
+  margin-bottom: 28px;
 }
 
+/* ── Mini carta de baralho (vertical) ── */
 .battle-ini-carta {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 52px;
+  height: 68px;
+  padding: 6px 7px 8px;
   border-radius: 8px;
-  border: 1px solid #ffffff18;
-  background: #111320;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(160deg, #141628 0%, #0c0d1e 100%);
   cursor: pointer;
   font-family: sans-serif;
-  min-width: 48px;
-  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+  position: relative;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s, opacity 0.2s;
+  box-sizing: border-box;
 }
 
 .battle-ini-carta:hover:not(.usada) {
-  background: #1a1f38;
-  border-color: #ffffff30;
+  transform: translateY(-6px);
+  border-color: rgba(255,255,255,0.28);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
 }
 
 .battle-ini-carta.selecionada {
   border-color: #c9a84c;
-  background: #1a1500;
-  box-shadow: 0 0 10px #c9a84c44;
+  background: linear-gradient(160deg, #1e1a00 0%, #120f00 100%);
+  box-shadow: 0 0 0 2px rgba(201,168,76,0.35), 0 8px 24px rgba(201,168,76,0.25);
+  transform: translateY(-4px);
 }
 
 .battle-ini-carta.usada {
-  opacity: 0.28;
+  opacity: 0.22;
   cursor: default;
+  transform: none;
 }
 
-.ini-carta-label {
-  font-size: 0.8rem;
-  font-weight: bold;
-  letter-spacing: 1px;
+.ini-carta-naipe-top {
+  font-size: 0.85rem;
   line-height: 1;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.ini-carta-val {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #e8e8f0;
+  line-height: 1;
+  align-self: center;
+  width: 100%;
+  text-align: center;
+  letter-spacing: -1px;
 }
 
 /* ── Botão confirmar ── */
 
 #battle-ini-btn-confirmar {
-  padding: 12px 44px;
+  padding: 13px 52px;
   border-radius: 10px;
-  border: 1px solid #c9a84c33;
+  border: 1px solid rgba(201,168,76,0.20);
   background: transparent;
-  color: #c9a84c55;
-  font-size: 0.8rem;
-  font-weight: bold;
-  letter-spacing: 4px;
+  color: rgba(201,168,76,0.35);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 5px;
   cursor: not-allowed;
   font-family: sans-serif;
-  transition: all 0.25s;
+  transition: all 0.3s;
+  text-transform: uppercase;
 }
 
 #battle-ini-btn-confirmar.pronto {
   border-color: #c9a84c;
-  background: #c9a84c;
-  color: #000;
+  background: linear-gradient(135deg, #c9a84c, #e0c060);
+  color: #1a1000;
   cursor: pointer;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.30);
 }
 
 #battle-ini-btn-confirmar.pronto:hover {
-  background: #e0c060;
+  background: linear-gradient(135deg, #e0c060, #f0d070);
+  box-shadow: 0 6px 28px rgba(201,168,76,0.45);
+  transform: translateY(-1px);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
