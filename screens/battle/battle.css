@@ -568,19 +568,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 32px;
+  gap: 8px;
+  margin-bottom: 28px;
 }
 
 .battle-ini-titulo {
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   color: #c9a84c;
   letter-spacing: 8px;
   text-transform: uppercase;
 }
 
 .battle-ini-sub {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   color: #8899aa88;
   letter-spacing: 1.5px;
   text-align: center;
@@ -591,20 +591,20 @@
 #battle-ini-chars {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  max-width: 700px;
-  margin-bottom: 24px;
+  max-width: 820px;
+  margin-bottom: 22px;
 }
 
 .battle-ini-char-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   background: linear-gradient(135deg, #0f1020 0%, #0a0b18 100%);
   border: 1px solid #ffffff10;
-  border-radius: 12px;
-  padding: 14px 20px;
+  border-radius: 14px;
+  padding: 18px 26px;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
   position: relative;
@@ -615,58 +615,58 @@
   content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 3px;
+  width: 4px;
   background: currentColor;
   opacity: 0.3;
-  border-radius: 12px 0 0 12px;
+  border-radius: 14px 0 0 14px;
   transition: opacity 0.2s;
 }
 
 .battle-ini-char-row:hover {
   background: linear-gradient(135deg, #131528 0%, #0d0e20 100%);
   border-color: #ffffff20;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45);
 }
 
 .battle-ini-char-row:hover::before {
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 .bic-naipe {
-  font-size: 2rem;
-  filter: drop-shadow(0 0 8px currentColor);
+  font-size: 2.4rem;
+  filter: drop-shadow(0 0 10px currentColor);
   line-height: 1;
   flex-shrink: 0;
-  width: 36px;
+  width: 44px;
   text-align: center;
 }
 
 .bic-nome {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: #ddddee;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
   font-weight: 700;
   text-transform: uppercase;
   flex: 1;
 }
 
 .bic-inc {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   color: #c9a84c;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   background: rgba(201,168,76,0.10);
   border: 1px solid rgba(201,168,76,0.25);
-  border-radius: 5px;
-  padding: 3px 8px;
+  border-radius: 6px;
+  padding: 4px 12px;
   flex-shrink: 0;
   font-weight: 700;
 }
 
 .bic-slot {
-  min-width: 160px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.62rem;
+  min-width: 190px;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-size: 0.68rem;
   letter-spacing: 1.5px;
   text-align: center;
   flex-shrink: 0;
@@ -685,8 +685,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 0.78rem;
+  gap: 8px;
+  font-size: 0.92rem;
   font-weight: 900;
   color: #c9a84c;
 }
@@ -699,8 +699,8 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  max-width: 700px;
-  margin-bottom: 28px;
+  max-width: 820px;
+  margin-bottom: 26px;
 }
 
 /* ── Mini carta de baralho (vertical) ── */
@@ -709,10 +709,10 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  width: 52px;
-  height: 68px;
-  padding: 6px 7px 8px;
-  border-radius: 8px;
+  width: 64px;
+  height: 88px;
+  padding: 8px 9px 10px;
+  border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.12);
   background: linear-gradient(160deg, #141628 0%, #0c0d1e 100%);
   cursor: pointer;
@@ -723,16 +723,16 @@
 }
 
 .battle-ini-carta:hover:not(.usada) {
-  transform: translateY(-6px);
+  transform: translateY(-8px);
   border-color: rgba(255,255,255,0.28);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.5);
 }
 
 .battle-ini-carta.selecionada {
   border-color: #c9a84c;
   background: linear-gradient(160deg, #1e1a00 0%, #120f00 100%);
-  box-shadow: 0 0 0 2px rgba(201,168,76,0.35), 0 8px 24px rgba(201,168,76,0.25);
-  transform: translateY(-4px);
+  box-shadow: 0 0 0 2px rgba(201,168,76,0.35), 0 10px 28px rgba(201,168,76,0.28);
+  transform: translateY(-6px);
 }
 
 .battle-ini-carta.usada {
@@ -742,13 +742,13 @@
 }
 
 .ini-carta-naipe-top {
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1;
-  filter: drop-shadow(0 0 4px currentColor);
+  filter: drop-shadow(0 0 5px currentColor);
 }
 
 .ini-carta-val {
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   font-weight: 900;
   color: #e8e8f0;
   line-height: 1;
@@ -761,12 +761,12 @@
 /* ── Botão confirmar ── */
 
 #battle-ini-btn-confirmar {
-  padding: 13px 52px;
-  border-radius: 10px;
+  padding: 15px 64px;
+  border-radius: 12px;
   border: 1px solid rgba(201,168,76,0.20);
   background: transparent;
   color: rgba(201,168,76,0.35);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 5px;
   cursor: not-allowed;
@@ -780,13 +780,13 @@
   background: linear-gradient(135deg, #c9a84c, #e0c060);
   color: #1a1000;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(201,168,76,0.30);
+  box-shadow: 0 4px 24px rgba(201,168,76,0.32);
 }
 
 #battle-ini-btn-confirmar.pronto:hover {
   background: linear-gradient(135deg, #e0c060, #f0d070);
-  box-shadow: 0 6px 28px rgba(201,168,76,0.45);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 32px rgba(201,168,76,0.48);
+  transform: translateY(-2px);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
