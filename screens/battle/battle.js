@@ -60,8 +60,13 @@ const BATTLE = (() => {
 
     const inimigo = INIMIGOS_TUTORIAL[etapaIdx] ?? INIMIGOS_TUTORIAL[0];
 
-    // PLAYER_STATE.personagens usa poolId como id — criarCombatente precisa de .id
-    const personagens = PLAYER_STATE.personagens.map(p => ({ ...p, id: p.poolId }));
+    // PLAYER_STATE.personagens usa poolId como id e naipe em português ('ouro', 'copas'…)
+    // Converte para o formato do battle: id = poolId, naipe = símbolo (♦ ♥ ♣ ♠)
+    const personagens = PLAYER_STATE.personagens.map(p => ({
+      ...p,
+      id:    p.poolId,
+      naipe: (NAIPE_VISUAL[p.naipe] ?? NAIPE_VISUAL[p.naipeAtivo])?.simbolo ?? null,
+    }));
 
     COMBAT.init(personagens, [inimigo]);
     _distribuirMao(10);
