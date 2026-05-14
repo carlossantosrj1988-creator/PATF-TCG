@@ -268,7 +268,12 @@ Boa sorte.`,
   // ── Entrar em uma etapa ───────────────────────────────────────────────────
 
   function entrarEtapa(idx) {
-    TUTORIAL_MAP.entrarEtapa(idx, () => concluirEtapa(idx));
+    TUTORIAL_MAP.entrarEtapa(
+      idx,
+      ETAPAS[idx].pontos,
+      () => concluirEtapa(idx),  // vitória
+      () => renderTela(),         // derrota — volta pro mapa, etapa repetível
+    );
   }
 
   // ── Placeholder de batalha ────────────────────────────────────────────────

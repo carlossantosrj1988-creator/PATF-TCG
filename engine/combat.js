@@ -60,9 +60,10 @@ const COMBAT = (() => {
       combatentes:       [],
       log:               [],
       // Deck compartilhado do time jogador (todos os personagens compartilham)
-      baralhoJogador:    [],
-      maoJogador:        [],
-      descarteJogador:   [],
+      baralhoJogador:        [],
+      maoJogador:            [],
+      descarteJogador:       [],
+      baralhoJogadorEsgotado: false,  // baralho do time acabou — condição de derrota
     };
   }
 
@@ -300,22 +301,24 @@ const COMBAT = (() => {
     return combatente.hp > 0;
   }
 
+  // O baralho não recicla o descarte. Esgotá-lo é condição de fim de batalha:
+  //   - time jogador sem cartas → derrota
+  //   - inimigo sem cartas      → esse inimigo é derrotado na hora
   function _comprarCarta(combatente, n) {
     if (combatente.lado === 'jogador') {
       if (BATTLE_STATE.baralhoJogador.length < n) {
-        BATTLE_STATE.baralhoJogador = DECK.embaralhar([...BATTLE_STATE.descarteJogador]);
-        BATTLE_STATE.descarteJogador = [];
+        BATTLE_STATE.baralhoJogadorEsgotado = true;
       }
       const { cartas, resto } = DECK.comprar(BATTLE_STATE.baralhoJogador, n);
-      BATTLE_STATE.maoJogador    = BATTLE_STATE.maoJogador.concat(cartas);
+      BATTLE_STATE.maoJogador     = BATTLE_STATE.maoJogador.concat(cartas);
       BATTLE_STATE.baralhoJogador = resto;
     } else {
       if (combatente.baralho.length < n) {
-        combatente.baralho = DECK.embaralhar([...combatente.descarte]);
-        combatente.descarte = [];
+        combatente.hp = 0;
+        _log('deck', `${combatente.nome} ficou sem cartas e foi derrotado`);
       }
       const { cartas, resto } = DECK.comprar(combatente.baralho, n);
-      combatente.mao    = combatente.mao.concat(cartas);
+      combatente.mao     = combatente.mao.concat(cartas);
       combatente.baralho = resto;
     }
   }
@@ -324,12 +327,16 @@ const COMBAT = (() => {
     BATTLE_STATE.log.push({ tipo, texto, dados });
   }
 
-  // Verifica se todos de um lado estão derrotados.
+  // Determina se a batalha terminou.
+  //   'derrota'  — time todo morto OU baralho do time esgotado
+  //   'vitoria'  — todos os inimigos derrotados (por morte ou por baralho esgotado)
+  //   null       — batalha continua
   function verificarFimDeBatalha() {
-    const jogadoresVivos = BATTLE_STATE.combatentes.filter(c => c.lado === 'jogador'  && _estaVivo(c));
-    const inimigosVivos  = BATTLE_STATE.combatentes.filter(c => c.lado === 'inimigo'  && _estaVivo(c));
-    if (jogadoresVivos.length === 0) return 'derrota';
-    if (inimigosVivos.length  === 0) return 'vitoria';
+    const jogadoresVivos = BATTLE_STATE.combatentes.filter(c => c.lado === 'jogador' && _estaVivo(c));
+    const inimigosVivos  = BATTLE_STATE.combatentes.filter(c => c.lado === 'inimigo' && _estaVivo(c));
+    if (jogadoresVivos.length === 0)        return 'derrota';
+    if (BATTLE_STATE.baralhoJogadorEsgotado) return 'derrota';
+    if (inimigosVivos.length  === 0)        return 'vitoria';
     return null;
   }
 

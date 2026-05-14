@@ -44,6 +44,8 @@ const BATTLE = (() => {
   // ══════════════════════════════════════════════════════════════════════════
 
   let _onVitoria         = null;
+  let _onDerrota         = null;
+  let _pontos            = 0;   // pontos da etapa — exibido na tela de fim
   let _aguardando        = false;  // evita double-fire no turno do inimigo
   let _estadoPainel      = 'etapa1'; // 'etapa1' | 'habilidades'
   let _passarConfirmando = false;
@@ -56,8 +58,11 @@ const BATTLE = (() => {
   // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
   const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
-  function init(etapaIdx, onVitoria) {
-    _onVitoria         = onVitoria;
+  // opts: { pontos, onVitoria, onDerrota }
+  function init(etapaIdx, opts = {}) {
+    _onVitoria         = opts.onVitoria ?? null;
+    _onDerrota         = opts.onDerrota ?? null;
+    _pontos            = opts.pontos    ?? 0;
     _aguardando        = false;
     _estadoPainel      = 'etapa1';
     _passarConfirmando = false;
@@ -316,6 +321,19 @@ const BATTLE = (() => {
   // ══════════════════════════════════════════════════════════════════════════
 
   function _renderizar() {
+    // Fim de batalha tem prioridade sobre tudo
+    let resultado = COMBAT.verificarFimDeBatalha();
+    if (resultado) { _fimDeBatalha(resultado); return; }
+
+    // Pula combatentes que morreram no meio do turno — corpo não tem rodada
+    let atual = COMBAT.combatenteAtual();
+    while (atual && atual.hp <= 0) {
+      COMBAT.avancarCombatente();
+      resultado = COMBAT.verificarFimDeBatalha();
+      if (resultado) { _fimDeBatalha(resultado); return; }
+      atual = COMBAT.combatenteAtual();
+    }
+
     let screen = document.getElementById('screen-battle');
     if (!screen) {
       screen = document.createElement('div');
@@ -333,7 +351,6 @@ const BATTLE = (() => {
     screen.appendChild(_criarBtnDebug());
 
     // Se o turno atual é do inimigo, agenda a ação automática
-    const atual = COMBAT.combatenteAtual();
     if (atual && atual.lado === 'inimigo' && !_aguardando) {
       _aguardando = true;
       setTimeout(_turnoInimigo, 900);
@@ -678,10 +695,64 @@ const BATTLE = (() => {
     _renderizar();
   }
 
+  // Botão de debug — atalho direto para a tela de vitória.
   function _vencer() {
+    _fimDeBatalha('vitoria');
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // FIM DE BATALHA — tela de resultado (vitória / derrota)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _fimDeBatalha(resultado) {
     const screen = document.getElementById('screen-battle');
-    if (screen) screen.style.display = 'none';
-    if (_onVitoria) _onVitoria();
+    if (!screen) return;
+    screen.innerHTML = '';
+    screen.style.display = 'block';
+
+    const ehVitoria = resultado === 'vitoria';
+    const jogadores = COMBAT.estado.combatentes.filter(c => c.lado === 'jogador');
+
+    const cards = jogadores.map(c => {
+      const cor    = _COR_INI[c.naipe] ?? '#888';
+      const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
+      const vivo   = c.hp > 0;
+      const hpPct  = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
+      return `
+        <div class="battle-fim-char${vivo ? '' : ' morto'}">
+          <div class="battle-fim-char-card" style="background:${bg};">
+            <span class="battle-fim-char-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+            <span class="battle-fim-char-nome">${c.nome}</span>
+          </div>
+          <div class="battle-fim-char-hp-bar">
+            <div class="battle-fim-char-hp-fill" style="width:${hpPct}%"></div>
+          </div>
+          <div class="battle-fim-char-hp-txt">${vivo ? `${c.hp}/${c.pvs}` : 'CAÍDO'}</div>
+        </div>`;
+    }).join('');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'battle-fim';
+    overlay.className = ehVitoria ? 'vitoria' : 'derrota';
+    overlay.innerHTML = `
+      <div id="battle-fim-bg"></div>
+      <div id="battle-fim-content">
+        <div id="battle-fim-titulo">${ehVitoria ? '⚔ VITÓRIA' : '💀 DERROTA'}</div>
+        <div id="battle-fim-chars">${cards}</div>
+        ${ehVitoria
+          ? `<div id="battle-fim-pontos">+${_pontos} PTS</div>`
+          : `<div id="battle-fim-sub">Seu time foi derrotado.</div>`}
+        <button id="battle-fim-btn">${ehVitoria ? 'CONTINUAR →' : '← VOLTAR AO MAPA'}</button>
+      </div>
+    `;
+    screen.appendChild(overlay);
+
+    overlay.querySelector('#battle-fim-btn').addEventListener('click', () => {
+      screen.style.display = 'none';
+      screen.innerHTML = '';
+      if (ehVitoria) { if (_onVitoria) _onVitoria(); }
+      else           { if (_onDerrota) _onDerrota(); }
+    });
   }
 
   // ══════════════════════════════════════════════════════════════════════════
