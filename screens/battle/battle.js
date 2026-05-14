@@ -65,11 +65,10 @@ const BATTLE = (() => {
 
     // PLAYER_STATE.personagens usa poolId como id e naipe em português ('ouro', 'copas'…)
     // Converte para o formato do battle: id = poolId, naipe = símbolo (♦ ♥ ♣ ♠)
-    const personagens = PLAYER_STATE.personagens.map(p => ({
-      ...p,
-      id:    p.poolId,
-        naipe: _NAIPE_SIM[p.naipe] ?? _NAIPE_SIM[p.naipeAtivo] ?? null,
-    }));
+    const personagens = PLAYER_STATE.personagens.map(p => {
+      const sim = _NAIPE_SIM[p.naipe] ?? _NAIPE_SIM[p.naipeAtivo] ?? null;
+      return { ...p, id: p.poolId, naipe: sim, naipeAtivo: sim };
+    });
 
     COMBAT.init(personagens, [inimigo]);
     _distribuirMao(10);
