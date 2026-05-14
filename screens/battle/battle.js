@@ -183,20 +183,44 @@ const BATTLE = (() => {
   // CAMPO
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Coordenadas JRPG (estilo MAA): posição absoluta em % do campo.
+  // Mais ao fundo (top menor) = escala menor (efeito de profundidade).
+  const JRPG_POS = {
+    jogador: [
+      { left: '24%', top: '25%', scale: 0.82 },
+      { left: '16%', top: '55%', scale: 0.92 },
+      { left: '28%', top: '82%', scale: 1.00 },
+    ],
+    inimigo: [
+      { left: '76%', top: '25%', scale: 0.82 },
+      { left: '84%', top: '55%', scale: 0.92 },
+      { left: '72%', top: '82%', scale: 1.00 },
+    ],
+  };
+
   function _criarCampo() {
     const campo = document.createElement('div');
     campo.id = 'battle-field';
+
+    // Glow central animado
+    const glow = document.createElement('div');
+    glow.className = 'battle-field-glow';
+    campo.appendChild(glow);
 
     const esq = document.createElement('div');
     esq.id = 'battle-field-left';
     esq.className = 'battle-field-lado';
 
-const dir = document.createElement('div');
+    const dir = document.createElement('div');
     dir.id = 'battle-field-right';
     dir.className = 'battle-field-lado';
 
+    // Índices separados por lado para mapear para JRPG_POS
+    let iJogador = 0, iInimigo = 0;
     for (const c of COMBAT.estado.combatentes) {
-      const slot = _criarCharSlot(c);
+      const isAtivo = COMBAT.combatenteAtual()?.id === c.id;
+      const idx     = c.lado === 'jogador' ? iJogador++ : iInimigo++;
+      const slot    = _criarCharSlot(c, idx, isAtivo);
       if (c.lado === 'jogador') esq.appendChild(slot);
       else                      dir.appendChild(slot);
     }
@@ -206,23 +230,40 @@ const dir = document.createElement('div');
     return campo;
   }
 
-  function _criarCharSlot(c) {
-    const { bg, borda } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
-    const hpPct = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
+  function _criarCharSlot(c, idx, isAtivo) {
+    const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
+    const hpPct  = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
+
+    // Cor do naipe para o símbolo
+    const corNaipe = {
+      '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8',
+    }[c.naipe] ?? '#c9a84c';
+
+    // Posição JRPG
+    const pos   = (JRPG_POS[c.lado] ?? JRPG_POS.inimigo)[idx]
+               ?? (JRPG_POS[c.lado] ?? JRPG_POS.inimigo).at(-1);
+    const scale = pos.scale;
 
     const slot = document.createElement('div');
-    slot.className = 'battle-char-slot';
+    slot.className = 'battle-char-slot' + (isAtivo ? ' ativo' : '');
     slot.dataset.id   = c.id;
     slot.dataset.lado = c.lado;
+    slot.style.left      = pos.left;
+    slot.style.top       = pos.top;
+    slot.style.zIndex    = idx + 1;
+    slot.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
     slot.innerHTML = `
-      <div class="battle-char-grad" style="background:${bg};border-color:${borda};">
-        <span class="battle-char-naipe">${c.naipe ?? '?'}</span>
+      <div class="battle-char-grad" style="background:${bg};">
+        <span class="battle-char-naipe" style="color:${corNaipe}">${c.naipe ?? '?'}</span>
+        <div class="battle-char-nome">${c.nome}</div>
       </div>
-      <div class="battle-char-nome">${c.nome}</div>
-      <div class="battle-char-hp-bar">
-        <div class="battle-char-hp-fill" style="width:${hpPct}%"></div>
+      <div class="battle-char-hp-row">
+        <div class="battle-char-hp-bar">
+          <div class="battle-char-hp-fill" style="width:${hpPct}%"></div>
+        </div>
+        <div class="battle-char-hp-txt">${c.hp}/${c.pvs}</div>
       </div>
-      <div class="battle-char-hp-txt">${c.hp} / ${c.pvs}</div>
     `;
     return slot;
   }
