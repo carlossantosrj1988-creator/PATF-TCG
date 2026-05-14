@@ -393,23 +393,46 @@ const STATUS = (() => {
     const icone      = tipo === 'habilidade' ? '⚔' : '◈';
     const tituloTipo = tipo === 'habilidade' ? `HABILIDADE ${slotIdx + 1}` : `PASSIVA ${slotIdx + 1}`;
 
-    // Resolve nome, descrição, cor e sublabel conforme a origem do slot
-    let nome, descricao, naipeCor, subLabel;
+    // Resolve dados, nome, descrição, cor e sublabel conforme a origem do slot
+    let dados, nome, descricao, naipeCor, subLabel;
     if (ehBasico) {
-      const hab = HABILIDADES.resolverHabilidade(slotValue);
-      nome      = hab ? hab.nome : '—';
-      descricao = hab && hab.descricao ? hab.descricao : 'Descrição em breve.';
-      subLabel  = hab ? `BÁSICA · ${hab.tipo}` : 'BÁSICA';
+      dados     = HABILIDADES.resolverHabilidade(slotValue);
+      nome      = dados ? dados.nome : '—';
+      descricao = dados && dados.descricao ? dados.descricao : 'Descrição em breve.';
+      subLabel  = dados ? `BÁSICA · ${dados.tipo}` : 'BÁSICA';
       naipeCor  = '#c9a84c';
     } else {
-      const no    = ATLAS_NOS.find(n => n.id === slotValue);
-      const dados = tipo === 'habilidade'
+      const no  = ATLAS_NOS.find(n => n.id === slotValue);
+      dados     = tipo === 'habilidade'
         ? HABILIDADES.getHabilidade(slotValue)
         : HABILIDADES.getPassiva(slotValue);
       nome      = dados && dados.nome ? dados.nome : (no ? no.label : '—');
       descricao = dados && dados.descricao ? dados.descricao : 'Descrição em breve.';
       subLabel  = no && no.naipe ? no.naipe.toUpperCase() : '';
       naipeCor  = no && no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
+    }
+
+    // Ficha técnica — só para habilidades (passivas têm outro formato)
+    let fichaHTML = '';
+    if (tipo === 'habilidade' && dados) {
+      const ALVO_LABEL = { unico: 'Alvo único', inimigos: 'Inimigos', aliados: 'Aliados', self: 'Si próprio', todos: 'Todos' };
+      const ACAO_LABEL = { N: 'Normal', R: 'Rápida', F: 'Furtiva', L: 'Lenta' };
+      const linhas = [
+        ['PODER',   dados.efeitoPuro ? 'EFEITO' : String(dados.poder ?? 0)],
+        ['TIPO',    dados.tipo || '—'],
+        ['ALVO',    ALVO_LABEL[dados.alvo] || dados.alvo || '—'],
+        ['TURNO',   dados.turno === 'nao' ? 'NÃO' : 'SIM'],
+        ['RECARGA', String(dados.recarga ?? 0)],
+        ['AÇÃO',    ACAO_LABEL[dados.acao] || dados.acao || '—'],
+      ];
+      fichaHTML = `
+        <div style="margin:4px 0 10px;padding:8px 14px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff06;text-align:left;">
+          ${linhas.map(([l, v]) => `
+            <div style="display:flex;justify-content:space-between;font-size:11px;line-height:1.95;">
+              <span style="color:#8899aa;letter-spacing:1px;">${l}</span>
+              <span style="color:#e8e8f0;font-weight:600;">${v}</span>
+            </div>`).join('')}
+        </div>`;
     }
 
     const avisoBasico = ehBasico
@@ -430,6 +453,7 @@ const STATUS = (() => {
         <div class="popup-detalhe-icone" style="color:${naipeCor}">${icone}</div>
         <div class="popup-detalhe-nome" style="color:${naipeCor}">${nome}</div>
         <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${subLabel}</div>
+        ${fichaHTML}
         <div class="popup-detalhe-desc">${descricao}</div>
         ${avisoBasico}
         <div class="popup-detalhe-acoes">
