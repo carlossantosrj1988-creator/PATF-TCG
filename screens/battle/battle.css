@@ -515,10 +515,10 @@
 
 /* ── Botão debug flutuante ── */
 
-#battle-btn-debug-vencer {
+#battle-btn-debug-vencer,
+#battle-btn-debug-perder {
   position: absolute;
   bottom: 188px;
-  left: 12px;
   padding: 3px 8px;
   background: transparent;
   border: 1px solid #cc444428;
@@ -532,7 +532,11 @@
   transition: color 0.12s, border-color 0.12s;
 }
 
-#battle-btn-debug-vencer:hover   { color: #cc4444aa; border-color: #cc444460; }
+#battle-btn-debug-vencer { left: 12px; }
+#battle-btn-debug-perder { left: 78px; }
+
+#battle-btn-debug-vencer:hover,
+#battle-btn-debug-perder:hover   { color: #cc4444aa; border-color: #cc444460; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    FASE DE INICIATIVA — tela de seleção de cartas
