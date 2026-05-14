@@ -13,7 +13,9 @@
 //     turno:      'sim'|'nao'        — disponível desde o 1º turno?
 //     recarga:    number            — rodadas de espera após uso
 //     acao:       'N'|'R'|'F'|'L'
-//     efeitoPuro: boolean           — habilidade sem dano
+//     efeitoPuro: boolean            — habilidade sem dano
+//     tags:       string[]           — efeitos que aplica (ex: 'amaciado'),
+//                                      ganchos para o sistema de buffs/debuffs
 //     descricao:  string
 //   }
 // Schema de uma passiva: { nome, gatilho, descricao }
@@ -39,6 +41,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
+      tags:       [],
       descricao:  'Jogue goblins suficientes em qualquer problema e ele há de sumir. No mínimo, vão sobrar menos goblins.',
     },
     defensivo: {
@@ -50,6 +53,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
+      tags:       [],
       descricao:  'Pela primeira vez na vida, Gra... sentiu um calorzinho gostoso por dentro.',
     },
     agil: {
@@ -61,6 +65,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
+      tags:       [],
       descricao:  'O conjunto de esferas de miz... mergulhou a mente dela no campo do pensamento, onde só as mais raras fagulhas de gênio podem ser colhidas.',
     },
     vigor: {
@@ -72,6 +77,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
+      tags:       [],
       descricao:  'Quer conhecer seu inimigo? Olhe para os seus pés enquanto o atropela. — Tah... da Wea...',
     },
   };
@@ -83,7 +89,22 @@ const HABILIDADES = (() => {
   // Indexadas pelo id do nó em ATLAS_NOS. Preenchidas conforme o catálogo
   // antigo for adaptado — ver game-design/06 e game-design/07.
 
-  const HABILIDADES_DATA = {};
+  const HABILIDADES_DATA = {
+    // ── Copas ────────────────────────────────────────────────────────────────
+    cop_h1_1: {                       // ex-ATACARRRR (Gorath ♥)
+      nome:       'Golpe Pesado',
+      poder:      4,
+      tipo:       'Corte e Contusão',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       ['amaciado'],
+      descricao:  'Aplica Amaciado.',
+    },
+  };
+
   const PASSIVAS_DATA    = {};
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -133,6 +154,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
+      tags:       [],
       descricao:  '',
       _placeholder: true,
     };
