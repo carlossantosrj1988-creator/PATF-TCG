@@ -70,18 +70,21 @@ Cada habilidade é descrita pelos campos (detalhe completo em `04_tags-de-habili
 
 ---
 
-## Habilidade Básica Universal
+## Habilidades Básicas
 
-Caso especial: **todo personagem nasce com a mesma habilidade básica**, independente de naipe.
+Cada arquétipo do `CHAR_POOL` (Vigor, Ofensivo, Defensivo, Ágil) nasce com **sua própria habilidade básica** equipada no slot de H1.
 
-- Não é específica de arquétipo — é o piso comum de qualquer build.
-- *Estrutura a confirmar:* se ocupa um slot via Atlas ou é concedida automaticamente fora da árvore.
+- Todas têm a mesma mecânica: poder 3, sem efeito, perfil básico. Muda só **nome, tipo e descrição**.
+- **Não estão no Atlas nem no mostruário** — são *starters*, não se compram.
+- **Via única:** ao trocar a básica por uma H1 comprada na árvore, ela some para sempre. O slot mostra um aviso antes da troca.
+- Existem para o tutorial ser jogável desde o começo.
+- Dados em `engine/habilidades.js` → `BASICOS` (indexado pelo id do arquétipo).
 
 ---
 
 ## Ordem de Trabalho
 
-1. **Definir a básica universal** — a primeira a ser criada
+1. **Definir as 4 básicas** — uma por arquétipo do `CHAR_POOL`
 2. **Esgotar o Fluxo A** — adaptar e renomear o catálogo antigo, distribuindo por naipe e categoria (H1 / H2 / H3 / Passivas)
 3. **Registrar** cada habilidade pronta em `engine/habilidades.js`
 4. **Religar** Status (popups, slots) e Batalha para lerem dos dados

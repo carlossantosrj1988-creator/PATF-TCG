@@ -105,6 +105,18 @@ const HABILIDADES = (() => {
     return PASSIVAS_DATA[id] ?? _esqueleto(id, 'passiva');
   }
 
+  // Resolve o valor de um slot de habilidade para o dado da habilidade.
+  //   null            → null
+  //   'basico:<arq>'  → básica do arquétipo
+  //   '<id do nó>'    → habilidade da árvore
+  function resolverHabilidade(slotValue) {
+    if (!slotValue) return null;
+    if (typeof slotValue === 'string' && slotValue.startsWith('basico:')) {
+      return getBasico(slotValue.slice(7));
+    }
+    return getHabilidade(slotValue);
+  }
+
   function _esqueleto(id, tipo) {
     const no = (typeof ATLAS_NOS !== 'undefined')
       ? ATLAS_NOS.find(n => n.id === id)
@@ -133,6 +145,7 @@ const HABILIDADES = (() => {
     getBasico,
     getHabilidade,
     getPassiva,
+    resolverHabilidade,
   };
 
 })();

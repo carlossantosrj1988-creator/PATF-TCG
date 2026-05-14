@@ -214,14 +214,16 @@ const STATUS = (() => {
     const passivas    = p.passivas    || [null, null];
 
     let habHTML = '<div class="status-dir-label">HABILIDADES</div>';
-    habilidades.forEach((id, i) => {
-      const no = id ? ATLAS_NOS.find(n => n.id === id) : null;
+    habilidades.forEach((slotVal, i) => {
+      const ehBasico = typeof slotVal === 'string' && slotVal.startsWith('basico:');
+      const no       = (slotVal && !ehBasico) ? ATLAS_NOS.find(n => n.id === slotVal) : null;
+      const hab      = HABILIDADES.resolverHabilidade(slotVal);
       const naipeCor = no?.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
       habHTML += `
-        <div class="status-slot-habilidade ${no ? 'ocupado' : ''}" data-slot="${i}" data-tipo="habilidade">
-          ${no
-            ? `<div class="slot-h-nome" style="color:${naipeCor}">${no.label}</div>
-               <div class="slot-h-tipo" style="color:${naipeCor}88">${no.naipe ? no.naipe.toUpperCase() : ''}</div>`
+        <div class="status-slot-habilidade ${hab ? 'ocupado' : ''}" data-slot="${i}" data-tipo="habilidade">
+          ${hab
+            ? `<div class="slot-h-nome" style="color:${naipeCor}">${hab.nome}</div>
+               <div class="slot-h-tipo" style="color:${naipeCor}88">${ehBasico ? 'BÁSICA' : (no?.naipe ? no.naipe.toUpperCase() : '')}</div>`
             : `<div class="slot-h-nome">HAB ${i + 1}</div>`
           }
         </div>
@@ -249,8 +251,7 @@ const STATUS = (() => {
         const slots   = tipo === 'habilidade' ? habilidades : passivas;
         const equipadoId = slots[slotIdx];
         if (equipadoId) {
-          const no = ATLAS_NOS.find(n => n.id === equipadoId);
-          if (no) abrirPopupDetalhe(tipo, slotIdx, no);
+          abrirPopupDetalhe(tipo, slotIdx, equipadoId);
         } else {
           abrirPopupSlot(tipo, slotIdx);
         }
@@ -379,14 +380,47 @@ const STATUS = (() => {
     });
   }
 
-  function abrirPopupDetalhe(tipo, slotIdx, no) {
+  function abrirPopupDetalhe(tipo, slotIdx, slotValue) {
     fecharPopup();
     const screen = document.getElementById('screen-status');
     const p = PLAYER_STATE.personagens[charIdx];
     const slotsAtuais = tipo === 'habilidade' ? p.habilidades : p.passivas;
-    const naipeCor = no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
-    const icone    = tipo === 'habilidade' ? '⚔' : '◈';
+
+    const ehBasico = tipo === 'habilidade'
+      && typeof slotValue === 'string'
+      && slotValue.startsWith('basico:');
+
+    const icone      = tipo === 'habilidade' ? '⚔' : '◈';
     const tituloTipo = tipo === 'habilidade' ? `HABILIDADE ${slotIdx + 1}` : `PASSIVA ${slotIdx + 1}`;
+
+    // Resolve nome, descrição, cor e sublabel conforme a origem do slot
+    let nome, descricao, naipeCor, subLabel;
+    if (ehBasico) {
+      const hab = HABILIDADES.resolverHabilidade(slotValue);
+      nome      = hab ? hab.nome : '—';
+      descricao = hab && hab.descricao ? hab.descricao : 'Descrição em breve.';
+      subLabel  = hab ? `BÁSICA · ${hab.tipo}` : 'BÁSICA';
+      naipeCor  = '#c9a84c';
+    } else {
+      const no    = ATLAS_NOS.find(n => n.id === slotValue);
+      const dados = tipo === 'habilidade'
+        ? HABILIDADES.getHabilidade(slotValue)
+        : HABILIDADES.getPassiva(slotValue);
+      nome      = dados && dados.nome ? dados.nome : (no ? no.label : '—');
+      descricao = dados && dados.descricao ? dados.descricao : 'Descrição em breve.';
+      subLabel  = no && no.naipe ? no.naipe.toUpperCase() : '';
+      naipeCor  = no && no.naipe ? NAIPES_DATA[no.naipe].cor : '#c9a84c';
+    }
+
+    const avisoBasico = ehBasico
+      ? `<div style="margin:10px 0;padding:10px 12px;border:1px solid #c9a84c55;border-radius:8px;background:#c9a84c12;font-size:11px;color:#e0c060;line-height:1.5;">
+           ⚠ Habilidade inicial. Se você trocá-la, ela <strong>some para sempre</strong> — não volta para o mostruário.
+         </div>`
+      : '';
+
+    const botaoAcao = ehBasico
+      ? `<button id="status-popup-trocar" style="color:#c9a84c;border-color:#c9a84c66;">TROCAR</button>`
+      : `<button id="status-popup-remover">REMOVER</button>`;
 
     const overlay = document.createElement('div');
     overlay.id = 'status-popup-overlay';
@@ -394,11 +428,12 @@ const STATUS = (() => {
       <div id="status-popup-box">
         <div id="status-popup-titulo">${tituloTipo}</div>
         <div class="popup-detalhe-icone" style="color:${naipeCor}">${icone}</div>
-        <div class="popup-detalhe-nome" style="color:${naipeCor}">${no.label}</div>
-        <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
-        <div class="popup-detalhe-desc">Descrição em breve.</div>
+        <div class="popup-detalhe-nome" style="color:${naipeCor}">${nome}</div>
+        <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${subLabel}</div>
+        <div class="popup-detalhe-desc">${descricao}</div>
+        ${avisoBasico}
         <div class="popup-detalhe-acoes">
-          <button id="status-popup-remover">REMOVER</button>
+          ${botaoAcao}
           <button id="status-popup-fechar">FECHAR</button>
         </div>
       </div>
@@ -407,12 +442,20 @@ const STATUS = (() => {
 
     overlay.addEventListener('click', e => { if (e.target === overlay) fecharPopup(); });
     overlay.querySelector('#status-popup-fechar').addEventListener('click', fecharPopup);
-    overlay.querySelector('#status-popup-remover').addEventListener('click', () => {
-      slotsAtuais[slotIdx] = null;
-      if (typeof salvarEstado === 'function') salvarEstado();
-      fecharPopup();
-      document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
-    });
+
+    if (ehBasico) {
+      overlay.querySelector('#status-popup-trocar').addEventListener('click', () => {
+        fecharPopup();
+        abrirPopupSlot(tipo, slotIdx);
+      });
+    } else {
+      overlay.querySelector('#status-popup-remover').addEventListener('click', () => {
+        slotsAtuais[slotIdx] = null;
+        if (typeof salvarEstado === 'function') salvarEstado();
+        fecharPopup();
+        document.getElementById('status-painel-dir').replaceWith(renderPainelDir());
+      });
+    }
   }
 
   // ── Navegação ─────────────────────────────────────────────────────────────

@@ -43,7 +43,8 @@ function criarPersonagem(poolId, nome) {
     naipeSecundario: null,
     naipeAtivo:      null,
     passivas:        [null, null],
-    habilidades:     [null, null, null],
+    // Slot de H1 nasce com a habilidade básica do arquétipo (starter).
+    habilidades:     [`basico:${base.id}`, null, null],
     atlas:           {},
   };
 }
