@@ -7,7 +7,7 @@
 // Schema de uma habilidade:
 //   {
 //     nome:       string
-//     poder:      number            — somado no cálculo de dano
+//     poder:      number | null      — somado no dano; null em efeito puro
 //     tipo:       string            — categoria (Concussivo, Sagrado, ...)
 //     alvo:       'unico'|'inimigos'|'aliados'|'self'|'todos'
 //     turno:      'sim'|'nao'        — disponível desde o 1º turno?
@@ -165,6 +165,18 @@ const HABILIDADES = (() => {
       efeitoPuro: false,
       tags:       [],
       descricao:  'Aplica Resfriamento.',
+    },
+    cop_h3_1: {                       // ex-Agora é Sério (Gorath ♥)
+      nome:       'Ódio',
+      poder:      null,
+      tipo:       'Melhoria',
+      alvo:       'self',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: true,
+      tags:       [],
+      descricao:  'Cada ataque recebido aumenta o poder da sua próxima habilidade de dano em 4. Dura até a próxima rodada.',
     },
   };
 
