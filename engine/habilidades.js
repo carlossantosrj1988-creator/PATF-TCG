@@ -153,6 +153,20 @@ const HABILIDADES = (() => {
       tags:       [],
       descricao:  'Ataque múltiplo — 2 golpes de poder 2.',
     },
+    cop_skaar: {                      // ex-SKAAAAARRRRR!!! (Gorath ♥)
+      naipe:      'copas',
+      categoria:  2,                  // posição no catálogo antigo (2ª skill)
+      nome:       'SKAAAAARRRRR!!!',   // placeholder — renomear
+      poder:      4,
+      tipo:       'Invocação',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'R',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Ação Rápida — invoca uma criatura que ataca o inimigo.',
+    },
   };
 
   // ══════════════════════════════════════════════════════════════════════════
