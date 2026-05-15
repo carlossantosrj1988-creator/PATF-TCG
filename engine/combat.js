@@ -69,11 +69,15 @@ const COMBAT = (() => {
 
   function criarCombatente(origem, lado, idExtra = '') {
     const baralho = lado === 'inimigo' ? DECK.embaralhar(DECK.criarBaralho()) : [];
-    return {
+    const c = {
       id:              `${lado}_${origem.id ?? idExtra}`,
       nome:            origem.nome ?? origem.label ?? '???',
       lado,
       naipe:           origem.naipeAtivo ?? origem.naipe ?? null,
+      // Stats base imutáveis + ativos (modificáveis por passivas/buffs).
+      atqBase:         origem.atq,
+      defBase:         origem.def,
+      incBase:         origem.inc,
       atq:             origem.atq,
       def:             origem.def,
       inc:             origem.inc,
@@ -97,6 +101,8 @@ const COMBAT = (() => {
       acaoExtra:       false,
       perdeuRodada:    false,
     };
+    PASSIVAS.recalcularStats(c);
+    return c;
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────
@@ -209,6 +215,7 @@ const COMBAT = (() => {
   // Compra 1 carta. Efeitos de "passar a rodada" resolvem na Etapa 5.
   function passarRodada(combatente) {
     _comprarCarta(combatente, 1);
+    PASSIVAS.disparar('ao_passar_rodada', combatente);
     _log('acao', `${combatente.nome} passou a rodada e comprou 1 carta`);
   }
 
@@ -223,6 +230,7 @@ const COMBAT = (() => {
 
     if (danoReal > 0) {
       alvo.hp = Math.max(0, alvo.hp - danoReal);
+      PASSIVAS.recalcularStats(alvo);   // passivas baseadas em HP reavaliam
       _log('dano', `${atacante.nome} causou ${danoReal} de dano em ${alvo.nome}`, { dano, defesa, danoReal });
     }
 
@@ -283,12 +291,15 @@ const COMBAT = (() => {
   }
 
   function _aplicarDoT(combatente) {
+    let tickou = false;
     for (const e of combatente.efeitos) {
       if (e.tipo === 'dot' && e.gatilho === 'inicio_rodada') {
         combatente.hp = Math.max(0, combatente.hp - e.valor);
+        tickou = true;
         _log('dot', `${combatente.nome} sofreu ${e.valor} de DoT`);
       }
     }
+    if (tickou) PASSIVAS.recalcularStats(combatente);
   }
 
   function _aplicarEfeito(combatente, efeito) {
