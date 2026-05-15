@@ -13,13 +13,14 @@ const TUTORIAL_MAP = (() => {
     { tipo: 'boss',        rotulo: 'ETAPA 5 / 5', iniIdx: 4 },
   ];
 
-  // Labels de inimigos — mesma ordem que INIMIGOS_TUTORIAL em battle.js
-  const _INIMIGOS = [
-    { label: 'Goblin',    naipe: '♣' },
-    { label: 'Orc',       naipe: '♠' },
-    { label: 'Bruxa',     naipe: '♥' },
-    { label: 'Cavaleiro', naipe: '♦' },
-    { label: 'Dragão',    naipe: '♠' },
+  // Sequência de inimigos do tutorial — ids do registry MONSTROS.
+  // Tutorial-map é o dono da sequência; battle.js só recebe o inimigo resolvido.
+  const TUTORIAL_INIMIGOS_IDS = [
+    'cria_t1_a',  // Etapa 1 — Cria de Sanguessuga
+    'vespa_a',    // Etapa 2 — Enxame de Vespas
+    'elfo_a',     // Etapa 3 — Elfo do Culto Sangrento (etapa de recuperação)
+    'urso_t2_a',  // Etapa 4 — Urso Polar das Cavernas
+    'boss_t1',    // Etapa 5 — Rainha Sanguessuga (boss)
   ];
 
   const _COR_NAIPE  = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
@@ -51,9 +52,14 @@ const TUTORIAL_MAP = (() => {
       p.hpAtual = salvo ? salvo.cur : p.pvs;
     }
 
+    const inimigoId = TUTORIAL_INIMIGOS_IDS[etapaIdx] ?? TUTORIAL_INIMIGOS_IDS[0];
+    const inimigo   = MONSTROS.get(inimigoId);
+
     _mostrarTransicao(etapaIdx, () => {
-      BATTLE.init(etapaIdx, {
+      BATTLE.init({
+        etapaIdx,
         pontos,
+        inimigos: inimigo ? [inimigo] : [],
         onVitoria: () => {
           _salvarHP();
           _afterBattle(etapaIdx, onConcluida);
@@ -112,9 +118,12 @@ const TUTORIAL_MAP = (() => {
   // ── Tela de transição: jogadores VS inimigo (fade-in → display → fade-out) ─
 
   function _mostrarTransicao(etapaIdx, onFim) {
-    const cfg     = _CONFIG[etapaIdx];
-    const inimigo = _INIMIGOS[cfg.iniIdx];
-    const corIni  = _COR_NAIPE[inimigo.naipe] ?? '#aaa';
+    const cfg       = _CONFIG[etapaIdx];
+    const inimigoId = TUTORIAL_INIMIGOS_IDS[cfg.iniIdx];
+    const inimigo   = MONSTROS.get(inimigoId);
+    const inimigoNaipe = inimigo?.naipe ?? null;
+    const inimigoNome  = inimigo?.nome  ?? '???';
+    const corIni       = _COR_NAIPE[inimigoNaipe] ?? '#aaa';
 
     const tipoLabel =
       cfg.tipo === 'boss'        ? '👑 BOSS FINAL' :
@@ -137,8 +146,8 @@ const TUTORIAL_MAP = (() => {
           <div id="tmap-trans-vs">VS</div>
           <div id="tmap-trans-time-inimigo">
             <div class="tmap-trans-char-card inimigo">
-              <span class="tmap-card-naipe" style="color:${corIni}">${inimigo.naipe}</span>
-              <span class="tmap-card-nome">${inimigo.label}</span>
+              <span class="tmap-card-naipe" style="color:${corIni}">${inimigoNaipe ?? '?'}</span>
+              <span class="tmap-card-nome">${inimigoNome}</span>
             </div>
           </div>
         </div>

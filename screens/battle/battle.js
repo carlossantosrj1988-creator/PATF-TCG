@@ -16,11 +16,8 @@
 const BATTLE = (() => {
 
   // ══════════════════════════════════════════════════════════════════════════
-  // INIMIGOS DE TESTE
+  // VISUAL POR NAIPE
   // ══════════════════════════════════════════════════════════════════════════
-  //
-  // Arquivo definitivo de monstros vem em sessão futura (enemy-ai/monstros.js).
-  // Por enquanto cada etapa do tutorial tem um inimigo placeholder.
 
   // Gradiente e borda por naipe — aplicados inline nos slots do campo e na topbar
   const GRAD_NAIPE = {
@@ -30,14 +27,6 @@ const BATTLE = (() => {
     '♠': { bg: 'linear-gradient(160deg, #080e28, #030510)', borda: '#1a2a4a55' },
   };
   const GRAD_NEUTRO = { bg: 'linear-gradient(160deg, #1e1e2e, #0d0d18)', borda: '#ffffff18' };
-
-  const INIMIGOS_TUTORIAL = [
-    { id: 'goblin',    label: 'Goblin',    naipe: '♣', atq: 4, def: 2, inc: 2, pvs: 40  },
-    { id: 'orc',       label: 'Orc',       naipe: '♠', atq: 5, def: 3, inc: 1, pvs: 60  },
-    { id: 'bruxa',     label: 'Bruxa',     naipe: '♥', atq: 6, def: 2, inc: 3, pvs: 50  },
-    { id: 'cavaleiro', label: 'Cavaleiro', naipe: '♦', atq: 5, def: 4, inc: 2, pvs: 70  },
-    { id: 'dragao',    label: 'Dragão',    naipe: '♠', atq: 8, def: 5, inc: 3, pvs: 100 },
-  ];
 
   // ══════════════════════════════════════════════════════════════════════════
   // ESTADO
@@ -63,27 +52,27 @@ const BATTLE = (() => {
   // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
   const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
-  // opts: { pontos, onVitoria, onDerrota }
-  function init(etapaIdx, opts = {}) {
+  // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota }
+  function init(opts = {}) {
     _onVitoria         = opts.onVitoria ?? null;
     _onDerrota         = opts.onDerrota ?? null;
     _pontos            = opts.pontos    ?? 0;
     _aguardando        = false;
     _estadoPainel      = 'etapa1';
     _passarConfirmando = false;
-    _etapaAtual        = etapaIdx;
+    _etapaAtual        = opts.etapaIdx ?? 0;
     _habSel            = null;
     _cartaSel          = null;
     _cartaSelIdx       = -1;
 
-    const inimigo = INIMIGOS_TUTORIAL[etapaIdx] ?? INIMIGOS_TUTORIAL[0];
+    const inimigos = opts.inimigos ?? [];
 
     const personagens = PLAYER_STATE.personagens.map(p => {
       const sim = _NAIPE_SIM[p.naipe] ?? _NAIPE_SIM[p.naipeAtivo] ?? null;
       return { ...p, id: p.poolId, naipe: sim, naipeAtivo: sim };
     });
 
-    COMBAT.init(personagens, [inimigo]);
+    COMBAT.init(personagens, inimigos);
     _distribuirMao(10);
     _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
   }
@@ -263,10 +252,10 @@ const BATTLE = (() => {
       alocadas.set(charId, pick.carta);
     }
 
-    // Inimigo normal: carta de menor valor. Boss (etapa 5): carta de maior valor.
-    const ehBoss = _etapaAtual >= 4;
+    // Boss pega carta de maior valor; demais (mob/miniboss) pegam a menor.
     for (const c of estado.combatentes.filter(x => x.lado === 'inimigo')) {
       if (!c.mao.length) continue;
+      const ehBoss = c.tipo === 'boss';
       let melhorIdx = 0;
       c.mao.forEach((carta, i) => {
         const v = DECK.valorIniciativa(carta);
@@ -896,7 +885,7 @@ const BATTLE = (() => {
     return frag;
   }
 
-  // Inimigo passa a rodada automaticamente (IA real vem em sessão futura).
+  // Inimigo age via IA — script registrado em enemy-ai/ia.js (ou script default).
   function _turnoInimigo() {
     const c = COMBAT.combatenteAtual();
     if (!c || c.lado !== 'inimigo') {
@@ -904,7 +893,7 @@ const BATTLE = (() => {
       return;
     }
     COMBAT.iniciarRodada(c);
-    COMBAT.passarRodada(c);
+    IA.executar(c);                  // decide e executa (ou passa) via script
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
     _aguardando        = false;
