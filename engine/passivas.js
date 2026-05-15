@@ -36,14 +36,25 @@ const PASSIVAS = (() => {
     }
   }
 
-  // Reseta stats para os valores base e roda todas as passivas de
-  // gatilho 'recalc_stats'. Chamado no init e quando algo afeta o
-  // cálculo (mudança de HP, fim de buff, etc).
+  // Reseta stats para os valores base, aplica modificadores de buffs/debuffs
+  // persistentes em c.efeitos, e roda as passivas de gatilho 'recalc_stats'.
+  // Chamado no init e quando algo afeta o cálculo (mudança de HP, fim de
+  // buff, etc).
   function recalcularStats(combatente) {
     if (!combatente) return;
     combatente.atq = combatente.atqBase;
     combatente.def = combatente.defBase;
     combatente.inc = combatente.incBase;
+
+    // Buffs/debuffs persistentes em c.efeitos modificam stats enquanto ativos
+    for (const e of combatente.efeitos ?? []) {
+      if (!e || (e.duracao !== undefined && e.duracao <= 0)) continue;
+      if (e.tipo === 'buff_atq')   combatente.atq += e.valor;
+      if (e.tipo === 'debuff_atq') combatente.atq -= e.valor;
+      if (e.tipo === 'buff_def')   combatente.def += e.valor;
+      if (e.tipo === 'debuff_def') combatente.def -= e.valor;
+    }
+
     disparar('recalc_stats', combatente);
   }
 
