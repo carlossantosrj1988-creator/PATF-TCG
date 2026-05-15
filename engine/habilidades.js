@@ -118,6 +118,18 @@ const HABILIDADES = (() => {
       acumuloMax: 2,
       descricao:  'Acúmulo de Poder: ao passar a rodada, ganha 1 carga. Com 1 carga, ignora a armadura do alvo. Com 2 cargas, atinge todos os inimigos.',
     },
+    cop_h1_3: {                       // ex-Lança do Poder (Thalion ♥)
+      nome:       'Perfurar',
+      poder:      6,
+      tipo:       'Perfurante',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Estocada perfurante de dano puro.',
+    },
   };
 
   const PASSIVAS_DATA    = {};
