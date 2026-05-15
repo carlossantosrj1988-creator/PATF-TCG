@@ -215,6 +215,34 @@ const HABILIDADES = (() => {
       tags:       [],
       descricao:  'Ação Rápida — invoca uma criatura que ataca o inimigo.',
     },
+    cop_roupas: {                     // ex-Roupas Encantadas (Tyren ♥)
+      naipe:      'copas',
+      categoria:  3,                  // posição no catálogo antigo (3ª skill)
+      nome:       'Roupas Encantadas', // placeholder — renomear
+      poder:      null,
+      tipo:       'Melhoria',
+      alvo:       'self',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'R',
+      efeitoPuro: true,
+      tags:       [],
+      descricao:  'Três modos (regeneração / proteção / contra-ataque). Ação Rápida.',
+    },
+    cop_salamandra: {                 // ex-Espírito da Salamandra (Caeryn ♥)
+      naipe:      'copas',
+      categoria:  3,                  // posição no catálogo antigo (3ª skill)
+      nome:       'Espírito da Salamandra', // placeholder — renomear
+      poder:      '2/2',
+      tipo:       'Invocação',
+      alvo:       'inimigos',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Derreter Armadura em todos os inimigos.',
+    },
   };
 
   // ══════════════════════════════════════════════════════════════════════════
