@@ -16,8 +16,6 @@
 //     efeitoPuro: boolean            — habilidade sem dano
 //     tags:       string[]           — efeitos que aplica (ex: 'amaciado'),
 //                                      ganchos para o sistema de buffs/debuffs
-//     acumuloMax: number (opcional)  — habilidade de acúmulo: máximo de
-//                                      cargas ganhas ao passar a rodada
 //     descricao:  string
 //   }
 // Schema de uma passiva: { nome, gatilho, descricao }
@@ -115,7 +113,7 @@ const HABILIDADES = (() => {
       acao:       'N',
       efeitoPuro: false,
       tags:       [],
-      descricao:  'Corte amplo de dano puro.',
+      descricao:  'Ao causar dano, ganha 1 de DEF até o início de sua próxima rodada. Não acumulativo.',
     },
     cop_h1_3: {                       // ex-Lança do Poder (Thalion ♥)
       nome:       'Perfurar',
@@ -198,6 +196,16 @@ const HABILIDADES = (() => {
       gatilho:   'Ao passar a rodada',
       descricao: 'Ao passar a rodada, ganha 1 carga de poder (máx 2). Sua próxima habilidade de dano gasta as cargas: com 1 carga, ignora a armadura do alvo; com 2 cargas, o alvo passa a ser todos os inimigos.',
     },
+    cop_p2: {                         // ex-Defender os Fracos (Gorath ♥)
+      nome:      'Defender os Fracos',
+      gatilho:   'Aliado é atacado',
+      descricao: 'Defende aliados de ataques de alvo único que não sejam Rápidos nem Furtivos.',
+    },
+    cop_p3: {                         // ex-Sou Invencível (Gorath ♥)
+      nome:      'Sou Invencível',
+      gatilho:   'Permanente',
+      descricao: 'Ganha +1 de DEF a cada 10% de vida perdida.',
+    },
   };
 
   // ── Pendentes — Tier 2 ────────────────────────────────────────────────────
@@ -276,6 +284,13 @@ const HABILIDADES = (() => {
       nome:       'Patrulheiro de Combate',  // placeholder — renomear
       gatilho:    '',
       descricao:  'A equipe ganha +10 de vida para cada Patrulheiro aliado.',
+    },
+    cop_emboscada: {                  // ex-Emboscada Florestal (Caeryn ♥)
+      naipe:      'copas',
+      tipo:       'passiva',
+      nome:       'Emboscada Florestal',  // placeholder — renomear
+      gatilho:    '',
+      descricao:  'Ativada 1x no início do combate: 20 de dano em todos os inimigos, ignora DEF. (Requer 3 Patrulheiros na equipe.)',
     },
   };
 
