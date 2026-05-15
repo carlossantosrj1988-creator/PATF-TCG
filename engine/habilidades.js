@@ -178,6 +178,18 @@ const HABILIDADES = (() => {
       tags:       [],
       descricao:  'Cada ataque recebido aumenta o poder da sua próxima habilidade de dano em 4. Dura até a próxima rodada.',
     },
+    cop_h3_2: {                       // ex-Espírito do Urso Polar (Thalion ♥)
+      nome:       'Espírito do Urso Polar',
+      poder:      2,
+      tipo:       'Invocação',
+      alvo:       'inimigos',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Ganha +3 de poder para cada debuff ativo no alvo.',
+    },
   };
 
   const PASSIVAS_DATA    = {};
