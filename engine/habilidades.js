@@ -130,6 +130,18 @@ const HABILIDADES = (() => {
       tags:       [],
       descricao:  'Estocada perfurante de dano puro.',
     },
+    cop_h2_1: {                       // ex-Avanço Escudo (Tyren ♥)
+      nome:       'Avanço Escudo',
+      poder:      3,
+      tipo:       'Corporal',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Exposto.',
+    },
   };
 
   const PASSIVAS_DATA    = {};
