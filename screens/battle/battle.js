@@ -608,21 +608,21 @@ const BATTLE = (() => {
       return painel;
     }
 
-    // ── Sel habilidade: lista as 3 habilidades equipadas (clica uma) ──
+    // ── Sel habilidade: lista as 3 habilidades (esq) + mão de cartas (dir, view) ──
     if (_estadoPainel === 'sel_habilidade') {
       painel.appendChild(_criarPainelSelHab(atual));
-      painel.appendChild(_criarPainelInfo('Escolha uma habilidade.'));
+      painel.appendChild(_criarPainelMaoView(atual, false));
       return painel;
     }
 
-    // ── Sel carta: habilidade fixada (esq) + mão (dir, clica uma) ──
+    // ── Sel carta: ficha da habilidade (esq) + mão de cartas (dir, clicável) ──
     if (_estadoPainel === 'sel_carta') {
-      painel.appendChild(_criarPainelResumo(_habSel, null));
-      painel.appendChild(_criarPainelSelCarta(atual));
+      painel.appendChild(_criarPainelHabDetalhe(_habSel));
+      painel.appendChild(_criarPainelMaoView(atual, true));
       return painel;
     }
 
-    // ── Sel alvo: aguarda clique num personagem do campo ──
+    // ── Sel alvo: resumo da seleção + aguarda clique num personagem do campo ──
     if (_estadoPainel === 'sel_alvo') {
       painel.appendChild(_criarPainelResumo(_habSel, _cartaSel));
       painel.appendChild(_criarPainelInfo('Toque num alvo no campo.'));
@@ -673,8 +673,8 @@ const BATTLE = (() => {
     return div;
   }
 
-  // ── Painel direito: mão de cartas (selecionável) ──
-  function _criarPainelSelCarta(combatente) {
+  // ── Painel direito: mão de cartas (clicável ou somente visual) ──
+  function _criarPainelMaoView(combatente, clicavel) {
     const div = document.createElement('div');
     div.id = 'battle-panel-cartas';
 
@@ -686,22 +686,67 @@ const BATTLE = (() => {
 
     mao.forEach((carta, i) => {
       const el = document.createElement('button');
-      el.className = 'battle-carta';
+      el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel');
       el.dataset.naipe = carta.naipe ?? '';
       el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
-      el.addEventListener('click', () => {
-        _cartaSel    = carta;
-        _cartaSelIdx = i;
-        const alvosAuto = _calcularAlvosAuto(_habSel, combatente);
-        if (alvosAuto) {
-          _executarAcao(alvosAuto);
-        } else {
-          _estadoPainel = 'sel_alvo';
-          _renderizar();
-        }
-      });
+      if (clicavel) {
+        el.addEventListener('click', () => {
+          _cartaSel    = carta;
+          _cartaSelIdx = i;
+          const alvosAuto = _calcularAlvosAuto(_habSel, combatente);
+          if (alvosAuto) {
+            _executarAcao(alvosAuto);
+          } else {
+            _estadoPainel = 'sel_alvo';
+            _renderizar();
+          }
+        });
+      } else {
+        el.disabled = true;
+      }
       div.appendChild(el);
     });
+
+    return div;
+  }
+
+  // ── Painel esquerdo: ficha completa da habilidade selecionada + ← VOLTAR ──
+  function _criarPainelHabDetalhe(hab) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+    div.classList.add('detalhe');
+
+    const ALVO_LABEL = { unico: 'Único', inimigos: 'Inimigos', aliados: 'Aliados', self: 'Si próprio', todos: 'Todos' };
+    const ACAO_LABEL = { N: 'Normal', R: 'Rápida', F: 'Furtiva', L: 'Lenta' };
+
+    const poderTxt = hab.efeitoPuro ? 'EFEITO' : (hab.poder ?? 0);
+    const alvoTxt  = ALVO_LABEL[hab.alvo] || hab.alvo || '—';
+    const acaoTxt  = ACAO_LABEL[hab.acao] || hab.acao || '—';
+    const recTxt   = hab.recarga ?? 0;
+    const turnoTxt = hab.turno === 'nao' ? 'NÃO' : 'SIM';
+
+    div.innerHTML = `
+      <div class="battle-hab-detalhe-nome">${hab.nome}</div>
+      <div class="battle-hab-detalhe-ficha">
+        <span><b>PODER</b> ${poderTxt}</span>
+        <span><b>TIPO</b> ${hab.tipo || '—'}</span>
+        <span><b>ALVO</b> ${alvoTxt}</span>
+        <span><b>TURNO</b> ${turnoTxt}</span>
+        <span><b>RECARGA</b> ${recTxt}</span>
+        <span><b>AÇÃO</b> ${acaoTxt}</span>
+      </div>
+      <div class="battle-hab-detalhe-desc">${hab.descricao || '—'}</div>
+    `;
+
+    const voltar = document.createElement('button');
+    voltar.className   = 'battle-btn-voltar';
+    voltar.textContent = '← VOLTAR';
+    voltar.addEventListener('click', () => {
+      _habSel       = null;
+      _estadoPainel = 'sel_habilidade';
+      _renderizar();
+    });
+    div.appendChild(voltar);
 
     return div;
   }
@@ -728,14 +773,10 @@ const BATTLE = (() => {
     voltar.className   = 'battle-btn-voltar';
     voltar.textContent = '← VOLTAR';
     voltar.addEventListener('click', () => {
-      if (_estadoPainel === 'sel_alvo') {
-        _cartaSel    = null;
-        _cartaSelIdx = -1;
-        _estadoPainel = 'sel_carta';
-      } else if (_estadoPainel === 'sel_carta') {
-        _habSel = null;
-        _estadoPainel = 'sel_habilidade';
-      }
+      // Resumo é usado só em sel_alvo — volta pra sel_carta liberando a carta
+      _cartaSel     = null;
+      _cartaSelIdx  = -1;
+      _estadoPainel = 'sel_carta';
       _renderizar();
     });
     div.appendChild(voltar);
