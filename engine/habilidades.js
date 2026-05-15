@@ -255,6 +255,22 @@ const HABILIDADES = (() => {
       tags:       [],
       descricao:  'Aplica Derreter Armadura em todos os inimigos.',
     },
+    // Passivas "Patrulheiro de Combate" — conceito mantido, interligadas
+    // entre si; vão para Tier 2.
+    cop_patrulheiro_cae: {            // ex-Patrulheiro de Combate (Caeryn ♥)
+      naipe:      'copas',
+      tipo:       'passiva',
+      nome:       'Patrulheiro de Combate',  // placeholder — renomear
+      gatilho:    '',
+      descricao:  'Aliados ganham +1 DEF para cada Patrulheiro aliado.',
+    },
+    cop_patrulheiro_tha: {            // ex-Patrulheiro de Combate (Thalion ♥)
+      naipe:      'copas',
+      tipo:       'passiva',
+      nome:       'Patrulheiro de Combate',  // placeholder — renomear
+      gatilho:    '',
+      descricao:  'A equipe ganha +10 de vida para cada Patrulheiro aliado.',
+    },
   };
 
   // ══════════════════════════════════════════════════════════════════════════
