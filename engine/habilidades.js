@@ -122,6 +122,27 @@ const HABILIDADES = (() => {
 
   const PASSIVAS_DATA    = {};
 
+  // ── Pendentes — Tier 2 ────────────────────────────────────────────────────
+  // Habilidades marcadas para Tier 2. O Atlas só tem Tier 1 por enquanto,
+  // então ficam aqui até a estrutura de T2 existir. Nome novo e nó definitivo
+  // a definir; dados preliminares vindos do catálogo antigo.
+  const PENDENTE_T2 = {
+    cop_espada_poder: {               // ex-Espada do Poder* (Caeryn ♥)
+      naipe:      'copas',
+      categoria:  1,                  // posição no catálogo antigo (1ª skill)
+      nome:       'Espada do Poder',  // placeholder — renomear
+      poder:      '2/2',
+      tipo:       'Cortante',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Ataque múltiplo — 2 golpes de poder 2.',
+    },
+  };
+
   // ══════════════════════════════════════════════════════════════════════════
   // LOOKUPS
   // ══════════════════════════════════════════════════════════════════════════
@@ -179,6 +200,7 @@ const HABILIDADES = (() => {
     BASICOS,
     HABILIDADES_DATA,
     PASSIVAS_DATA,
+    PENDENTE_T2,
     getBasico,
     getHabilidade,
     getPassiva,
