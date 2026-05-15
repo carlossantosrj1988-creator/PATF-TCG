@@ -344,11 +344,9 @@
 .battle-char-hp-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.4s ease;
+  background: #55cc88;  /* fallback — JS sobrescreve com cor dinâmica por HP% */
+  transition: width 0.4s ease, background 0.3s;
 }
-
-.battle-char-slot[data-lado="jogador"] .battle-char-hp-fill { background: #55cc88; }
-.battle-char-slot[data-lado="inimigo"] .battle-char-hp-fill { background: #cc5555; }
 
 .battle-char-hp-txt {
   font-size: 7px;
@@ -356,6 +354,96 @@
   text-align: center;
   padding-top: 2px;
   letter-spacing: 0.5px;
+}
+
+/* Faixa de stats — ATQ · DEF · HP. Indicador up/down por modificação. */
+.battle-char-stats {
+  width: 66px;
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 1px 0;
+  gap: 2px;
+}
+
+.bcs-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.bcs-l {
+  font-size: 6px;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.bcs-v {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ddd;
+  line-height: 1.2;
+}
+
+.bcs-v.up   { color: #55cc88; }
+.bcs-v.down { color: #cc5555; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FLUXO DE USO DE HABILIDADE — resumo da seleção + alvo clicável no campo
+══════════════════════════════════════════════════════════════════════════ */
+
+/* Habilidade em recarga — desabilitada */
+.battle-btn-hab.em-recarga,
+.battle-btn-hab:disabled {
+  color: #ffffff25;
+  border-color: #ffffff10;
+  cursor: default;
+  background: transparent;
+}
+.battle-btn-hab.em-recarga:hover,
+.battle-btn-hab:disabled:hover {
+  background: transparent;
+  border-color: #ffffff10;
+}
+
+/* Linha do resumo no painel esquerdo (sel_carta / sel_alvo) */
+.battle-resumo-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #ffffff10;
+}
+.battle-resumo-linha:last-of-type { border-bottom: none; }
+
+.battle-resumo-l {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #66778888;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.battle-resumo-v {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: 1px;
+}
+
+/* Slot do personagem clicável como alvo */
+.battle-char-slot.selecionavel { cursor: pointer; }
+.battle-char-slot.selecionavel .battle-char-grad {
+  border-color: rgba(204,68,68,0.85);
+  animation: alvo-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes alvo-pulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(204,68,68,0.40), inset 0 0 8px rgba(204,68,68,0.10); }
+  50%      { box-shadow: 0 0 24px rgba(204,68,68,0.75), inset 0 0 14px rgba(204,68,68,0.20); }
 }
 
 /* Slot ativo (turno) — borda dourada pulsando */
@@ -478,6 +566,7 @@
   flex-shrink: 0;
   width: 72px;
   height: 104px;
+  padding: 0;
   background: #16162a;
   border: 1px solid #ffffff18;
   border-radius: 8px;
@@ -485,6 +574,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-family: inherit;
   transition: transform 0.12s, border-color 0.12s;
 }
 

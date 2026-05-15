@@ -69,22 +69,27 @@ const COMBAT = (() => {
 
   function criarCombatente(origem, lado, idExtra = '') {
     const baralho = lado === 'inimigo' ? DECK.embaralhar(DECK.criarBaralho()) : [];
-    return {
+    const c = {
       id:              `${lado}_${origem.id ?? idExtra}`,
       nome:            origem.nome ?? origem.label ?? '???',
       lado,
       naipe:           origem.naipeAtivo ?? origem.naipe ?? null,
+      // Stats base imutáveis + ativos (modificáveis por passivas/buffs).
+      atqBase:         origem.atq,
+      defBase:         origem.def,
+      incBase:         origem.inc,
       atq:             origem.atq,
       def:             origem.def,
       inc:             origem.inc,
       pvs:             origem.pvs,
       hp:              origem.hpAtual ?? origem.pvs,
       // Slots resolvidos para os dados da habilidade — o combate registra
-      // o que está equipado em cada slot (não só o id).
+      // o que está equipado em cada slot (não só o id). Atrela _id pra
+      // o registry de efeitos intrínsecos poder localizar handlers.
       habilidades:     origem.habilidades
         ? origem.habilidades.map(s => {
             const d = HABILIDADES.resolverHabilidade(s);
-            return d ? { ...d } : null;
+            return d ? { ...d, _id: s } : null;
           })
         : [],
       passivas:        origem.passivas    ? [...origem.passivas]    : [],
@@ -97,6 +102,8 @@ const COMBAT = (() => {
       acaoExtra:       false,
       perdeuRodada:    false,
     };
+    PASSIVAS.recalcularStats(c);
+    return c;
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────
@@ -192,9 +199,11 @@ const COMBAT = (() => {
   }
 
   // Etapa 0 (Início da rodada) — roda antes das 5 etapas.
-  // Deduz cooldowns/buffs/debuffs em 1 e aplica DoT.
+  // Deduz cooldowns/buffs/debuffs em 1, recalcula stats (refletindo
+  // buffs que expiraram) e aplica DoT.
   function iniciarRodada(combatente) {
     _deduzirEfeitos(combatente);
+    PASSIVAS.recalcularStats(combatente);
     _aplicarDoT(combatente);
   }
 
@@ -209,6 +218,7 @@ const COMBAT = (() => {
   // Compra 1 carta. Efeitos de "passar a rodada" resolvem na Etapa 5.
   function passarRodada(combatente) {
     _comprarCarta(combatente, 1);
+    PASSIVAS.disparar('ao_passar_rodada', combatente);
     _log('acao', `${combatente.nome} passou a rodada e comprou 1 carta`);
   }
 
@@ -223,6 +233,7 @@ const COMBAT = (() => {
 
     if (danoReal > 0) {
       alvo.hp = Math.max(0, alvo.hp - danoReal);
+      PASSIVAS.recalcularStats(alvo);   // passivas baseadas em HP reavaliam
       _log('dano', `${atacante.nome} causou ${danoReal} de dano em ${alvo.nome}`, { dano, defesa, danoReal });
     }
 
@@ -230,6 +241,92 @@ const COMBAT = (() => {
       danoReal,
       causouDano: danoReal > 0,  // gatilho para efeitos condicionais
     };
+  }
+
+  // ── Resolver ação (uso de habilidade) ──────────────────────────────────────
+  // Orquestra um uso de habilidade end-to-end:
+  //   1. Consome a carta da mão (jogador → maoJogador, inimigo → mao do c)
+  //   2. Dispara efeito 'ao_usar' da habilidade
+  //   3. Para cada alvo:
+  //      a. Dispara 'aliado_atacado' nos aliados do alvo (pode redirecionar
+  //         o defensor — ex: Defender os Fracos)
+  //      b. Modifica poder via 'modificar_poder' (ex: Espírito do Urso Polar)
+  //      c. Resolve dano via etapa3_resolucaoDano
+  //      d. Se sofreu dano com 'odio_bonus' ativo, acumula +4 (Ódio)
+  //      e. Dispara 'ao_causar_dano' (efeito intrínseco + passiva) e
+  //         'ao_sofrer_dano' (passiva no alvo)
+  // Não avança turno — quem chama (battle.js) faz etapa5 + avancarCombatente.
+  function resolverAcao(atacante, hab, cartaIdx, alvos) {
+    if (!atacante || !hab || !Array.isArray(alvos) || alvos.length === 0) return null;
+
+    // 1. Consome carta
+    let carta;
+    if (atacante.lado === 'jogador') {
+      carta = BATTLE_STATE.maoJogador.splice(cartaIdx, 1)[0];
+      if (carta) BATTLE_STATE.descarteJogador.push(carta);
+    } else {
+      carta = atacante.mao.splice(cartaIdx, 1)[0];
+      if (carta) atacante.descarte.push(carta);
+    }
+    if (!carta) return null;
+
+    // Aplica recarga (cd +1: a habilidade salta o turno atual e espera N rodadas)
+    if (hab.recarga > 0 && hab._id) {
+      atacante.cooldowns[hab._id] = hab.recarga + 1;
+    }
+
+    // 2. Efeito 'ao_usar' (ex: Ódio marca odio_bonus)
+    EFEITOS_HABILIDADES.disparar(hab, 'ao_usar', atacante, { alvos, carta });
+
+    // 3. Poder efetivo — gasta bônus acumulados (ex: Ódio)
+    let poderEfetivo = hab.poder ?? 0;
+    if (!hab.efeitoPuro) {
+      const odio = atacante.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
+      if (odio && odio.valor > 0) {
+        poderEfetivo += odio.valor;
+        odio.valor = 0;
+      }
+    }
+
+    // 4. Resolve por alvo
+    for (const alvo of alvos) {
+      if (!alvo || alvo.hp <= 0) continue;
+
+      // Defender os Fracos: aliados do alvo podem interceptar
+      const evIntercept = {
+        alvo: hab.alvo, acao: hab.acao,
+        atacante, alvoOriginal: alvo, defensor: null,
+      };
+      for (const c of BATTLE_STATE.combatentes) {
+        if (c.lado === alvo.lado && c !== alvo && _estaVivo(c)) {
+          PASSIVAS.disparar('aliado_atacado', c, evIntercept);
+        }
+      }
+      const alvoReal = evIntercept.defensor ?? alvo;
+
+      // Modificador de poder por efeito da habilidade (ex: Urso Polar)
+      const evPoder = { alvo: alvoReal, bonusPoder: 0 };
+      EFEITOS_HABILIDADES.disparar(hab, 'modificar_poder', atacante, evPoder);
+      const poderFinal = poderEfetivo + evPoder.bonusPoder;
+
+      // Dano
+      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, null);
+
+      // Acumula odio_bonus se o alvo estava em estado de Ódio ao sofrer dano
+      if (resultado.causouDano) {
+        const odioAlvo = alvoReal.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
+        if (odioAlvo) odioAlvo.valor += 4;
+      }
+
+      // Gatilhos: efeito intrínseco + passivas
+      EFEITOS_HABILIDADES.disparar(hab, 'ao_causar_dano', atacante, { alvo: alvoReal, ...resultado });
+      if (resultado.causouDano) {
+        PASSIVAS.disparar('ao_causar_dano', atacante, { alvo: alvoReal, ...resultado });
+        PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...resultado });
+      }
+    }
+
+    return { ok: true };
   }
 
   // Etapa 4 — Verifica se há ação extra (ação rápida ou rodada extra).
@@ -283,12 +380,15 @@ const COMBAT = (() => {
   }
 
   function _aplicarDoT(combatente) {
+    let tickou = false;
     for (const e of combatente.efeitos) {
       if (e.tipo === 'dot' && e.gatilho === 'inicio_rodada') {
         combatente.hp = Math.max(0, combatente.hp - e.valor);
+        tickou = true;
         _log('dot', `${combatente.nome} sofreu ${e.valor} de DoT`);
       }
     }
+    if (tickou) PASSIVAS.recalcularStats(combatente);
   }
 
   function _aplicarEfeito(combatente, efeito) {
@@ -365,6 +465,7 @@ const COMBAT = (() => {
     etapa1_verificacoes,
     passarRodada,
     etapa3_resolucaoDano,
+    resolverAcao,
     etapa4_acaoExtra,
     etapa5_fimRodada,
     avancarCombatente,
