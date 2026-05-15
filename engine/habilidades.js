@@ -102,7 +102,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
-      tags:       ['amaciado'],
+      tags:       [],
       descricao:  'Aplica Amaciado.',
     },
     cop_h1_2: {                       // ex-Avanço Espada (Tyren ♥)
@@ -141,6 +141,18 @@ const HABILIDADES = (() => {
       efeitoPuro: false,
       tags:       [],
       descricao:  'Aplica Exposto.',
+    },
+    cop_h2_2: {                       // ex-Corte Flamejante (Caeryn ♥)
+      nome:       'Corte Flamejante',
+      poder:      3,
+      tipo:       'Fogo',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Queimadura.',
     },
   };
 
