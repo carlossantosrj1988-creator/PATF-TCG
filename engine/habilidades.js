@@ -7,7 +7,7 @@
 // Schema de uma habilidade:
 //   {
 //     nome:       string
-//     poder:      number            — somado no cálculo de dano
+//     poder:      number | null      — somado no dano; null em efeito puro
 //     tipo:       string            — categoria (Concussivo, Sagrado, ...)
 //     alvo:       'unico'|'inimigos'|'aliados'|'self'|'todos'
 //     turno:      'sim'|'nao'        — disponível desde o 1º turno?
@@ -102,12 +102,12 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
-      tags:       ['amaciado'],
+      tags:       [],
       descricao:  'Aplica Amaciado.',
     },
     cop_h1_2: {                       // ex-Avanço Espada (Tyren ♥)
       nome:       'Golpe Amplo',
-      poder:      3,
+      poder:      4,
       tipo:       'Cortante',
       alvo:       'unico',
       turno:      'sim',
@@ -115,12 +115,169 @@ const HABILIDADES = (() => {
       acao:       'N',
       efeitoPuro: false,
       tags:       [],
-      acumuloMax: 2,
-      descricao:  'Acúmulo de Poder: ao passar a rodada, ganha 1 carga. Com 1 carga, ignora a armadura do alvo. Com 2 cargas, atinge todos os inimigos.',
+      descricao:  'Corte amplo de dano puro.',
+    },
+    cop_h1_3: {                       // ex-Lança do Poder (Thalion ♥)
+      nome:       'Perfurar',
+      poder:      6,
+      tipo:       'Perfurante',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Estocada perfurante de dano puro.',
+    },
+    cop_h2_1: {                       // ex-Avanço Escudo (Tyren ♥)
+      nome:       'Avanço Escudo',
+      poder:      3,
+      tipo:       'Corporal',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Exposto.',
+    },
+    cop_h2_2: {                       // ex-Corte Flamejante (Caeryn ♥)
+      nome:       'Corte Flamejante',
+      poder:      3,
+      tipo:       'Fogo',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Queimadura.',
+    },
+    cop_h2_3: {                       // ex-Corte Gélido (Thalion ♥)
+      nome:       'Pancada Glacial',
+      poder:      3,
+      tipo:       'Frio',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Resfriamento.',
+    },
+    cop_h3_1: {                       // ex-Agora é Sério (Gorath ♥)
+      nome:       'Ódio',
+      poder:      null,
+      tipo:       'Melhoria',
+      alvo:       'self',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: true,
+      tags:       [],
+      descricao:  'Cada ataque recebido aumenta o poder da sua próxima habilidade de dano em 4. Dura até a próxima rodada.',
+    },
+    cop_h3_2: {                       // ex-Espírito do Urso Polar (Thalion ♥)
+      nome:       'Espírito do Urso Polar',
+      poder:      2,
+      tipo:       'Invocação',
+      alvo:       'inimigos',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Ganha +3 de poder para cada debuff ativo no alvo.',
     },
   };
 
-  const PASSIVAS_DATA    = {};
+  const PASSIVAS_DATA    = {
+    // ── Copas ────────────────────────────────────────────────────────────────
+    cop_p1: {                         // ex-Acúmulo de Poder (Tyren ♥) — versão genérica
+      nome:      'Acúmulo de Poder',
+      gatilho:   'Ao passar a rodada',
+      descricao: 'Ao passar a rodada, ganha 1 carga de poder (máx 2). Sua próxima habilidade de dano gasta as cargas: com 1 carga, ignora a armadura do alvo; com 2 cargas, o alvo passa a ser todos os inimigos.',
+    },
+  };
+
+  // ── Pendentes — Tier 2 ────────────────────────────────────────────────────
+  // Habilidades marcadas para Tier 2. O Atlas só tem Tier 1 por enquanto,
+  // então ficam aqui até a estrutura de T2 existir. Nome novo e nó definitivo
+  // a definir; dados preliminares vindos do catálogo antigo.
+  const PENDENTE_T2 = {
+    cop_espada_poder: {               // ex-Espada do Poder* (Caeryn ♥)
+      naipe:      'copas',
+      categoria:  1,                  // posição no catálogo antigo (1ª skill)
+      nome:       'Espada do Poder',  // placeholder — renomear
+      poder:      '2/2',
+      tipo:       'Cortante',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Ataque múltiplo — 2 golpes de poder 2.',
+    },
+    cop_skaar: {                      // ex-SKAAAAARRRRR!!! (Gorath ♥)
+      naipe:      'copas',
+      categoria:  2,                  // posição no catálogo antigo (2ª skill)
+      nome:       'SKAAAAARRRRR!!!',   // placeholder — renomear
+      poder:      4,
+      tipo:       'Invocação',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'R',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Ação Rápida — invoca uma criatura que ataca o inimigo.',
+    },
+    cop_roupas: {                     // ex-Roupas Encantadas (Tyren ♥)
+      naipe:      'copas',
+      categoria:  3,                  // posição no catálogo antigo (3ª skill)
+      nome:       'Roupas Encantadas', // placeholder — renomear
+      poder:      null,
+      tipo:       'Melhoria',
+      alvo:       'self',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'R',
+      efeitoPuro: true,
+      tags:       [],
+      descricao:  'Três modos (regeneração / proteção / contra-ataque). Ação Rápida.',
+    },
+    cop_salamandra: {                 // ex-Espírito da Salamandra (Caeryn ♥)
+      naipe:      'copas',
+      categoria:  3,                  // posição no catálogo antigo (3ª skill)
+      nome:       'Espírito da Salamandra', // placeholder — renomear
+      poder:      '2/2',
+      tipo:       'Invocação',
+      alvo:       'inimigos',
+      turno:      'sim',
+      recarga:    1,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      descricao:  'Aplica Derreter Armadura em todos os inimigos.',
+    },
+    // Passivas "Patrulheiro de Combate" — conceito mantido, interligadas
+    // entre si; vão para Tier 2.
+    cop_patrulheiro_cae: {            // ex-Patrulheiro de Combate (Caeryn ♥)
+      naipe:      'copas',
+      tipo:       'passiva',
+      nome:       'Patrulheiro de Combate',  // placeholder — renomear
+      gatilho:    '',
+      descricao:  'Aliados ganham +1 DEF para cada Patrulheiro aliado.',
+    },
+    cop_patrulheiro_tha: {            // ex-Patrulheiro de Combate (Thalion ♥)
+      naipe:      'copas',
+      tipo:       'passiva',
+      nome:       'Patrulheiro de Combate',  // placeholder — renomear
+      gatilho:    '',
+      descricao:  'A equipe ganha +10 de vida para cada Patrulheiro aliado.',
+    },
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   // LOOKUPS
@@ -179,6 +336,7 @@ const HABILIDADES = (() => {
     BASICOS,
     HABILIDADES_DATA,
     PASSIVAS_DATA,
+    PENDENTE_T2,
     getBasico,
     getHabilidade,
     getPassiva,
