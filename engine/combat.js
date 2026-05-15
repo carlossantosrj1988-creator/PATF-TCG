@@ -84,7 +84,10 @@ const COMBAT = (() => {
       habilidades:     origem.habilidades
         ? origem.habilidades.map(s => {
             const d = HABILIDADES.resolverHabilidade(s);
-            return d ? { ...d } : null;
+            if (!d) return null;
+            const copia = { ...d };
+            if (copia.acumuloMax) copia.stacks = 0;  // habilidade de acúmulo
+            return copia;
           })
         : [],
       passivas:        origem.passivas    ? [...origem.passivas]    : [],
@@ -209,7 +212,17 @@ const COMBAT = (() => {
   // Compra 1 carta. Efeitos de "passar a rodada" resolvem na Etapa 5.
   function passarRodada(combatente) {
     _comprarCarta(combatente, 1);
+    _carregarAcumulo(combatente);
     _log('acao', `${combatente.nome} passou a rodada e comprou 1 carta`);
+  }
+
+  // Habilidades de acúmulo ganham 1 carga ao passar a rodada (até o máximo).
+  function _carregarAcumulo(combatente) {
+    for (const hab of combatente.habilidades) {
+      if (hab && hab.acumuloMax) {
+        hab.stacks = Math.min((hab.stacks ?? 0) + 1, hab.acumuloMax);
+      }
+    }
   }
 
   // Etapa 3 — Resolução de dano.

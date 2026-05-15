@@ -16,6 +16,8 @@
 //     efeitoPuro: boolean            — habilidade sem dano
 //     tags:       string[]           — efeitos que aplica (ex: 'amaciado'),
 //                                      ganchos para o sistema de buffs/debuffs
+//     acumuloMax: number (opcional)  — habilidade de acúmulo: máximo de
+//                                      cargas ganhas ao passar a rodada
 //     descricao:  string
 //   }
 // Schema de uma passiva: { nome, gatilho, descricao }
@@ -102,6 +104,19 @@ const HABILIDADES = (() => {
       efeitoPuro: false,
       tags:       ['amaciado'],
       descricao:  'Aplica Amaciado.',
+    },
+    cop_h1_2: {                       // ex-Avanço Espada (Tyren ♥)
+      nome:       'Golpe Amplo',
+      poder:      3,
+      tipo:       'Cortante',
+      alvo:       'unico',
+      turno:      'sim',
+      recarga:    0,
+      acao:       'N',
+      efeitoPuro: false,
+      tags:       [],
+      acumuloMax: 2,
+      descricao:  'Acúmulo de Poder: ao passar a rodada, ganha 1 carga. Com 1 carga, ignora a armadura do alvo. Com 2 cargas, atinge todos os inimigos.',
     },
   };
 
