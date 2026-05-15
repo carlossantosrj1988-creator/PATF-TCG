@@ -350,8 +350,6 @@ const BATTLE = (() => {
     }
     screen.innerHTML = '';
     screen.style.display = 'block';
-    _estadoPainel      = 'etapa1';
-    _passarConfirmando = false;
 
     screen.appendChild(_criarTopbar());
     screen.appendChild(_criarCampo());
@@ -830,7 +828,12 @@ const BATTLE = (() => {
     COMBAT.passarRodada(c);
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
-    _aguardando = false;
+    _aguardando        = false;
+    _estadoPainel      = 'etapa1';
+    _passarConfirmando = false;
+    _habSel            = null;
+    _cartaSel          = null;
+    _cartaSelIdx       = -1;
     _renderizar();
   }
 
@@ -863,7 +866,9 @@ const BATTLE = (() => {
     COMBAT.passarRodada(c);
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
-    _aguardando = false;
+    _aguardando        = false;
+    _estadoPainel      = 'etapa1';
+    _passarConfirmando = false;
     _renderizar();
   }
 
