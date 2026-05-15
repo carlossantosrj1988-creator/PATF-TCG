@@ -196,6 +196,16 @@ const HABILIDADES = (() => {
       gatilho:   'Ao passar a rodada',
       descricao: 'Ao passar a rodada, ganha 1 carga de poder (máx 2). Sua próxima habilidade de dano gasta as cargas: com 1 carga, ignora a armadura do alvo; com 2 cargas, o alvo passa a ser todos os inimigos.',
     },
+    cop_p2: {                         // ex-Defender os Fracos (Gorath ♥)
+      nome:      'Defender os Fracos',
+      gatilho:   'Aliado é atacado',
+      descricao: 'Defende aliados de ataques de alvo único que não sejam Rápidos nem Furtivos.',
+    },
+    cop_p3: {                         // ex-Sou Invencível (Gorath ♥)
+      nome:      'Sou Invencível',
+      gatilho:   'Permanente',
+      descricao: 'Ganha +1 de DEF a cada 10% de vida perdida.',
+    },
   };
 
   // ── Pendentes — Tier 2 ────────────────────────────────────────────────────
