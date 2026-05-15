@@ -495,6 +495,7 @@ const BATTLE = (() => {
   function _criarCharSlot(c, idx, isAtivo) {
     const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
     const hpPct  = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
+    const hpCor  = hpPct > 60 ? '#55cc88' : hpPct > 30 ? '#e8c050' : '#cc5555';
 
     // Cor do naipe para o símbolo
     const corNaipe = {
@@ -515,6 +516,10 @@ const BATTLE = (() => {
     slot.style.zIndex    = idx + 1;
     slot.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
+    // Indicador up/down nos stats: comparar atual vs base imutável
+    const atqCls = c.atq > (c.atqBase ?? c.atq) ? 'up' : c.atq < (c.atqBase ?? c.atq) ? 'down' : '';
+    const defCls = c.def > (c.defBase ?? c.def) ? 'up' : c.def < (c.defBase ?? c.def) ? 'down' : '';
+
     slot.innerHTML = `
       <div class="battle-char-grad" style="background:${bg};">
         <span class="battle-char-naipe" style="color:${corNaipe}">${c.naipe ?? '?'}</span>
@@ -522,9 +527,14 @@ const BATTLE = (() => {
       </div>
       <div class="battle-char-hp-row">
         <div class="battle-char-hp-bar">
-          <div class="battle-char-hp-fill" style="width:${hpPct}%"></div>
+          <div class="battle-char-hp-fill" style="width:${hpPct}%;background:${hpCor}"></div>
         </div>
         <div class="battle-char-hp-txt">${c.hp}/${c.pvs}</div>
+      </div>
+      <div class="battle-char-stats">
+        <div class="bcs-item"><span class="bcs-l">ATQ</span><span class="bcs-v ${atqCls}">${c.atq}</span></div>
+        <div class="bcs-item"><span class="bcs-l">DEF</span><span class="bcs-v ${defCls}">${c.def}</span></div>
+        <div class="bcs-item"><span class="bcs-l">HP</span><span class="bcs-v">${c.hp}</span></div>
       </div>
     `;
     return slot;

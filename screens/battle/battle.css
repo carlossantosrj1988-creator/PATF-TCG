@@ -344,11 +344,9 @@
 .battle-char-hp-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.4s ease;
+  background: #55cc88;  /* fallback — JS sobrescreve com cor dinâmica por HP% */
+  transition: width 0.4s ease, background 0.3s;
 }
-
-.battle-char-slot[data-lado="jogador"] .battle-char-hp-fill { background: #55cc88; }
-.battle-char-slot[data-lado="inimigo"] .battle-char-hp-fill { background: #cc5555; }
 
 .battle-char-hp-txt {
   font-size: 7px;
@@ -357,6 +355,41 @@
   padding-top: 2px;
   letter-spacing: 0.5px;
 }
+
+/* Faixa de stats — ATQ · DEF · HP. Indicador up/down por modificação. */
+.battle-char-stats {
+  width: 66px;
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 1px 0;
+  gap: 2px;
+}
+
+.bcs-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.bcs-l {
+  font-size: 6px;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.bcs-v {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ddd;
+  line-height: 1.2;
+}
+
+.bcs-v.up   { color: #55cc88; }
+.bcs-v.down { color: #cc5555; }
 
 /* Slot ativo (turno) — borda dourada pulsando */
 .battle-char-slot.ativo .battle-char-grad {
