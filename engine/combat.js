@@ -73,6 +73,7 @@ const COMBAT = (() => {
       id:              `${lado}_${origem.id ?? idExtra}`,
       nome:            origem.nome ?? origem.label ?? '???',
       lado,
+      tipo:            origem.tipo ?? null,  // 'mob' | 'miniboss' | 'boss' | null (jogador)
       naipe:           origem.naipeAtivo ?? origem.naipe ?? null,
       // Stats base imutáveis + ativos (modificáveis por passivas/buffs).
       atqBase:         origem.atq,
@@ -83,13 +84,16 @@ const COMBAT = (() => {
       inc:             origem.inc,
       pvs:             origem.pvs,
       hp:              origem.hpAtual ?? origem.pvs,
-      // Slots resolvidos para os dados da habilidade — o combate registra
-      // o que está equipado em cada slot (não só o id). Atrela _id pra
-      // o registry de efeitos intrínsecos poder localizar handlers.
+      // Slots resolvidos. Aceita string id (lookup HABILIDADES) ou objeto
+      // já resolvido (vindo de MONSTROS.get pra inimigos).
       habilidades:     origem.habilidades
         ? origem.habilidades.map(s => {
-            const d = HABILIDADES.resolverHabilidade(s);
-            return d ? { ...d, _id: s } : null;
+            if (!s) return null;
+            if (typeof s === 'string') {
+              const d = HABILIDADES.resolverHabilidade(s);
+              return d ? { ...d, _id: s } : null;
+            }
+            return { ...s };  // pré-resolvido, _id já setado
           })
         : [],
       passivas:        origem.passivas    ? [...origem.passivas]    : [],
