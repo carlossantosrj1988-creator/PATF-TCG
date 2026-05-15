@@ -107,7 +107,7 @@ const HABILIDADES = (() => {
     },
     cop_h1_2: {                       // ex-Avanço Espada (Tyren ♥)
       nome:       'Golpe Amplo',
-      poder:      3,
+      poder:      4,
       tipo:       'Cortante',
       alvo:       'unico',
       turno:      'sim',
@@ -115,8 +115,7 @@ const HABILIDADES = (() => {
       acao:       'N',
       efeitoPuro: false,
       tags:       [],
-      acumuloMax: 2,
-      descricao:  'Acúmulo de Poder: ao passar a rodada, ganha 1 carga. Com 1 carga, ignora a armadura do alvo. Com 2 cargas, atinge todos os inimigos.',
+      descricao:  'Corte amplo de dano puro.',
     },
     cop_h1_3: {                       // ex-Lança do Poder (Thalion ♥)
       nome:       'Perfurar',
@@ -192,7 +191,14 @@ const HABILIDADES = (() => {
     },
   };
 
-  const PASSIVAS_DATA    = {};
+  const PASSIVAS_DATA    = {
+    // ── Copas ────────────────────────────────────────────────────────────────
+    cop_p1: {                         // ex-Acúmulo de Poder (Tyren ♥) — versão genérica
+      nome:      'Acúmulo de Poder',
+      gatilho:   'Ao passar a rodada',
+      descricao: 'Ao passar a rodada, ganha 1 carga de poder (máx 2). Sua próxima habilidade de dano gasta as cargas: com 1 carga, ignora a armadura do alvo; com 2 cargas, o alvo passa a ser todos os inimigos.',
+    },
+  };
 
   // ── Pendentes — Tier 2 ────────────────────────────────────────────────────
   // Habilidades marcadas para Tier 2. O Atlas só tem Tier 1 por enquanto,
