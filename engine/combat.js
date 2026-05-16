@@ -285,7 +285,7 @@ const COMBAT = (() => {
     // 2. Efeito 'ao_usar' (ex: Ódio marca odio_bonus)
     EFEITOS_HABILIDADES.disparar(hab, 'ao_usar', atacante, { alvos, carta });
 
-    // 3. Poder efetivo — gasta bônus acumulados (ex: Ódio)
+    // 3. Poder efetivo — gasta bônus acumulados (ex: Ódio, Rei)
     let poderEfetivo = hab.poder ?? 0;
     if (!hab.efeitoPuro) {
       const odio = atacante.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
@@ -293,7 +293,14 @@ const COMBAT = (() => {
         poderEfetivo += odio.valor;
         odio.valor = 0;
       }
+      const rei = atacante.efeitos.find(e => e.tipo === 'rei_atq_bonus' && e.duracao > 0);
+      if (rei) {
+        poderEfetivo += rei.valor;
+        rei.duracao = 0;          // consumido
+      }
     }
+    // Limpa efeitos expirados (rei_atq_bonus zerado, etc.)
+    atacante.efeitos = atacante.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
 
     // 4. Resolve por alvo
     for (const alvo of alvos) {
@@ -458,6 +465,11 @@ const COMBAT = (() => {
     }
   }
 
+  // Wrapper público — usado por cartas especiais (ex: Ás compra 1 carta)
+  function comprarCarta(combatente, n = 1) {
+    _comprarCarta(combatente, n);
+  }
+
   function _log(tipo, texto, dados = {}) {
     BATTLE_STATE.log.push({ tipo, texto, dados });
   }
@@ -501,6 +513,9 @@ const COMBAT = (() => {
     // Efeitos
     adicionarEfeito,
     verificarFimDeBatalha,
+
+    // Helpers de mão (uso de cartas especiais)
+    comprarCarta,
   };
 
 })();

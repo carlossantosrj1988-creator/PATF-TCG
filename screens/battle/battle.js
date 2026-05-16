@@ -46,6 +46,7 @@ const BATTLE = (() => {
   let _cartaSelIdx       = -1;    // índice da carta na mão (pra remover via combat.js)
   let _defesaPendente    = null;  // { atacante, decisao, alvoPlayer, dano, onResolve }
   let _defesaSel         = null;  // { tipo: 'passar' | 'carta', idx? } — dupla confirmação
+  let _especialPendente  = null;  // { carta, idx } — carta especial em uso (ex: Q aguardando alvo)
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
@@ -68,6 +69,7 @@ const BATTLE = (() => {
     _cartaSelIdx       = -1;
     _defesaPendente    = null;
     _defesaSel         = null;
+    _especialPendente  = null;
 
     const inimigos = opts.inimigos ?? [];
 
@@ -537,12 +539,21 @@ const BATTLE = (() => {
       </div>
     `;
 
-    // Clicável como alvo quando o fluxo está em 'sel_alvo'
+    // Clicável como alvo quando o fluxo está em 'sel_alvo' (habilidade alvo único)
     if (_estadoPainel === 'sel_alvo' && _habSel) {
       const atacante = COMBAT.combatenteAtual();
       if (_alvoValido(c, _habSel, atacante)) {
         slot.classList.add('selecionavel');
         slot.addEventListener('click', () => _executarAcao([c]));
+      }
+    }
+
+    // Clicável como aliado quando carta especial Q (Dama) está aguardando alvo
+    if (_estadoPainel === 'sel_alvo_especial' && _especialPendente?.carta?.valor === 'Q') {
+      const atacante = COMBAT.combatenteAtual();
+      if (c.lado === atacante.lado && c.hp > 0) {
+        slot.classList.add('selecionavel');
+        slot.addEventListener('click', () => _resolverDama(c));
       }
     }
 
@@ -586,7 +597,7 @@ const BATTLE = (() => {
       return painel;
     }
 
-    // ── Etapa 1: dois botões grandes (50/50) ──
+    // ── Etapa 1: 3 botões grandes (HABILIDADES / ESPECIAIS / PASSAR) ──
     if (_estadoPainel === 'etapa1') {
       const btnHab = document.createElement('button');
       btnHab.id        = 'battle-btn-habilidades';
@@ -597,14 +608,38 @@ const BATTLE = (() => {
         _renderizar();
       });
 
+      const btnEsp = document.createElement('button');
+      btnEsp.id        = 'battle-btn-especiais';
+      btnEsp.className = 'battle-panel-btn-grande';
+      btnEsp.textContent = '✦ ESPECIAIS';
+      btnEsp.addEventListener('click', () => {
+        _estadoPainel = 'sel_especial';
+        _renderizar();
+      });
+
       const btnPassar = document.createElement('button');
       btnPassar.id        = 'battle-btn-passar';
       btnPassar.className = 'battle-panel-btn-grande';
-      btnPassar.textContent = '⏭ PASSAR A RODADA';
+      btnPassar.textContent = '⏭ PASSAR';
       btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
 
       painel.appendChild(btnHab);
+      painel.appendChild(btnEsp);
       painel.appendChild(btnPassar);
+      return painel;
+    }
+
+    // ── Sel especial: mão da carta (só especiais clicáveis; J grayed — defesa-only) ──
+    if (_estadoPainel === 'sel_especial') {
+      painel.appendChild(_criarPainelInfoEspecial());
+      painel.appendChild(_criarPainelSelEspecial(atual));
+      return painel;
+    }
+
+    // ── Sel alvo especial: aguarda clique num aliado (Q remove debuff) ──
+    if (_estadoPainel === 'sel_alvo_especial') {
+      painel.appendChild(_criarPainelResumoEspecial());
+      painel.appendChild(_criarPainelInfo('Toque num aliado.'));
       return painel;
     }
 
@@ -792,6 +827,92 @@ const BATTLE = (() => {
     return div;
   }
 
+  // ── Especial esquerda (sel_especial): texto de orientação + ← VOLTAR ──
+  function _criarPainelInfoEspecial() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+    div.classList.add('detalhe');
+
+    div.innerHTML = `
+      <div class="battle-defesa-titulo" style="color:#c9a84c;">✦ CARTA ESPECIAL</div>
+      <div class="battle-defesa-info">
+        Escolha uma carta especial pra usar.<br>
+        <span style="color:#888;font-size:9px;">J fica pra defesa.</span>
+      </div>
+    `;
+
+    const voltar = document.createElement('button');
+    voltar.className   = 'battle-btn-voltar';
+    voltar.textContent = '← VOLTAR';
+    voltar.addEventListener('click', () => {
+      _estadoPainel = 'etapa1';
+      _renderizar();
+    });
+    div.appendChild(voltar);
+
+    return div;
+  }
+
+  // ── Especial direita: cartas da mão — só Q/K/A/★ clicáveis (J é defesa-only) ──
+  function _criarPainelSelEspecial(combatente) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-cartas';
+
+    const mao = COMBAT.estado.maoJogador;
+    if (!mao || mao.length === 0) {
+      div.innerHTML = `<div class="battle-mao-vazia">Mão vazia.</div>`;
+      return div;
+    }
+
+    mao.forEach((carta, i) => {
+      const ehJ        = carta.valor === 'J';
+      const ehEspecial = carta.tipo === 'especial' || carta.tipo === 'coringa';
+      const clicavel   = ehEspecial && !ehJ;
+
+      const el = document.createElement('button');
+      el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel');
+      el.dataset.naipe = carta.naipe ?? '';
+      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      if (clicavel) {
+        el.addEventListener('click', () => _usarEspecial(carta, i));
+      } else {
+        el.disabled = true;
+      }
+      div.appendChild(el);
+    });
+
+    return div;
+  }
+
+  // ── Especial esquerda (sel_alvo_especial): resumo da carta + ← VOLTAR ──
+  function _criarPainelResumoEspecial() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+    div.classList.add('detalhe');
+
+    const c = _especialPendente?.carta;
+    const corCarta = _COR_INI[c?.naipe] ?? '#c9a84c';
+
+    div.innerHTML = `
+      <div class="battle-defesa-titulo" style="color:#c9a84c;">✦ CARTA ESPECIAL</div>
+      <div class="battle-defesa-info">
+        Usando <strong style="color:${corCarta}">${c?.label ?? '?'}</strong>
+      </div>
+    `;
+
+    const voltar = document.createElement('button');
+    voltar.className   = 'battle-btn-voltar';
+    voltar.textContent = '← VOLTAR';
+    voltar.addEventListener('click', () => {
+      _especialPendente = null;
+      _estadoPainel = 'sel_especial';
+      _renderizar();
+    });
+    div.appendChild(voltar);
+
+    return div;
+  }
+
   // ── Defesa esquerda: atacante + alvo atual + dano + PASSAR (dupla confirmação) ──
   function _criarPainelDefesaEsq() {
     const div = document.createElement('div');
@@ -892,17 +1013,106 @@ const BATTLE = (() => {
   function _executarAcao(alvos) {
     const atacante = COMBAT.combatenteAtual();
     if (!atacante || !_habSel) return;
-
     COMBAT.resolverAcao(atacante, _habSel, _cartaSelIdx, alvos);
-    COMBAT.etapa5_fimRodada(atacante);
-    COMBAT.avancarCombatente();
+    _finalizarTurno(atacante);
+  }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // CARTAS ESPECIAIS — Q/K/A/★ usadas como ação própria do jogador
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Tira a carta da mão compartilhada e manda pro descarte.
+  function _consumirEspecialDaMao(idx) {
+    const mao = COMBAT.estado.maoJogador;
+    const carta = mao.splice(idx, 1)[0];
+    if (carta) COMBAT.estado.descarteJogador.push(carta);
+    return carta;
+  }
+
+  // Dispatcher: identifica a especial e roteia. Q vai pra alvo; resto resolve.
+  function _usarEspecial(carta, idx) {
+    const c = COMBAT.combatenteAtual();
+    if (!c) return;
+
+    if (carta.valor === 'Q') {
+      // Q precisa de alvo aliado — vai pra sel_alvo_especial, consome depois
+      _especialPendente = { carta, idx };
+      _estadoPainel = 'sel_alvo_especial';
+      _renderizar();
+      return;
+    }
+
+    // K, A, ★ resolvem imediatamente
+    _consumirEspecialDaMao(idx);
+    if      (carta.valor === 'K') _aplicarRei(c);
+    else if (carta.valor === 'A') _aplicarAs(c);
+    else if (carta.valor === '★') _aplicarCoringa(c);
+    _finalizarTurno(c);
+  }
+
+  // K — Rei: próxima habilidade de dano ganha +10 (ATQ via poder efetivo).
+  // resolverAcao consome 'rei_atq_bonus' antes do cálculo (mesmo padrão do Ódio).
+  function _aplicarRei(c) {
+    c.efeitos.push({ tipo: 'rei_atq_bonus', valor: 10, duracao: 1 });
+  }
+
+  // A — Ás: compra 1 carta do baralho (compartilhado pra jogador).
+  function _aplicarAs(c) {
+    COMBAT.comprarCarta(c, 1);
+  }
+
+  // ★ — Coringa: concede rodada extra. _finalizarTurno checa essa flag e,
+  // se true, pula etapa 5 + avançar e roda outra etapa 1 pro mesmo c.
+  function _aplicarCoringa(c) {
+    c._rodadaExtraPending = true;
+  }
+
+  // Q — Dama: remove 1 debuff aleatório do aliado escolhido.
+  // Chamado quando o jogador clica num aliado em sel_alvo_especial.
+  function _resolverDama(alvoAliado) {
+    const c = COMBAT.combatenteAtual();
+    if (!c || !_especialPendente) return;
+    _consumirEspecialDaMao(_especialPendente.idx);
+    const debuffs = (alvoAliado.efeitos ?? []).filter(e =>
+      typeof e.tipo === 'string' && e.tipo.startsWith('debuff_')
+    );
+    if (debuffs.length > 0) {
+      const escolhido = debuffs[Math.floor(Math.random() * debuffs.length)];
+      escolhido.duracao = 0;
+      alvoAliado.efeitos = alvoAliado.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
+      PASSIVAS.recalcularStats(alvoAliado);
+    }
+    _especialPendente = null;
+    _finalizarTurno(c);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // FINALIZAR TURNO — helper único: etapa5 + avançar + reset de estado.
+  // Se c._rodadaExtraPending (de ★), pula tudo e re-roda etapa1 pro mesmo c.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _finalizarTurno(c) {
+    if (c && c._rodadaExtraPending) {
+      c._rodadaExtraPending = false;
+      _estadoPainel      = 'etapa1';
+      _habSel            = null;
+      _cartaSel          = null;
+      _cartaSelIdx       = -1;
+      _especialPendente  = null;
+      _passarConfirmando = false;
+      _aguardando        = false;
+      _renderizar();
+      return;
+    }
+    COMBAT.etapa5_fimRodada(c);
+    COMBAT.avancarCombatente();
+    _aguardando        = false;
+    _estadoPainel      = 'etapa1';
     _habSel            = null;
     _cartaSel          = null;
     _cartaSelIdx       = -1;
-    _estadoPainel      = 'etapa1';
+    _especialPendente  = null;
     _passarConfirmando = false;
-
     _renderizar();
   }
 
@@ -933,18 +1143,9 @@ const BATTLE = (() => {
   function _passarRodada() {
     const c = COMBAT.combatenteAtual();
     if (!c || c.lado !== 'jogador') return;
-
     COMBAT.iniciarRodada(c);
     COMBAT.passarRodada(c);
-    COMBAT.etapa5_fimRodada(c);
-    COMBAT.avancarCombatente();
-    _aguardando        = false;
-    _estadoPainel      = 'etapa1';
-    _passarConfirmando = false;
-    _habSel            = null;
-    _cartaSel          = null;
-    _cartaSelIdx       = -1;
-    _renderizar();
+    _finalizarTurno(c);
   }
 
   function _criarBtnDebug() {
@@ -978,7 +1179,7 @@ const BATTLE = (() => {
     const decisao = IA.decidir(c);
     if (!decisao || !decisao.hab) {
       COMBAT.passarRodada(c);
-      _fecharTurnoInimigo(c);
+      _finalizarTurno(c);
       return;
     }
 
@@ -991,18 +1192,8 @@ const BATTLE = (() => {
       _iniciarDefesa(c, decisao, alvosPlayer);
     } else {
       COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
-      _fecharTurnoInimigo(c);
+      _finalizarTurno(c);
     }
-  }
-
-  // Fecha o turno do inimigo: etapa 5 + avança + reseta estado do painel.
-  function _fecharTurnoInimigo(c) {
-    COMBAT.etapa5_fimRodada(c);
-    COMBAT.avancarCombatente();
-    _aguardando        = false;
-    _estadoPainel      = 'etapa1';
-    _passarConfirmando = false;
-    _renderizar();
   }
 
   // Configura a tela de defesa: vira uma fila de alvos jogador (1 ou mais).
@@ -1029,7 +1220,7 @@ const BATTLE = (() => {
       _defesaPendente = null;
       _defesaSel      = null;
       COMBAT.resolverAcao(atacante, decisao.hab, decisao.cartaIdx, decisao.alvos, defesas);
-      _fecharTurnoInimigo(atacante);
+      _finalizarTurno(atacante);
       return;
     }
 
