@@ -1,5 +1,7 @@
 // engine/efeitos.js
-// Registry de buffs/debuffs nomeados (Amaciado, Exposto, Queimadura, etc.).
+// Runtime dos efeitos nomeados — registry de funções `aplicar` por id,
+// dispatcher e UI de tooltip. Os DADOS dos efeitos vivem em
+// engine/efeitos-catalogo.js (EFEITOS_DATA); aqui mora o COMPORTAMENTO.
 //
 // Habilidades declaram `tags` (ex: tags:['exposto']). Quando uma habilidade
 // causa dano, combat.js (resolverAcao) chama EFEITOS.aplicar(tag, alvo, atacante)
@@ -7,28 +9,39 @@
 // em c.efeitos com tipo/valor/duracao certos. Os módulos existentes
 // (recalcularStats, _aplicarDoT, etapa3) já leem c.efeitos pelo `tipo`.
 //
-// Cada efeito implementa:
-//   categoria   : 'debuff_dot' | 'debuff_stat' | 'debuff_marca' | 'buff_*' | ...
-//   descricao   : texto humano (UI futura)
-//   aplicar(alvo, atacante, opts) : empilha entrada(s) em alvo.efeitos OU renova
+// API:
+//   registrar(id, aplicar)   — vincula a função aplicar à entrada do catálogo.
+//                              Lança aviso se id não está em EFEITOS_DATA.
+//   aplicar(id, alvo, atac)  — dispara o efeito.
+//   get(id)                  — devolve { nome, categoria, descricao, aplicar }.
+//   destacar(texto)          — wrappa nomes de efeitos conhecidos em <span>.
 //
 // Renovação: se o efeito já está ativo, renova duração; não empilha nova entrada
 // e não re-aplica stat (que já está contado em c.efeitos).
 
 const EFEITOS = (() => {
 
-  const _registry = new Map();  // id → { categoria, descricao, aplicar }
+  const _aplicadores = new Map();  // id → fn(alvo, atacante, opts)
 
-  function registrar(id, def) { _registry.set(id, def); }
+  function registrar(id, aplicar) {
+    if (!EFEITOS_DATA[id]) {
+      console.warn(`[EFEITOS] registrando '${id}' sem entrada no catálogo`);
+    }
+    _aplicadores.set(id, aplicar);
+  }
 
   function aplicar(id, alvo, atacante, opts) {
-    const ef = _registry.get(id);
-    if (!ef || !alvo) return false;
-    ef.aplicar(alvo, atacante, opts ?? {});
+    const fn = _aplicadores.get(id);
+    if (!fn || !alvo) return false;
+    fn(alvo, atacante, opts ?? {});
     return true;
   }
 
-  function get(id) { return _registry.get(id); }
+  function get(id) {
+    const data = EFEITOS_DATA[id];
+    if (!data) return null;
+    return { ...data, aplicar: _aplicadores.get(id) ?? null };
+  }
 
   // Helper: renova duração se o efeito já existe no alvo (mesmo _origem);
   // senão chama criar() pra empilhar a entrada nova. Retorna true se renovou.
@@ -45,86 +58,65 @@ const EFEITOS = (() => {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // IMPLEMENTAÇÕES — efeitos iniciais (A.1)
+  // IMPLEMENTAÇÕES — cada efeito do catálogo recebe seu aplicar aqui
   // ══════════════════════════════════════════════════════════════════════════
 
   // ── Amaciado ──────────────────────────────────────────────────────────────
   // Marca; habilidades de Corte contra o alvo recebem poder dobrado.
-  // 2 turnos, renovável.
   // O dobramento acontece em combat.js resolverAcao (check pela presença do efeito).
-  registrar('amaciado', {
-    nome:       'Amaciado',
-    categoria:  'debuff_marca',
-    descricao:  'Habilidades de Corte recebidas têm o poder dobrado por 2 turnos.',
-    aplicar(alvo) {
-      _renovarOuCriar(alvo, 'amaciado', () => {
-        alvo.efeitos.push({
-          tipo: 'amaciado', duracao: 2, duracaoOriginal: 2, _origem: 'amaciado',
-        });
+  registrar('amaciado', (alvo) => {
+    _renovarOuCriar(alvo, 'amaciado', () => {
+      alvo.efeitos.push({
+        tipo: 'amaciado', duracao: 2, duracaoOriginal: 2, _origem: 'amaciado',
       });
-    },
+    });
   });
 
   // ── Exposto ───────────────────────────────────────────────────────────────
-  // -50% da DEF base do alvo por 2 turnos. Aplica via debuff_def em c.efeitos —
+  // -50% da DEF base do alvo. Aplica via debuff_def em c.efeitos —
   // recalcularStats já lê esse tipo automaticamente.
-  registrar('exposto', {
-    nome:       'Exposto',
-    categoria:  'debuff_stat',
-    descricao:  'DEF base do alvo reduzida em 50% por 2 turnos.',
-    aplicar(alvo) {
-      const renovou = _renovarOuCriar(alvo, 'exposto', () => {
-        const reducao = Math.floor((alvo.defBase ?? alvo.def ?? 0) * 0.5);
-        alvo.efeitos.push({
-          tipo: 'debuff_def', valor: reducao, duracao: 2, duracaoOriginal: 2,
-          _origem: 'exposto',
-        });
+  registrar('exposto', (alvo) => {
+    const renovou = _renovarOuCriar(alvo, 'exposto', () => {
+      const reducao = Math.floor((alvo.defBase ?? alvo.def ?? 0) * 0.5);
+      alvo.efeitos.push({
+        tipo: 'debuff_def', valor: reducao, duracao: 2, duracaoOriginal: 2,
+        _origem: 'exposto',
       });
-      if (!renovou) PASSIVAS.recalcularStats(alvo);
-    },
+    });
+    if (!renovou) PASSIVAS.recalcularStats(alvo);
   });
 
   // ── Queimadura ────────────────────────────────────────────────────────────
-  // DoT: 10 dano por turno (gatilho 'inicio_rodada' — _aplicarDoT já trata) +
-  // -1 DEF persistente enquanto durar. 2 turnos, renovável.
-  registrar('queimadura', {
-    nome:       'Queimadura',
-    categoria:  'debuff_dot',
-    descricao:  '10 de dano por turno + -1 DEF por 2 turnos.',
-    aplicar(alvo) {
-      const renovou = _renovarOuCriar(alvo, 'queimadura', () => {
-        alvo.efeitos.push({
-          tipo: 'dot', valor: 10, gatilho: 'inicio_rodada',
-          duracao: 2, duracaoOriginal: 2, _origem: 'queimadura',
-        });
-        alvo.efeitos.push({
-          tipo: 'debuff_def', valor: 1, duracao: 2, duracaoOriginal: 2,
-          _origem: 'queimadura',
-        });
+  // DoT: dano por turno (gatilho 'inicio_rodada' — _aplicarDoT já trata) +
+  // -1 DEF persistente enquanto durar.
+  registrar('queimadura', (alvo) => {
+    const renovou = _renovarOuCriar(alvo, 'queimadura', () => {
+      alvo.efeitos.push({
+        tipo: 'dot', valor: 10, gatilho: 'inicio_rodada',
+        duracao: 2, duracaoOriginal: 2, _origem: 'queimadura',
       });
-      if (!renovou) PASSIVAS.recalcularStats(alvo);
-    },
+      alvo.efeitos.push({
+        tipo: 'debuff_def', valor: 1, duracao: 2, duracaoOriginal: 2,
+        _origem: 'queimadura',
+      });
+    });
+    if (!renovou) PASSIVAS.recalcularStats(alvo);
   });
 
   // ── Resfriamento ──────────────────────────────────────────────────────────
-  // DoT: 10 dano por turno + -1 ATQ persistente. 2 turnos, renovável.
-  registrar('resfriamento', {
-    nome:       'Resfriamento',
-    categoria:  'debuff_dot',
-    descricao:  '10 de dano por turno + -1 ATQ por 2 turnos.',
-    aplicar(alvo) {
-      const renovou = _renovarOuCriar(alvo, 'resfriamento', () => {
-        alvo.efeitos.push({
-          tipo: 'dot', valor: 10, gatilho: 'inicio_rodada',
-          duracao: 2, duracaoOriginal: 2, _origem: 'resfriamento',
-        });
-        alvo.efeitos.push({
-          tipo: 'debuff_atq', valor: 1, duracao: 2, duracaoOriginal: 2,
-          _origem: 'resfriamento',
-        });
+  // DoT + -1 ATQ persistente.
+  registrar('resfriamento', (alvo) => {
+    const renovou = _renovarOuCriar(alvo, 'resfriamento', () => {
+      alvo.efeitos.push({
+        tipo: 'dot', valor: 10, gatilho: 'inicio_rodada',
+        duracao: 2, duracaoOriginal: 2, _origem: 'resfriamento',
       });
-      if (!renovou) PASSIVAS.recalcularStats(alvo);
-    },
+      alvo.efeitos.push({
+        tipo: 'debuff_atq', valor: 1, duracao: 2, duracaoOriginal: 2,
+        _origem: 'resfriamento',
+      });
+    });
+    if (!renovou) PASSIVAS.recalcularStats(alvo);
   });
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -137,7 +129,8 @@ const EFEITOS = (() => {
   function destacar(texto) {
     if (!texto) return '';
     let r = String(texto);
-    for (const [id, ef] of _registry) {
+    for (const id in EFEITOS_DATA) {
+      const ef = EFEITOS_DATA[id];
       if (!ef.nome) continue;
       const escaped = ef.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(`\\b${escaped}\\b`, 'g');
@@ -157,7 +150,7 @@ const EFEITOS = (() => {
   function _abrirTooltip(tagEl) {
     _fecharTooltip();
     const id = tagEl.dataset.id;
-    const ef = _registry.get(id);
+    const ef = EFEITOS_DATA[id];
     if (!ef) return;
     const tip = document.createElement('div');
     tip.className = 'efeito-tooltip';
