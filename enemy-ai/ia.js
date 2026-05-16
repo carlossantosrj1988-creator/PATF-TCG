@@ -25,25 +25,18 @@ const IA = (() => {
     _registry.set(id, fn);
   }
 
-  // Executa o turno do inimigo. Lê o script, decide, age (ou passa).
-  function executar(combatente) {
-    if (!combatente || combatente.hp <= 0) {
-      COMBAT.passarRodada(combatente);
-      return;
-    }
+  // Decide o que o inimigo vai fazer. Retorna { hab, cartaIdx, alvos } ou null.
+  // Não EXECUTA — a execução é orquestrada por quem chama (battle.js),
+  // porque pode precisar pausar para a tela de defesa antes de resolver.
+  function decidir(combatente) {
+    if (!combatente || combatente.hp <= 0) return null;
 
-    // Extrai o id base (remove prefixo 'inimigo_' e sufixo _a/_b/_c)
+    // Extrai o id base (remove prefixo 'inimigo_' e sufixo α/β/γ)
     const idCompleto = (combatente.id || '').replace(/^inimigo_/, '');
     const idBase     = idCompleto.replace(/_[abcαβγ]$/, '');
 
     const script = _registry.get(idCompleto) || _registry.get(idBase) || _scriptDefault;
-    const decisao = script(combatente, COMBAT.estado, helpers);
-
-    if (decisao && decisao.hab) {
-      COMBAT.resolverAcao(combatente, decisao.hab, decisao.cartaIdx ?? -1, decisao.alvos || []);
-    } else {
-      COMBAT.passarRodada(combatente);
-    }
+    return script(combatente, COMBAT.estado, helpers);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -162,6 +155,6 @@ const IA = (() => {
     return { hab, cartaIdx, alvos };
   }
 
-  return { registrar, executar, helpers };
+  return { registrar, decidir, helpers };
 
 })();

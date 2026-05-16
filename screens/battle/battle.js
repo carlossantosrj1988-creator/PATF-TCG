@@ -44,6 +44,8 @@ const BATTLE = (() => {
   let _habSel            = null;  // habilidade selecionada no fluxo de uso
   let _cartaSel          = null;  // carta selecionada
   let _cartaSelIdx       = -1;    // índice da carta na mão (pra remover via combat.js)
+  let _defesaPendente    = null;  // { atacante, decisao, alvoPlayer, dano, onResolve }
+  let _defesaSel         = null;  // { tipo: 'passar' | 'carta', idx? } — dupla confirmação
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
@@ -64,6 +66,8 @@ const BATTLE = (() => {
     _habSel            = null;
     _cartaSel          = null;
     _cartaSelIdx       = -1;
+    _defesaPendente    = null;
+    _defesaSel         = null;
 
     const inimigos = opts.inimigos ?? [];
 
@@ -562,6 +566,13 @@ const BATTLE = (() => {
     const painel = document.createElement('div');
     painel.id = 'battle-panel';
 
+    // ── Defesa pendente: interrompe o fluxo normal ──
+    if (_defesaPendente) {
+      painel.appendChild(_criarPainelDefesaEsq());
+      painel.appendChild(_criarPainelDefesaDir());
+      return painel;
+    }
+
     const atual = COMBAT.combatenteAtual();
 
     // ── Turno do inimigo ──
@@ -781,6 +792,59 @@ const BATTLE = (() => {
     return div;
   }
 
+  // ── Defesa esquerda: atacante + dano + botão PASSAR (dupla confirmação) ──
+  function _criarPainelDefesaEsq() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+    div.classList.add('detalhe');
+
+    const { atacante, alvoPlayer, dano } = _defesaPendente;
+    const corAt = _COR_INI[atacante.naipe] ?? '#cc7777';
+
+    div.innerHTML = `
+      <div class="battle-defesa-titulo">⚠ DEFENDER</div>
+      <div class="battle-defesa-info">
+        <span style="color:${corAt}">${atacante.nome}</span>
+        ataca <strong>${alvoPlayer.nome}</strong>
+      </div>
+      <div class="battle-defesa-dano">Causará <strong>${dano}</strong> de dano</div>
+    `;
+
+    const passarSel = _defesaSel && _defesaSel.tipo === 'passar';
+    const btnPassar = document.createElement('button');
+    btnPassar.id        = 'battle-btn-passar';
+    btnPassar.className = 'battle-defesa-passar' + (passarSel ? ' confirmando' : '');
+    btnPassar.textContent = passarSel ? '⏭ CONFIRMAR PASSAR' : '⏭ PASSAR (sem defesa)';
+    btnPassar.addEventListener('click', () => _selecionarDefesa({ tipo: 'passar' }));
+    div.appendChild(btnPassar);
+
+    return div;
+  }
+
+  // ── Defesa direita: cartas da mão (clica → seleciona → clica de novo → confirma) ──
+  function _criarPainelDefesaDir() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-cartas';
+
+    const mao = COMBAT.estado.maoJogador;
+    if (!mao || mao.length === 0) {
+      div.innerHTML = `<div class="battle-mao-vazia">Sem cartas — clica em PASSAR</div>`;
+      return div;
+    }
+
+    mao.forEach((carta, i) => {
+      const sel = _defesaSel && _defesaSel.tipo === 'carta' && _defesaSel.idx === i;
+      const el = document.createElement('button');
+      el.className = 'battle-carta' + (sel ? ' selecionada' : '');
+      el.dataset.naipe = carta.naipe ?? '';
+      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      el.addEventListener('click', () => _selecionarDefesa({ tipo: 'carta', idx: i }));
+      div.appendChild(el);
+    });
+
+    return div;
+  }
+
   // ── Cálculo de alvos / executor ───────────────────────────────────────────
 
   // Retorna array de alvos quando a habilidade tem alvo automático,
@@ -885,7 +949,8 @@ const BATTLE = (() => {
     return frag;
   }
 
-  // Inimigo age via IA — script registrado em enemy-ai/ia.js (ou script default).
+  // Turno do inimigo: IA decide; se for ataque de dano em jogador (alvo único),
+  // mostra a tela de defesa antes de resolver. Outros casos resolvem direto.
   function _turnoInimigo() {
     const c = COMBAT.combatenteAtual();
     if (!c || c.lado !== 'inimigo') {
@@ -893,13 +958,79 @@ const BATTLE = (() => {
       return;
     }
     COMBAT.iniciarRodada(c);
-    IA.executar(c);                  // decide e executa (ou passa) via script
+
+    const decisao = IA.decidir(c);
+    if (!decisao || !decisao.hab) {
+      COMBAT.passarRodada(c);
+      _fecharTurnoInimigo(c);
+      return;
+    }
+
+    const ehAtaqueDanoUnico =
+      !decisao.hab.efeitoPuro
+      && decisao.hab.alvo === 'unico'
+      && decisao.alvos[0]?.lado === 'jogador';
+
+    if (ehAtaqueDanoUnico) {
+      _iniciarDefesa(c, decisao);
+    } else {
+      COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
+      _fecharTurnoInimigo(c);
+    }
+  }
+
+  // Fecha o turno do inimigo: etapa 5 + avança + reseta estado do painel.
+  function _fecharTurnoInimigo(c) {
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
     _aguardando        = false;
     _estadoPainel      = 'etapa1';
     _passarConfirmando = false;
     _renderizar();
+  }
+
+  // Configura a tela de defesa: calcula o dano potencial e arma o callback.
+  function _iniciarDefesa(atacante, decisao) {
+    const alvoPlayer  = decisao.alvos[0];
+    const cartaAtaque = (atacante.lado === 'jogador'
+      ? COMBAT.estado.maoJogador
+      : atacante.mao)[decisao.cartaIdx];
+
+    const dano = DAMAGE.calcularDano(
+      atacante, alvoPlayer,
+      decisao.hab.poder ?? 0, cartaAtaque, decisao.hab.efeitoPuro,
+    );
+
+    _defesaPendente = {
+      atacante, decisao, alvoPlayer, dano,
+      onResolve(cartaDefesaIdx) {
+        const defesas = (cartaDefesaIdx != null)
+          ? { [alvoPlayer.id]: cartaDefesaIdx }
+          : null;
+        COMBAT.resolverAcao(atacante, decisao.hab, decisao.cartaIdx, decisao.alvos, defesas);
+        _defesaPendente = null;
+        _defesaSel      = null;
+        _fecharTurnoInimigo(atacante);
+      },
+    };
+    _defesaSel = null;
+    _renderizar();
+  }
+
+  // Processa um clique no painel de defesa — dupla confirmação.
+  function _selecionarDefesa(novaSel) {
+    if (!_defesaPendente) return;
+    const igual = _defesaSel
+      && _defesaSel.tipo === novaSel.tipo
+      && _defesaSel.idx === novaSel.idx;
+    if (igual) {
+      // Confirmação — resolve
+      const cartaIdx = novaSel.tipo === 'carta' ? novaSel.idx : null;
+      _defesaPendente.onResolve(cartaIdx);
+    } else {
+      _defesaSel = novaSel;
+      _renderizar();
+    }
   }
 
   // Botão de debug — atalho direto para a tela de vitória.
