@@ -314,7 +314,12 @@ const BATTLE = (() => {
       }, 180 + i * 320);
     });
 
-    const avançar = () => { overlay.remove(); _renderizar(); };
+    const avançar = () => {
+      overlay.remove();
+      const primeiro = COMBAT.combatenteAtual();
+      if (primeiro) _iniciarTurno(primeiro);   // primeira rodada começa aqui
+      _renderizar();
+    };
     const timer   = setTimeout(avançar, 180 + ordem.length * 320 + 1600);
     overlay.addEventListener('click', () => { clearTimeout(timer); avançar(); });
   }
@@ -328,14 +333,18 @@ const BATTLE = (() => {
     let resultado = COMBAT.verificarFimDeBatalha();
     if (resultado) { _fimDeBatalha(resultado); return; }
 
-    // Pula combatentes que morreram no meio do turno — corpo não tem rodada
+    // Pula combatentes que morreram no meio do turno — corpo não tem rodada.
+    // Se pular pra um novo vivo, inicia o turno dele (iniciarRodada é idempotente).
     let atual = COMBAT.combatenteAtual();
+    let pulou = false;
     while (atual && atual.hp <= 0) {
       COMBAT.avancarCombatente();
+      pulou = true;
       resultado = COMBAT.verificarFimDeBatalha();
       if (resultado) { _fimDeBatalha(resultado); return; }
       atual = COMBAT.combatenteAtual();
     }
+    if (pulou && atual) _iniciarTurno(atual);
 
     let screen = document.getElementById('screen-battle');
     if (!screen) {
@@ -1087,13 +1096,27 @@ const BATTLE = (() => {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // FINALIZAR TURNO — helper único: etapa5 + avançar + reset de estado.
-  // Se c._rodadaExtraPending (de ★), pula tudo e re-roda etapa1 pro mesmo c.
+  // INICIAR / FINALIZAR TURNO
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Inicia o turno de um combatente: Início (deduce + DoT, once) + Etapa 1
+  // (tick passivas + recalc + stun check). iniciarRodada é idempotente
+  // (não dispara duas vezes pro mesmo turno).
+  function _iniciarTurno(c) {
+    if (!c || c.hp <= 0) return;
+    COMBAT.iniciarRodada(c);
+    COMBAT.rodarEtapa1(c);
+    // (Se podeAgir for false por stun, ainda assim deixamos o turno seguir;
+    // o resto da lógica de pular ação fica pra A.2 quando Congelado/Atordoado
+    // existirem como efeitos registrados.)
+  }
+
+  // Finaliza o turno. Em rodada extra (★ ou outros), pula etapa5 + avançar
+  // e re-roda só a Etapa 1 pro mesmo combatente (Início não repete).
   function _finalizarTurno(c) {
     if (c && c._rodadaExtraPending) {
       c._rodadaExtraPending = false;
+      COMBAT.rodarEtapa1(c);          // re-roda só Etapa 1 — Início é once-per-round
       _estadoPainel      = 'etapa1';
       _habSel            = null;
       _cartaSel          = null;
@@ -1106,6 +1129,8 @@ const BATTLE = (() => {
     }
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
+    const proximo = COMBAT.combatenteAtual();
+    if (proximo) _iniciarTurno(proximo);
     _aguardando        = false;
     _estadoPainel      = 'etapa1';
     _habSel            = null;
@@ -1143,7 +1168,7 @@ const BATTLE = (() => {
   function _passarRodada() {
     const c = COMBAT.combatenteAtual();
     if (!c || c.lado !== 'jogador') return;
-    COMBAT.iniciarRodada(c);
+    // iniciarRodada já foi chamado em _iniciarTurno quando o turno começou.
     COMBAT.passarRodada(c);
     _finalizarTurno(c);
   }
@@ -1168,13 +1193,13 @@ const BATTLE = (() => {
 
   // Turno do inimigo: IA decide; se for ataque de dano em jogador (alvo único),
   // mostra a tela de defesa antes de resolver. Outros casos resolvem direto.
+  // iniciarRodada já foi chamado em _iniciarTurno quando o turno começou.
   function _turnoInimigo() {
     const c = COMBAT.combatenteAtual();
     if (!c || c.lado !== 'inimigo') {
       _aguardando = false;
       return;
     }
-    COMBAT.iniciarRodada(c);
 
     const decisao = IA.decidir(c);
     if (!decisao || !decisao.hab) {

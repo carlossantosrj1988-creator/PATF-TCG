@@ -100,7 +100,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
-      tags:       [],
+      tags:       ['amaciado'],
       descricao:  'Aplica Amaciado.',
     },
     cop_h1_2: {                       // ex-Avanço Espada (Tyren ♥)
@@ -136,7 +136,7 @@ const HABILIDADES = (() => {
       recarga:    0,
       acao:       'N',
       efeitoPuro: false,
-      tags:       [],
+      tags:       ['exposto'],
       descricao:  'Aplica Exposto.',
     },
     cop_h2_2: {                       // ex-Corte Flamejante (Caeryn ♥)
@@ -148,7 +148,7 @@ const HABILIDADES = (() => {
       recarga:    1,
       acao:       'N',
       efeitoPuro: false,
-      tags:       [],
+      tags:       ['queimadura'],
       descricao:  'Aplica Queimadura.',
     },
     cop_h2_3: {                       // ex-Corte Gélido (Thalion ♥)
@@ -160,7 +160,7 @@ const HABILIDADES = (() => {
       recarga:    1,
       acao:       'N',
       efeitoPuro: false,
-      tags:       [],
+      tags:       ['resfriamento'],
       descricao:  'Aplica Resfriamento.',
     },
     cop_h3_1: {                       // ex-Agora é Sério (Gorath ♥)
