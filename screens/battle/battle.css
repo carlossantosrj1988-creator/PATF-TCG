@@ -565,6 +565,239 @@
   transform: translateY(-6px);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   STATUS POPUP — clica no personagem em batalha, abre ficha viva
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-status-popup {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+  animation: ini-tela-in 0.18s ease;
+}
+
+#battle-status-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+#battle-status-box {
+  position: relative;
+  z-index: 1;
+  width: 520px;
+  max-width: 92%;
+  max-height: 88%;
+  overflow-y: auto;
+  background: #0d0f1a;
+  border: 1px solid #ffffff20;
+  border-radius: 12px;
+  padding: 18px 22px 20px;
+  color: #ddd;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.bsp-fechar {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: #777;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.bsp-fechar:hover { color: #c9a84c; }
+
+/* ── Cabeçalho ── */
+.bsp-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ffffff14;
+  margin-bottom: 12px;
+}
+
+.bsp-naipe {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px currentColor);
+}
+
+.bsp-cab-nome { display: flex; flex-direction: column; gap: 2px; }
+.bsp-nome {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #e8e8f0;
+}
+.bsp-naipe-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ── Vantagens/desvantagens ── */
+.bsp-vantagens {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #aab;
+  margin-bottom: 12px;
+}
+.bsp-tag-vant, .bsp-tag-desv {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+  font-weight: 700;
+}
+.bsp-tag-vant { background: rgba(85,204,136,0.15); color: #55cc88; border: 1px solid rgba(85,204,136,0.35); }
+.bsp-tag-desv { background: rgba(204,85,85,0.15); color: #cc5555; border: 1px solid rgba(204,85,85,0.35); }
+
+/* ── Stats ── */
+.bsp-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.bsp-stat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid #ffffff10;
+  border-radius: 6px;
+  padding: 6px 0;
+  text-align: center;
+}
+.bsp-stat-l {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+}
+.bsp-stat-v {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8e8f0;
+  margin-top: 2px;
+}
+.bsp-stat-v.up   { color: #55cc88; }
+.bsp-stat-v.down { color: #cc5555; }
+
+/* ── HP ── */
+.bsp-hp { margin-bottom: 14px; }
+.bsp-hp-bar {
+  height: 8px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bsp-hp-fill { height: 100%; border-radius: 4px; transition: width 0.4s, background 0.3s; }
+.bsp-hp-txt {
+  font-size: 10px;
+  color: #888;
+  text-align: right;
+  letter-spacing: 1px;
+  padding-top: 3px;
+}
+
+/* ── Seções (Habilidades, Passivas, Efeitos) ── */
+.bsp-secao { margin-bottom: 12px; }
+.bsp-secao-titulo {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #c9a84c;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #c9a84c22;
+}
+
+.bsp-skill, .bsp-passiva {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #ffffff10;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+}
+.bsp-skill-nome, .bsp-passiva-nome {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ddd;
+  margin-bottom: 2px;
+}
+.bsp-skill-desc, .bsp-passiva-desc {
+  font-size: 10px;
+  color: #aab;
+  font-style: italic;
+  line-height: 1.4;
+}
+.bsp-skill-cd {
+  font-size: 9px;
+  color: #cc5555;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-left: 6px;
+}
+.bsp-skill.vazio, .bsp-passiva.vazio {
+  color: #555;
+  font-style: italic;
+  font-size: 10px;
+  text-align: center;
+  border-style: dashed;
+}
+
+.bsp-empty {
+  color: #555;
+  font-style: italic;
+  font-size: 10px;
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* ── Efeitos ativos ── */
+.bsp-efeitos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bsp-efeito {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.bsp-efeito.buff   { background: rgba(85,204,136,0.12); color: #55cc88; border: 1px solid rgba(85,204,136,0.30); }
+.bsp-efeito.debuff { background: rgba(204,85,85,0.12);  color: #cc5555; border: 1px solid rgba(204,85,85,0.30); }
+.bsp-efeito.neutro { background: rgba(255,255,255,0.06); color: #aab;   border: 1px solid #ffffff14; }
+.bsp-efeito-dur {
+  font-size: 9px;
+  opacity: 0.7;
+  padding-left: 4px;
+  border-left: 1px solid currentColor;
+}
+
 /* Slot ativo (turno) — borda dourada pulsando */
 .battle-char-slot.ativo .battle-char-grad {
   border-color: rgba(201,168,76,0.7);

@@ -47,6 +47,7 @@ const BATTLE = (() => {
   let _defesaPendente    = null;  // { atacante, decisao, alvoPlayer, dano, onResolve }
   let _defesaSel         = null;  // { tipo: 'passar' | 'carta', idx? } — dupla confirmação
   let _especialPendente  = null;  // { carta, idx } — carta especial em uso (ex: Q aguardando alvo)
+  let _statusPopupChar   = null;  // personagem sendo mostrado no popup de status (live update)
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
@@ -70,6 +71,7 @@ const BATTLE = (() => {
     _defesaPendente    = null;
     _defesaSel         = null;
     _especialPendente  = null;
+    _statusPopupChar   = null;
 
     const inimigos = opts.inimigos ?? [];
 
@@ -365,6 +367,9 @@ const BATTLE = (() => {
       _aguardando = true;
       setTimeout(_turnoInimigo, 900);
     }
+
+    // Live-update do popup de status, se estiver aberto
+    if (_statusPopupChar) _mostrarStatusPersonagem(_statusPopupChar);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -556,14 +561,18 @@ const BATTLE = (() => {
         slot.addEventListener('click', () => _executarAcao([c]));
       }
     }
-
     // Clicável como aliado quando carta especial Q (Dama) está aguardando alvo
-    if (_estadoPainel === 'sel_alvo_especial' && _especialPendente?.carta?.valor === 'Q') {
+    else if (_estadoPainel === 'sel_alvo_especial' && _especialPendente?.carta?.valor === 'Q') {
       const atacante = COMBAT.combatenteAtual();
       if (c.lado === atacante.lado && c.hp > 0) {
         slot.classList.add('selecionavel');
         slot.addEventListener('click', () => _resolverDama(c));
       }
+    }
+    // Fora de seleção: clique abre popup de status do personagem (informativo).
+    else {
+      slot.style.cursor = 'pointer';
+      slot.addEventListener('click', () => _mostrarStatusPersonagem(c));
     }
 
     return slot;
@@ -1093,6 +1102,146 @@ const BATTLE = (() => {
     }
     _especialPendente = null;
     _finalizarTurno(c);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // STATUS POPUP — clica no personagem em batalha para inspeção informativa
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Ciclo de vantagem de naipe (espelha damage.js / naipes-mecanicas)
+  const _NAIPE_VENCE = { '♥': '♣', '♣': '♦', '♦': '♠', '♠': '♥' };
+  const _NAIPE_PERDE = { '♥': '♠', '♣': '♥', '♦': '♣', '♠': '♦' };
+  const _NAIPE_NOME  = { '♥': '♥ Copas', '♣': '♣ Paus', '♦': '♦ Ouro', '♠': '♠ Espadas' };
+
+  // Rótulo humano de um efeito ativo (usa nome do registry quando possível)
+  function _efeitoLabel(e) {
+    if (e._origem && typeof EFEITOS !== 'undefined') {
+      const ef = EFEITOS.get(e._origem);
+      if (ef && ef.nome) return ef.nome;
+    }
+    const map = {
+      dot:            'Dano por turno',
+      buff_atq:       '+ATQ',  debuff_atq: '−ATQ',
+      buff_def:       '+DEF',  debuff_def: '−DEF',
+      frozen:         'Congelado',
+      stun:           'Atordoado',
+      amaciado:       'Amaciado',
+      odio_bonus:     'Ódio',
+      rei_atq_bonus:  'Bônus de Rei',
+    };
+    return map[e.tipo] || e.tipo;
+  }
+
+  function _classeEfeito(e) {
+    if (e.tipo.startsWith('buff'))   return 'buff';
+    if (e.tipo.startsWith('debuff')) return 'debuff';
+    if (e.tipo === 'dot' || e.tipo === 'frozen' || e.tipo === 'stun') return 'debuff';
+    return 'neutro';
+  }
+
+  // Renderiza (ou re-renderiza) o popup de status pro combatente c.
+  // Re-chamado em _renderizar se _statusPopupChar estiver setado (live update).
+  function _mostrarStatusPersonagem(c) {
+    _statusPopupChar = c;
+    const existente = document.getElementById('battle-status-popup');
+    if (existente) existente.remove();
+
+    const screen = document.getElementById('screen-battle');
+    if (!screen || !c) return;
+
+    const corNaipe  = _COR_INI[c.naipe] ?? '#c9a84c';
+    const naipeLbl  = _NAIPE_NOME[c.naipe] ?? '— sem naipe';
+    const venceN    = c.naipe ? _NAIPE_VENCE[c.naipe] : null;
+    const perdeN    = c.naipe ? _NAIPE_PERDE[c.naipe] : null;
+
+    const atqCls = c.atq > (c.atqBase ?? c.atq) ? 'up' : c.atq < (c.atqBase ?? c.atq) ? 'down' : '';
+    const defCls = c.def > (c.defBase ?? c.def) ? 'up' : c.def < (c.defBase ?? c.def) ? 'down' : '';
+    const incCls = c.inc > (c.incBase ?? c.inc) ? 'up' : c.inc < (c.incBase ?? c.inc) ? 'down' : '';
+
+    const hpPct = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
+    const hpCor = hpPct > 60 ? '#55cc88' : hpPct > 30 ? '#e8c050' : '#cc5555';
+
+    // Habilidades slotadas
+    const habsHtml = (c.habilidades || []).map((h, i) => {
+      if (!h) return `<div class="bsp-skill vazio">— slot ${i + 1} vazio —</div>`;
+      const cd = c.cooldowns[h._id] ?? 0;
+      const tag = cd > 0 ? ` <span class="bsp-skill-cd">recarga ${cd}</span>` : '';
+      return `
+        <div class="bsp-skill">
+          <div class="bsp-skill-nome">${h.nome}${tag}</div>
+          <div class="bsp-skill-desc">${EFEITOS.destacar(h.descricao || '—')}</div>
+        </div>`;
+    }).join('');
+
+    // Passivas slotadas
+    const passivasHtml = (c.passivas || []).map((pid, i) => {
+      if (!pid) return `<div class="bsp-passiva vazio">— slot ${i + 1} vazio —</div>`;
+      const p = HABILIDADES.getPassiva(pid);
+      return `
+        <div class="bsp-passiva">
+          <div class="bsp-passiva-nome">${p.nome}</div>
+          <div class="bsp-passiva-desc">${EFEITOS.destacar(p.descricao || '—')}</div>
+        </div>`;
+    }).join('');
+
+    // Efeitos ativos
+    const efeitosAtivos = (c.efeitos || []).filter(e => (e.duracao ?? 0) > 0);
+    const efeitosHtml = efeitosAtivos.length === 0
+      ? '<div class="bsp-empty">Sem efeitos ativos.</div>'
+      : efeitosAtivos.map(e => `
+          <div class="bsp-efeito ${_classeEfeito(e)}">
+            <span class="bsp-efeito-nome">${_efeitoLabel(e)}</span>
+            <span class="bsp-efeito-dur">${e.duracao}t</span>
+          </div>
+        `).join('');
+
+    const popup = document.createElement('div');
+    popup.id = 'battle-status-popup';
+    popup.innerHTML = `
+      <div id="battle-status-overlay"></div>
+      <div id="battle-status-box">
+        <button class="bsp-fechar" aria-label="Fechar">×</button>
+        <div class="bsp-cabecalho">
+          <span class="bsp-naipe" style="color:${corNaipe}">${c.naipe ?? '?'}</span>
+          <div class="bsp-cab-nome">
+            <div class="bsp-nome">${c.nome}</div>
+            <div class="bsp-naipe-label" style="color:${corNaipe}aa">${naipeLbl}</div>
+          </div>
+        </div>
+        ${venceN ? `
+          <div class="bsp-vantagens">
+            <div class="bsp-vant"><span class="bsp-tag-vant">VANTAGEM</span> contra <strong style="color:${_COR_INI[venceN] ?? '#888'}">${venceN}</strong></div>
+            <div class="bsp-desv"><span class="bsp-tag-desv">DESVANTAGEM</span> contra <strong style="color:${_COR_INI[perdeN] ?? '#888'}">${perdeN}</strong></div>
+          </div>` : ''}
+        <div class="bsp-stats">
+          <div class="bsp-stat"><span class="bsp-stat-l">ATQ</span><span class="bsp-stat-v ${atqCls}">${c.atq}</span></div>
+          <div class="bsp-stat"><span class="bsp-stat-l">DEF</span><span class="bsp-stat-v ${defCls}">${c.def}</span></div>
+          <div class="bsp-stat"><span class="bsp-stat-l">INC</span><span class="bsp-stat-v ${incCls}">${c.inc}</span></div>
+        </div>
+        <div class="bsp-hp">
+          <div class="bsp-hp-bar"><div class="bsp-hp-fill" style="width:${hpPct}%;background:${hpCor}"></div></div>
+          <div class="bsp-hp-txt">${c.hp} / ${c.pvs}</div>
+        </div>
+        <div class="bsp-secao">
+          <div class="bsp-secao-titulo">HABILIDADES</div>
+          ${habsHtml || '<div class="bsp-empty">Sem habilidades equipadas.</div>'}
+        </div>
+        <div class="bsp-secao">
+          <div class="bsp-secao-titulo">PASSIVAS</div>
+          ${passivasHtml || '<div class="bsp-empty">Sem passivas equipadas.</div>'}
+        </div>
+        <div class="bsp-secao">
+          <div class="bsp-secao-titulo">EFEITOS ATIVOS</div>
+          <div class="bsp-efeitos-lista">${efeitosHtml}</div>
+        </div>
+      </div>
+    `;
+
+    screen.appendChild(popup);
+
+    const fechar = () => { popup.remove(); _statusPopupChar = null; };
+    popup.querySelector('.bsp-fechar').addEventListener('click', fechar);
+    popup.querySelector('#battle-status-overlay').addEventListener('click', fechar);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
