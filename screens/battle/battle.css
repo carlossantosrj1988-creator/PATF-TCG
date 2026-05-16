@@ -497,6 +497,74 @@
   padding: 4px 0;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   TELA DE DEFESA — inimigo ataca, jogador defende com carta ou passa
+══════════════════════════════════════════════════════════════════════════ */
+
+.battle-defesa-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: #d46060;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-align: center;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #d4606028;
+}
+
+.battle-defesa-info {
+  font-size: 11px;
+  color: #cccccc;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+.battle-defesa-info strong { color: #e8e8f0; }
+
+.battle-defesa-dano {
+  font-size: 12px;
+  color: #aaaaaa;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.battle-defesa-dano strong {
+  color: #d46060;
+  font-size: 17px;
+  margin: 0 4px;
+}
+
+.battle-defesa-passar {
+  margin-top: 4px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid #ffffff20;
+  border-radius: 8px;
+  color: #8899aa;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.battle-defesa-passar:hover {
+  background: #ffffff08;
+  border-color: #ffffff35;
+  color: #aabbcc;
+}
+.battle-defesa-passar.confirmando {
+  border-color: #55cc88;
+  background: #55cc8812;
+  color: #55cc88;
+}
+
+/* Carta selecionada (1º clique) durante dupla confirmação na defesa */
+.battle-carta.selecionada {
+  border-color: #c9a84c;
+  box-shadow: 0 0 0 2px rgba(201,168,76,0.45), 0 8px 22px rgba(201,168,76,0.30);
+  transform: translateY(-6px);
+}
+
 /* Slot ativo (turno) — borda dourada pulsando */
 .battle-char-slot.ativo .battle-char-grad {
   border-color: rgba(201,168,76,0.7);

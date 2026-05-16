@@ -255,12 +255,15 @@ const COMBAT = (() => {
   //      a. Dispara 'aliado_atacado' nos aliados do alvo (pode redirecionar
   //         o defensor — ex: Defender os Fracos)
   //      b. Modifica poder via 'modificar_poder' (ex: Espírito do Urso Polar)
-  //      c. Resolve dano via etapa3_resolucaoDano
+  //      c. Resolve dano via etapa3_resolucaoDano (com defesaCarta se houver)
   //      d. Se sofreu dano com 'odio_bonus' ativo, acumula +4 (Ódio)
   //      e. Dispara 'ao_causar_dano' (efeito intrínseco + passiva) e
   //         'ao_sofrer_dano' (passiva no alvo)
   // Não avança turno — quem chama (battle.js) faz etapa5 + avancarCombatente.
-  function resolverAcao(atacante, hab, cartaIdx, alvos) {
+  //
+  // defesasPorAlvo: { [alvo.id]: cartaIdx } — opcional. Quando presente,
+  // consome a carta de defesa da mão do alvo e usa no cálculo de defesa.
+  function resolverAcao(atacante, hab, cartaIdx, alvos, defesasPorAlvo = null) {
     if (!atacante || !hab || !Array.isArray(alvos) || alvos.length === 0) return null;
 
     // 1. Consome carta
@@ -313,8 +316,22 @@ const COMBAT = (() => {
       EFEITOS_HABILIDADES.disparar(hab, 'modificar_poder', atacante, evPoder);
       const poderFinal = poderEfetivo + evPoder.bonusPoder;
 
-      // Dano
-      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, null);
+      // Carta de defesa — consumida da mão do alvo se mapa fornecido.
+      // Chave do mapa é o id do alvo ORIGINAL (pré-intercepto).
+      let defesaCarta = null;
+      const defesaIdx = defesasPorAlvo ? defesasPorAlvo[alvo.id] : undefined;
+      if (defesaIdx != null) {
+        if (alvoReal.lado === 'jogador') {
+          defesaCarta = BATTLE_STATE.maoJogador.splice(defesaIdx, 1)[0] ?? null;
+          if (defesaCarta) BATTLE_STATE.descarteJogador.push(defesaCarta);
+        } else {
+          defesaCarta = alvoReal.mao.splice(defesaIdx, 1)[0] ?? null;
+          if (defesaCarta) alvoReal.descarte.push(defesaCarta);
+        }
+      }
+
+      // Dano (com defesa, se houver carta)
+      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta);
 
       // Acumula odio_bonus se o alvo estava em estado de Ódio ao sofrer dano
       if (resultado.causouDano) {
