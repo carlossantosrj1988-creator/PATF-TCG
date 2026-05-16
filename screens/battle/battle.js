@@ -779,7 +779,7 @@ const BATTLE = (() => {
         <span><b>RECARGA</b> ${recTxt}</span>
         <span><b>AÇÃO</b> ${acaoTxt}</span>
       </div>
-      <div class="battle-hab-detalhe-desc">${hab.descricao || '—'}</div>
+      <div class="battle-hab-detalhe-desc">${EFEITOS.destacar(hab.descricao || '—')}</div>
     `;
 
     const voltar = document.createElement('button');

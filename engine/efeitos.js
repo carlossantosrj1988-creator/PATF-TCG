@@ -53,8 +53,9 @@ const EFEITOS = (() => {
   // 2 turnos, renovável.
   // O dobramento acontece em combat.js resolverAcao (check pela presença do efeito).
   registrar('amaciado', {
-    categoria: 'debuff_marca',
-    descricao: 'Habilidades de Corte recebidas têm o poder dobrado por 2 turnos.',
+    nome:       'Amaciado',
+    categoria:  'debuff_marca',
+    descricao:  'Habilidades de Corte recebidas têm o poder dobrado por 2 turnos.',
     aplicar(alvo) {
       _renovarOuCriar(alvo, 'amaciado', () => {
         alvo.efeitos.push({
@@ -68,8 +69,9 @@ const EFEITOS = (() => {
   // -50% da DEF base do alvo por 2 turnos. Aplica via debuff_def em c.efeitos —
   // recalcularStats já lê esse tipo automaticamente.
   registrar('exposto', {
-    categoria: 'debuff_stat',
-    descricao: 'DEF base do alvo reduzida em 50% por 2 turnos.',
+    nome:       'Exposto',
+    categoria:  'debuff_stat',
+    descricao:  'DEF base do alvo reduzida em 50% por 2 turnos.',
     aplicar(alvo) {
       const renovou = _renovarOuCriar(alvo, 'exposto', () => {
         const reducao = Math.floor((alvo.defBase ?? alvo.def ?? 0) * 0.5);
@@ -86,8 +88,9 @@ const EFEITOS = (() => {
   // DoT: 10 dano por turno (gatilho 'inicio_rodada' — _aplicarDoT já trata) +
   // -1 DEF persistente enquanto durar. 2 turnos, renovável.
   registrar('queimadura', {
-    categoria: 'debuff_dot',
-    descricao: '10 de dano por turno + -1 DEF por 2 turnos.',
+    nome:       'Queimadura',
+    categoria:  'debuff_dot',
+    descricao:  '10 de dano por turno + -1 DEF por 2 turnos.',
     aplicar(alvo) {
       const renovou = _renovarOuCriar(alvo, 'queimadura', () => {
         alvo.efeitos.push({
@@ -106,8 +109,9 @@ const EFEITOS = (() => {
   // ── Resfriamento ──────────────────────────────────────────────────────────
   // DoT: 10 dano por turno + -1 ATQ persistente. 2 turnos, renovável.
   registrar('resfriamento', {
-    categoria: 'debuff_dot',
-    descricao: '10 de dano por turno + -1 ATQ por 2 turnos.',
+    nome:       'Resfriamento',
+    categoria:  'debuff_dot',
+    descricao:  '10 de dano por turno + -1 ATQ por 2 turnos.',
     aplicar(alvo) {
       const renovou = _renovarOuCriar(alvo, 'resfriamento', () => {
         alvo.efeitos.push({
@@ -123,6 +127,70 @@ const EFEITOS = (() => {
     },
   });
 
-  return { registrar, aplicar, get };
+  // ══════════════════════════════════════════════════════════════════════════
+  // UI — destaque clicável de tags nas descrições
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Recebe um texto qualquer (descricao de habilidade, passiva, etc.) e
+  // devolve HTML com cada nome de efeito conhecido envolvido num <span>
+  // clicável. Use em qualquer lugar que renderize descrição.
+  function destacar(texto) {
+    if (!texto) return '';
+    let r = String(texto);
+    for (const [id, ef] of _registry) {
+      if (!ef.nome) continue;
+      const escaped = ef.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`\\b${escaped}\\b`, 'g');
+      r = r.replace(re, `<span class="efeito-tag" data-id="${id}">${ef.nome}</span>`);
+    }
+    return r;
+  }
+
+  // ── Tooltip global (única instância, anexada ao body) ─────────────────────
+
+  let _tooltipEl = null;
+
+  function _fecharTooltip() {
+    if (_tooltipEl) { _tooltipEl.remove(); _tooltipEl = null; }
+  }
+
+  function _abrirTooltip(tagEl) {
+    _fecharTooltip();
+    const id = tagEl.dataset.id;
+    const ef = _registry.get(id);
+    if (!ef) return;
+    const tip = document.createElement('div');
+    tip.className = 'efeito-tooltip';
+    tip.innerHTML = `
+      <button class="efeito-tooltip-close" aria-label="Fechar">×</button>
+      <div class="efeito-tooltip-nome">${ef.nome}</div>
+      <div class="efeito-tooltip-desc">${ef.descricao}</div>
+    `;
+    document.body.appendChild(tip);
+    // Posiciona próximo ao tag (fixed = viewport-relative, alinha com transform do canvas)
+    const rect = tagEl.getBoundingClientRect();
+    const w    = tip.offsetWidth;
+    const h    = tip.offsetHeight;
+    let left   = rect.left;
+    let top    = rect.bottom + 6;
+    // Mantém dentro do viewport
+    if (left + w > window.innerWidth - 8)  left = window.innerWidth - w - 8;
+    if (top  + h > window.innerHeight - 8) top  = rect.top - h - 6;
+    if (left < 8) left = 8;
+    if (top  < 8) top  = 8;
+    tip.style.left = left + 'px';
+    tip.style.top  = top  + 'px';
+    _tooltipEl = tip;
+  }
+
+  // Listener global — uma vez na vida da página.
+  document.addEventListener('click', (e) => {
+    const tag = e.target.closest('.efeito-tag');
+    if (tag) { _abrirTooltip(tag); return; }
+    if (e.target.closest('.efeito-tooltip-close')) { _fecharTooltip(); return; }
+    if (_tooltipEl && !_tooltipEl.contains(e.target)) _fecharTooltip();
+  });
+
+  return { registrar, aplicar, get, destacar };
 
 })();
