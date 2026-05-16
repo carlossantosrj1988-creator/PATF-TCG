@@ -316,17 +316,24 @@ const COMBAT = (() => {
       EFEITOS_HABILIDADES.disparar(hab, 'modificar_poder', atacante, evPoder);
       const poderFinal = poderEfetivo + evPoder.bonusPoder;
 
-      // Carta de defesa — consumida da mão do alvo se mapa fornecido.
-      // Chave do mapa é o id do alvo ORIGINAL (pré-intercepto).
+      // Carta de defesa — vem do mapa, indexada pelo id do alvo ORIGINAL
+      // (pré-intercepto). Mapa carrega o OBJETO da carta — splice por
+      // referência evita bug de índices quando múltiplos alvos defendem.
       let defesaCarta = null;
-      const defesaIdx = defesasPorAlvo ? defesasPorAlvo[alvo.id] : undefined;
-      if (defesaIdx != null) {
+      const defesaRef = defesasPorAlvo ? defesasPorAlvo[alvo.id] : null;
+      if (defesaRef) {
         if (alvoReal.lado === 'jogador') {
-          defesaCarta = BATTLE_STATE.maoJogador.splice(defesaIdx, 1)[0] ?? null;
-          if (defesaCarta) BATTLE_STATE.descarteJogador.push(defesaCarta);
+          const idx = BATTLE_STATE.maoJogador.indexOf(defesaRef);
+          if (idx >= 0) {
+            defesaCarta = BATTLE_STATE.maoJogador.splice(idx, 1)[0];
+            BATTLE_STATE.descarteJogador.push(defesaCarta);
+          }
         } else {
-          defesaCarta = alvoReal.mao.splice(defesaIdx, 1)[0] ?? null;
-          if (defesaCarta) alvoReal.descarte.push(defesaCarta);
+          const idx = alvoReal.mao.indexOf(defesaRef);
+          if (idx >= 0) {
+            defesaCarta = alvoReal.mao.splice(idx, 1)[0];
+            alvoReal.descarte.push(defesaCarta);
+          }
         }
       }
 

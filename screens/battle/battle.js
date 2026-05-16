@@ -792,20 +792,24 @@ const BATTLE = (() => {
     return div;
   }
 
-  // ── Defesa esquerda: atacante + dano + botão PASSAR (dupla confirmação) ──
+  // ── Defesa esquerda: atacante + alvo atual + dano + PASSAR (dupla confirmação) ──
   function _criarPainelDefesaEsq() {
     const div = document.createElement('div');
     div.id = 'battle-panel-habs';
     div.classList.add('detalhe');
 
-    const { atacante, alvoPlayer, dano } = _defesaPendente;
+    const { atacante, alvoAtual, dano, total, fila } = _defesaPendente;
     const corAt = _COR_INI[atacante.naipe] ?? '#cc7777';
 
+    // Conta posição atual na fila (1-based). fila.length é o que SOBRA depois
+    // do atual ter sido tirado, então: posicao = total - fila.length.
+    const tituloSufixo = total > 1 ? ` ${total - fila.length}/${total}` : '';
+
     div.innerHTML = `
-      <div class="battle-defesa-titulo">⚠ DEFENDER</div>
+      <div class="battle-defesa-titulo">⚠ DEFENDER${tituloSufixo}</div>
       <div class="battle-defesa-info">
         <span style="color:${corAt}">${atacante.nome}</span>
-        ataca <strong>${alvoPlayer.nome}</strong>
+        ataca <strong>${alvoAtual.nome}</strong>
       </div>
       <div class="battle-defesa-dano">Causará <strong>${dano}</strong> de dano</div>
     `;
@@ -822,6 +826,7 @@ const BATTLE = (() => {
   }
 
   // ── Defesa direita: cartas da mão (clica → seleciona → clica de novo → confirma) ──
+  // Cartas já reservadas por jogadores anteriores na mesma área ficam grayed.
   function _criarPainelDefesaDir() {
     const div = document.createElement('div');
     div.id = 'battle-panel-cartas';
@@ -832,13 +837,24 @@ const BATTLE = (() => {
       return div;
     }
 
+    const reservadas = new Set(
+      Object.values(_defesaPendente.defesasColetadas).filter(c => c)
+    );
+
     mao.forEach((carta, i) => {
-      const sel = _defesaSel && _defesaSel.tipo === 'carta' && _defesaSel.idx === i;
+      const sel       = _defesaSel && _defesaSel.tipo === 'carta' && _defesaSel.idx === i;
+      const reservada = reservadas.has(carta);
       const el = document.createElement('button');
-      el.className = 'battle-carta' + (sel ? ' selecionada' : '');
+      el.className = 'battle-carta'
+        + (sel ? ' selecionada' : '')
+        + (reservada ? ' nao-clicavel' : '');
       el.dataset.naipe = carta.naipe ?? '';
       el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
-      el.addEventListener('click', () => _selecionarDefesa({ tipo: 'carta', idx: i }));
+      if (reservada) {
+        el.disabled = true;
+      } else {
+        el.addEventListener('click', () => _selecionarDefesa({ tipo: 'carta', idx: i }));
+      }
       div.appendChild(el);
     });
 
@@ -966,13 +982,13 @@ const BATTLE = (() => {
       return;
     }
 
-    const ehAtaqueDanoUnico =
-      !decisao.hab.efeitoPuro
-      && decisao.hab.alvo === 'unico'
-      && decisao.alvos[0]?.lado === 'jogador';
+    // Tela de defesa pra qualquer ataque de dano que atinja jogador(es).
+    // Área dispara defesa por alvo, em sequência (cada um escolhe).
+    const alvosPlayer = decisao.alvos.filter(a => a.lado === 'jogador' && a.hp > 0);
+    const ehAtaqueComDefesa = !decisao.hab.efeitoPuro && alvosPlayer.length > 0;
 
-    if (ehAtaqueDanoUnico) {
-      _iniciarDefesa(c, decisao);
+    if (ehAtaqueComDefesa) {
+      _iniciarDefesa(c, decisao, alvosPlayer);
     } else {
       COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
       _fecharTurnoInimigo(c);
@@ -989,44 +1005,66 @@ const BATTLE = (() => {
     _renderizar();
   }
 
-  // Configura a tela de defesa: calcula o dano potencial e arma o callback.
-  function _iniciarDefesa(atacante, decisao) {
-    const alvoPlayer  = decisao.alvos[0];
-    const cartaAtaque = (atacante.lado === 'jogador'
-      ? COMBAT.estado.maoJogador
-      : atacante.mao)[decisao.cartaIdx];
+  // Configura a tela de defesa: vira uma fila de alvos jogador (1 ou mais).
+  // Cada confirmação avança pro próximo. Quando a fila esvazia, resolve.
+  function _iniciarDefesa(atacante, decisao, alvosPlayer) {
+    _defesaPendente = {
+      atacante, decisao,
+      fila:              [...alvosPlayer],  // alvos restantes pra defender
+      total:             alvosPlayer.length,
+      alvoAtual:         null,
+      dano:              0,
+      defesasColetadas:  {},                // alvoId → cartaObj ou null
+    };
+    _avancarFilaDefesa();
+  }
 
-    const dano = DAMAGE.calcularDano(
-      atacante, alvoPlayer,
-      decisao.hab.poder ?? 0, cartaAtaque, decisao.hab.efeitoPuro,
+  // Tira o próximo alvo da fila e prepara a tela. Quando fila vazia, resolve.
+  function _avancarFilaDefesa() {
+    if (!_defesaPendente) return;
+    if (_defesaPendente.fila.length === 0) {
+      const { atacante, decisao, defesasColetadas } = _defesaPendente;
+      // Limpa antes — defesasPorAlvo vazio vira null
+      const defesas = Object.keys(defesasColetadas).length > 0 ? defesasColetadas : null;
+      _defesaPendente = null;
+      _defesaSel      = null;
+      COMBAT.resolverAcao(atacante, decisao.hab, decisao.cartaIdx, decisao.alvos, defesas);
+      _fecharTurnoInimigo(atacante);
+      return;
+    }
+
+    _defesaPendente.alvoAtual = _defesaPendente.fila.shift();
+
+    // Recalcula dano potencial pro alvo atual
+    const cartaAtaque = (_defesaPendente.atacante.lado === 'jogador'
+      ? COMBAT.estado.maoJogador
+      : _defesaPendente.atacante.mao)[_defesaPendente.decisao.cartaIdx];
+    _defesaPendente.dano = DAMAGE.calcularDano(
+      _defesaPendente.atacante,
+      _defesaPendente.alvoAtual,
+      _defesaPendente.decisao.hab.poder ?? 0,
+      cartaAtaque,
+      _defesaPendente.decisao.hab.efeitoPuro,
     );
 
-    _defesaPendente = {
-      atacante, decisao, alvoPlayer, dano,
-      onResolve(cartaDefesaIdx) {
-        const defesas = (cartaDefesaIdx != null)
-          ? { [alvoPlayer.id]: cartaDefesaIdx }
-          : null;
-        COMBAT.resolverAcao(atacante, decisao.hab, decisao.cartaIdx, decisao.alvos, defesas);
-        _defesaPendente = null;
-        _defesaSel      = null;
-        _fecharTurnoInimigo(atacante);
-      },
-    };
     _defesaSel = null;
     _renderizar();
   }
 
   // Processa um clique no painel de defesa — dupla confirmação.
   function _selecionarDefesa(novaSel) {
-    if (!_defesaPendente) return;
+    if (!_defesaPendente || !_defesaPendente.alvoAtual) return;
     const igual = _defesaSel
       && _defesaSel.tipo === novaSel.tipo
       && _defesaSel.idx === novaSel.idx;
     if (igual) {
-      // Confirmação — resolve
-      const cartaIdx = novaSel.tipo === 'carta' ? novaSel.idx : null;
-      _defesaPendente.onResolve(cartaIdx);
+      // Confirma — registra escolha (objeto da carta, não índice — splice
+      // por referência em resolverAcao evita bug com múltiplos alvos)
+      const cartaObj = novaSel.tipo === 'carta'
+        ? COMBAT.estado.maoJogador[novaSel.idx]
+        : null;
+      _defesaPendente.defesasColetadas[_defesaPendente.alvoAtual.id] = cartaObj;
+      _avancarFilaDefesa();
     } else {
       _defesaSel = novaSel;
       _renderizar();
