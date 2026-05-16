@@ -74,7 +74,9 @@ const DAMAGE = (() => {
   // ── Cálculo de defesa ─────────────────────────────────────────────────────
 
   // carta: objeto de carta usado na defesa, ou null (DEF base)
+  // Carta J (Valete) na defesa = esquiva total — defesa "infinita" zera o dano.
   function calcularDefesa(defensor, carta = null) {
+    if (carta && carta.valor === 'J') return Infinity;
     const valCarta = carta ? DECK.valorDano(carta) : 0;
     return defensor.def + valCarta;
   }

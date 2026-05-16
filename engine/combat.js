@@ -202,16 +202,34 @@ const COMBAT = (() => {
     return BATTLE_STATE.ordem[BATTLE_STATE.indiceAtual] ?? null;
   }
 
-  // Etapa 0 (Início da rodada) — roda antes das 5 etapas.
-  // Deduz cooldowns/buffs/debuffs em 1, recalcula stats (refletindo
-  // buffs que expiraram) e aplica DoT.
+  // Início da Rodada — once-per-round. NÃO repete em rodada extra / ação rápida.
+  // Deduz cooldowns + duração de buffs/debuffs (filtra expirados) e aplica DoT.
+  // Idempotente: marca _turnoIniciado para evitar chamada dupla.
   function iniciarRodada(combatente) {
+    if (!combatente || combatente._turnoIniciado) return;
+    combatente._turnoIniciado = true;
     _deduzirEfeitos(combatente);
-    PASSIVAS.recalcularStats(combatente);
     _aplicarDoT(combatente);
   }
 
-  // Etapa 1 — Verificações pré-ação.
+  // Etapa 1 — Verificações Pré-Ação. Re-roda em rodada extra / ação rápida.
+  //   1.a tick passivas (gatilho 'tick_passivas') → recalcularStats
+  //   1.b verificação de perda de rodada (Congelado, Atordoado — 50% chance)
+  // Retorna { podeAgir, motivo? }.
+  function rodarEtapa1(combatente) {
+    if (!combatente) return { podeAgir: false };
+    PASSIVAS.disparar('tick_passivas', combatente);
+    PASSIVAS.recalcularStats(combatente);
+    const stunned = combatente.efeitos.find(e =>
+      (e.tipo === 'frozen' || e.tipo === 'stun') && e.duracao > 0
+    );
+    if (stunned && Math.random() < 0.5) {
+      return { podeAgir: false, motivo: stunned.tipo };
+    }
+    return { podeAgir: true };
+  }
+
+  // Etapa 1 (legado) — Verificações pré-ação básicas (perda de rodada por efeito).
   // Retorna { podeAgir: bool }.
   function etapa1_verificacoes(combatente) {
     combatente.perdeuRodada = combatente.efeitos.some(e => e.tipo === 'perda_rodada' && e.duracao > 0);
@@ -285,7 +303,7 @@ const COMBAT = (() => {
     // 2. Efeito 'ao_usar' (ex: Ódio marca odio_bonus)
     EFEITOS_HABILIDADES.disparar(hab, 'ao_usar', atacante, { alvos, carta });
 
-    // 3. Poder efetivo — gasta bônus acumulados (ex: Ódio)
+    // 3. Poder efetivo — gasta bônus acumulados (ex: Ódio, Rei)
     let poderEfetivo = hab.poder ?? 0;
     if (!hab.efeitoPuro) {
       const odio = atacante.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
@@ -293,7 +311,14 @@ const COMBAT = (() => {
         poderEfetivo += odio.valor;
         odio.valor = 0;
       }
+      const rei = atacante.efeitos.find(e => e.tipo === 'rei_atq_bonus' && e.duracao > 0);
+      if (rei) {
+        poderEfetivo += rei.valor;
+        rei.duracao = 0;          // consumido
+      }
     }
+    // Limpa efeitos expirados (rei_atq_bonus zerado, etc.)
+    atacante.efeitos = atacante.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
 
     // 4. Resolve por alvo
     for (const alvo of alvos) {
@@ -314,7 +339,13 @@ const COMBAT = (() => {
       // Modificador de poder por efeito da habilidade (ex: Urso Polar)
       const evPoder = { alvo: alvoReal, bonusPoder: 0 };
       EFEITOS_HABILIDADES.disparar(hab, 'modificar_poder', atacante, evPoder);
-      const poderFinal = poderEfetivo + evPoder.bonusPoder;
+      let poderFinal = poderEfetivo + evPoder.bonusPoder;
+
+      // Amaciado: alvo marcado recebe poder dobrado de habilidades de Corte.
+      if (_ehCorte(hab.tipo)
+          && alvoReal.efeitos.some(e => e.tipo === 'amaciado' && e.duracao > 0)) {
+        poderFinal *= 2;
+      }
 
       // Carta de defesa — vem do mapa, indexada pelo id do alvo ORIGINAL
       // (pré-intercepto). Mapa carrega o OBJETO da carta — splice por
@@ -351,10 +382,27 @@ const COMBAT = (() => {
       if (resultado.causouDano) {
         PASSIVAS.disparar('ao_causar_dano', atacante, { alvo: alvoReal, ...resultado });
         PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...resultado });
+
+        // Linker: aplica efeitos nomeados das tags da habilidade no alvo.
+        // (Apenas quando causou dano — game-design 02 §3.3.)
+        if (Array.isArray(hab.tags) && hab.tags.length > 0
+            && typeof EFEITOS !== 'undefined' && EFEITOS.aplicar) {
+          for (const tag of hab.tags) {
+            EFEITOS.aplicar(tag, alvoReal, atacante);
+          }
+        }
       }
     }
 
     return { ok: true };
+  }
+
+  // Helper: identifica habilidades de "Corte" pelo texto do tipo.
+  // Faz substring match porque temos "Cortante" (antigo) e "Corte e Contusão" (novo).
+  function _ehCorte(tipo) {
+    if (!tipo || typeof tipo !== 'string') return false;
+    const t = tipo.toLowerCase();
+    return t.includes('corte') || t.includes('cortante');
   }
 
   // Etapa 4 — Verifica se há ação extra (ação rápida ou rodada extra).
@@ -370,12 +418,14 @@ const COMBAT = (() => {
   }
 
   // Etapa 5 — Fim da rodada. Efeitos de fim de turno resolvem aqui.
+  // Limpa _turnoIniciado pra próxima rodada poder rodar iniciarRodada de novo.
   function etapa5_fimRodada(combatente) {
     for (const efeito of combatente.efeitos) {
       if (efeito.gatilho === 'fim_rodada') {
         _aplicarEfeito(combatente, efeito);
       }
     }
+    if (combatente) combatente._turnoIniciado = false;
     _log('fim_rodada', `Rodada de ${combatente.nome} encerrada`);
   }
 
@@ -458,6 +508,11 @@ const COMBAT = (() => {
     }
   }
 
+  // Wrapper público — usado por cartas especiais (ex: Ás compra 1 carta)
+  function comprarCarta(combatente, n = 1) {
+    _comprarCarta(combatente, n);
+  }
+
   function _log(tipo, texto, dados = {}) {
     BATTLE_STATE.log.push({ tipo, texto, dados });
   }
@@ -490,6 +545,7 @@ const COMBAT = (() => {
     // Turno e rodada
     combatenteAtual,
     iniciarRodada,
+    rodarEtapa1,
     etapa1_verificacoes,
     passarRodada,
     etapa3_resolucaoDano,
@@ -501,6 +557,9 @@ const COMBAT = (() => {
     // Efeitos
     adicionarEfeito,
     verificarFimDeBatalha,
+
+    // Helpers de mão (uso de cartas especiais)
+    comprarCarta,
   };
 
 })();

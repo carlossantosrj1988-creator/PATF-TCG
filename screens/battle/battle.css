@@ -596,17 +596,18 @@
   height: 100%;
   background: transparent;
   border: none;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
-  letter-spacing: 6px;
+  letter-spacing: 4px;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s;
   position: relative;
 }
 
-/* separador central como pseudo-elemento — evita criar elemento extra */
-#battle-btn-habilidades::after {
+/* separadores entre os 3 botões grandes (HABILIDADES | ESPECIAIS | PASSAR) */
+#battle-btn-habilidades::after,
+#battle-btn-especiais::after {
   content: '';
   position: absolute;
   right: 0; top: 20%; bottom: 20%;
@@ -616,6 +617,9 @@
 
 #battle-btn-habilidades          { color: #c9a84c; }
 #battle-btn-habilidades:hover    { background: #c9a84c10; }
+
+#battle-btn-especiais            { color: #b070d0; }
+#battle-btn-especiais:hover      { background: #b070d010; }
 
 #battle-btn-passar               { color: #8899aa; }
 #battle-btn-passar:hover         { background: #ffffff08; }
