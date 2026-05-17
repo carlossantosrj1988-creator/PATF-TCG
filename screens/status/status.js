@@ -321,7 +321,7 @@ const STATUS = (() => {
         <div class="popup-detalhe-nome" style="color:${naipe.cor}">${nome}</div>
         <div class="popup-detalhe-naipe" style="color:${naipe.cor}99">${naipe.label}</div>
         ${fichaHTML}
-        <div class="popup-detalhe-desc">${descricao}</div>
+        <div class="popup-detalhe-desc">${EFEITOS.destacar(descricao)}</div>
         <div class="popup-detalhe-acoes">
           <button id="status-popup-fechar">FECHAR</button>
           <button id="btn-comprar-no"
@@ -438,7 +438,7 @@ const STATUS = (() => {
           <div class="popup-detalhe-nome" style="color:${naipeCor}">${nome}</div>
           <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${no.naipe ? no.naipe.toUpperCase() : ''}</div>
           ${blocoDados}
-          <div class="popup-detalhe-desc">${descricao}</div>
+          <div class="popup-detalhe-desc">${EFEITOS.destacar(descricao)}</div>
           <div class="popup-detalhe-acoes">
             <button id="status-popup-voltar">← VOLTAR</button>
             <button id="status-popup-equipar" style="color:${naipeCor};border-color:${naipeCor}66;">EQUIPAR</button>
@@ -509,7 +509,7 @@ const STATUS = (() => {
         <div class="popup-detalhe-nome" style="color:${naipeCor}">${nome}</div>
         <div class="popup-detalhe-naipe" style="color:${naipeCor}88">${subLabel}</div>
         ${fichaHTML}
-        <div class="popup-detalhe-desc">${descricao}</div>
+        <div class="popup-detalhe-desc">${EFEITOS.destacar(descricao)}</div>
         ${avisoBasico}
         <div class="popup-detalhe-acoes">
           ${botaoAcao}
