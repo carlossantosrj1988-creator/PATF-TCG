@@ -51,4 +51,10 @@ const EFEITOS_DATA = {
     descricao: '10 de dano por turno + -1 ATQ por 2 turnos.',
   },
 
+  enfraquecido: {
+    nome:      'Enfraquecido',
+    categoria: 'debuff_stat',
+    descricao: 'ATQ base do alvo reduzido em 50% por 2 turnos.',
+  },
+
 };

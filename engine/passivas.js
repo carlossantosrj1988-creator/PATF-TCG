@@ -89,6 +89,35 @@ const PASSIVAS = (() => {
     c.def += bonus;
   });
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Espadas
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // esp_p1 — Resiliência
+  // Quando um aliado é nocauteado, recupera 20% do PVS máximo.
+  registrar('esp_p1', 'aliado_nocauteado', (c) => {
+    if (!c.pvs) return;
+    const cura = Math.floor(c.pvs * 0.2);
+    c.hp = Math.min(c.pvs, c.hp + cura);
+  });
+
+  // esp_p2 — Novo Level
+  // Ao nocautear um inimigo, compra 1 carta extra e ganha rodada extra.
+  registrar('esp_p2', 'ao_nocautear_inimigo', (c) => {
+    COMBAT.comprarCarta(c, 1);
+    c._rodadaExtraPending = true;
+  });
+
+  // esp_p3 — Gladiador
+  // Abaixo de 20% de vida: +2 ATQ e +2 DEF permanentes (reavalia a cada recalc).
+  registrar('esp_p3', 'recalc_stats', (c) => {
+    if (!c.pvs) return;
+    if ((c.hp / c.pvs) < 0.2) {
+      c.atq += 2;
+      c.def += 2;
+    }
+  });
+
   return { disparar, recalcularStats };
 
 })();
