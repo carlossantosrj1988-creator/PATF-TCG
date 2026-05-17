@@ -102,6 +102,83 @@ const EFEITOS_HABILIDADES = (() => {
     if (mult > 1) ev.bonusPoder += ev.poderBase * (mult - 1);
   });
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Ouros
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Barragem (our_h1_1)
+  // Ao passar a rodada: ganha 1 carga (_barragemCargas, máx 3).
+  // Ao usar: gasta 1 carga e sinaliza ação extra de Barragem (_barragemAcaoExtra).
+  registrar('our_h1_1', 'ao_passar_rodada', (c) => {
+    c._barragemCargas = Math.min((c._barragemCargas ?? 0) + 1, 3);
+  });
+  registrar('our_h1_1', 'ao_usar', (c) => {
+    if ((c._barragemCargas ?? 0) > 0) {
+      c._barragemCargas -= 1;
+      c._barragemAcaoExtra = true;
+    }
+  });
+
+  // Feixe de Plasma (our_h1_2)
+  // Ignora armadura do alvo: sinaliza evPoder.ignoraArmadura.
+  registrar('our_h1_2', 'modificar_poder', (c, ev) => {
+    ev.ignoraArmadura = true;
+  });
+
+  // Máscara de Faces (our_h2_4)
+  // Alterna entre modo Feliz e Triste a cada uso. Aplica stat buff/debuff por 1 rodada.
+  registrar('our_h2_4', 'ao_usar', (c) => {
+    c._mascaraFeliz = !c._mascaraFeliz;
+    const aliados  = (typeof COMBAT !== 'undefined' && COMBAT.estado)
+      ? COMBAT.estado.combatentes.filter(x => x.lado === c.lado && x !== c && x.hp > 0)
+      : [];
+    const inimigos = (typeof COMBAT !== 'undefined' && COMBAT.estado)
+      ? COMBAT.estado.combatentes.filter(x => x.lado !== c.lado && x.hp > 0)
+      : [];
+    if (c._mascaraFeliz) {
+      for (const a of aliados) {
+        a.efeitos.push({ tipo: 'buff_atq', valor: 1, duracao: 2, duracaoOriginal: 2, _origem: 'masc_feliz' });
+        PASSIVAS.recalcularStats(a);
+      }
+    } else {
+      for (const a of inimigos) {
+        a.efeitos.push({ tipo: 'debuff_atq', valor: 1, duracao: 2, duracaoOriginal: 2, _origem: 'masc_triste' });
+        PASSIVAS.recalcularStats(a);
+      }
+    }
+    c.efeitos.push({ tipo: 'masc_ativa', duracao: 2, duracaoOriginal: 2, _origem: 'mascara_faces' });
+  });
+
+  // Elixir da Cura (our_h3_1)
+  // Cura todos os aliados no array ev.alvos em (ATQ + 1) de vida.
+  registrar('our_h3_1', 'ao_usar', (c, ev) => {
+    for (const a of (ev.alvos ?? [])) {
+      if (!a || a.hp <= 0) continue;
+      a.hp = Math.min(a.pvs ?? a.hp, a.hp + (c.atq ?? 0) + 1);
+      PASSIVAS.recalcularStats(a);
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Paus
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Controle Mental (pau_h2_1)
+  // Aplica Encantado diretamente no alvo (skill é efeitoPuro, tags não disparam automaticamente).
+  registrar('pau_h2_1', 'ao_usar', (c, ev) => {
+    const alvo = (ev.alvos ?? [])[0];
+    if (alvo) EFEITOS.aplicar('encantado', alvo, c);
+  });
+
+  // Prestidigitação (pau_h3_1)
+  // Aplica Imagem Espelhada em cada aliado do array ev.alvos.
+  registrar('pau_h3_1', 'ao_usar', (c, ev) => {
+    for (const a of (ev.alvos ?? [])) {
+      if (!a || a.hp <= 0) continue;
+      EFEITOS.aplicar('imagem_espelhada', a, c);
+    }
+  });
+
   return { disparar };
 
 })();

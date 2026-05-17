@@ -118,6 +118,81 @@ const PASSIVAS = (() => {
     }
   });
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Ouros
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // our_p1 — Concentração de Energia
+  // Ao passar a rodada: ganha 1 carga (_energiaCargas, sem limite fixo) e causa
+  // 1 de dano puro a todos os inimigos.
+  // O gasto das cargas ao usar habilidade é feito via modificar_poder em efeitos-habilidades
+  // — ou, alternativamente, interceptado em battle.js antes de resolverAcao.
+  registrar('our_p1', 'ao_passar_rodada', (c) => {
+    c._energiaCargas = (c._energiaCargas ?? 0) + 1;
+    const estado = (typeof COMBAT !== 'undefined') ? COMBAT.estado : null;
+    if (!estado) return;
+    for (const inimigo of estado.combatentes) {
+      if (inimigo.lado !== c.lado && inimigo.hp > 0) {
+        inimigo.hp = Math.max(0, inimigo.hp - 1);
+        recalcularStats(inimigo);
+      }
+    }
+  });
+
+  // our_p2 — Ação Duplicada
+  // A cada turno (tick_passivas): 50% de chance de ganhar ação extra Rápida.
+  registrar('our_p2', 'tick_passivas', (c) => {
+    if (c.acaoExtra) return;   // já usou ação extra neste turno
+    if (Math.random() < 0.5) {
+      c._acaoDuplicadaPending = true;
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Paus
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // pau_p1 — Sorte Grande
+  // Início de rodada (tick_passivas): 50% de chance de comprar 1 carta extra.
+  registrar('pau_p1', 'tick_passivas', (c) => {
+    if (Math.random() < 0.5) {
+      COMBAT.comprarCarta(c, 1);
+    }
+  });
+
+  // pau_p2 — Protetor Instintivo
+  // Quando aliado é atacado: 50% de chance de interceptar ataque único normal,
+  // 25% de interceptar se Rápido ou Furtivo.
+  registrar('pau_p2', 'aliado_atacado', (c, ev) => {
+    if (ev.alvo !== 'unico') return;
+    const chance = (ev.acao === 'R' || ev.acao === 'F') ? 0.25 : 0.5;
+    if (Math.random() < chance) {
+      ev.defensor = c;
+    }
+  });
+
+  // pau_p3 — Inspirar Coragem
+  // tick_passivas: renova buff_atq/buff_def de duração 2 em cada aliado vivo.
+  // O buff expira se o portador morrer (sem mais ticks). recalcularStats lê
+  // buff_atq/buff_def automaticamente — sem modificar stats de terceiros diretamente.
+  registrar('pau_p3', 'tick_passivas', (c) => {
+    if (c.hp <= 0) return;
+    const estado = (typeof COMBAT !== 'undefined') ? COMBAT.estado : null;
+    if (!estado) return;
+    const origem = `inspirar_${c.id}`;
+    for (const aliado of estado.combatentes) {
+      if (aliado.lado !== c.lado || aliado === c || aliado.hp <= 0) continue;
+      const existentes = aliado.efeitos.filter(e => e._origem === origem);
+      if (existentes.length > 0) {
+        for (const b of existentes) b.duracao = 2;
+      } else {
+        aliado.efeitos.push({ tipo: 'buff_atq', valor: 1, duracao: 2, duracaoOriginal: 2, _origem: origem });
+        aliado.efeitos.push({ tipo: 'buff_def', valor: 1, duracao: 2, duracaoOriginal: 2, _origem: origem });
+        recalcularStats(aliado);
+      }
+    }
+  });
+
   return { disparar, recalcularStats };
 
 })();

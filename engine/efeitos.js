@@ -46,7 +46,7 @@ const EFEITOS = (() => {
   // Helper: renova duração se o efeito já existe no alvo (mesmo _origem);
   // senão chama criar() pra empilhar a entrada nova. Retorna true se renovou.
   function _renovarOuCriar(alvo, origem, criar) {
-    const ja = alvo.efeitos.find(e => e._origem === origem && (e.duracao ?? 0) > 0);
+    const ja = alvo.efeitos.find(e => e._origem === origem && (e.duracao === null || (e.duracao ?? 0) > 0));
     if (ja) {
       for (const e of alvo.efeitos) {
         if (e._origem === origem) e.duracao = e.duracaoOriginal ?? e.duracao;
@@ -130,6 +130,73 @@ const EFEITOS = (() => {
       });
     });
     if (!renovou) PASSIVAS.recalcularStats(alvo);
+  });
+
+  // ── Armadura Derretida ────────────────────────────────────────────────────
+  // Marca: impede uso de cartas de defesa e do Valete. Verificado em resolverAcao.
+  registrar('derretar_armadura', (alvo) => {
+    _renovarOuCriar(alvo, 'derretar_armadura', () => {
+      alvo.efeitos.push({
+        tipo: 'derretar_armadura', duracao: 2, duracaoOriginal: 2, _origem: 'derretar_armadura',
+      });
+    });
+  });
+
+  // ── Radiação ──────────────────────────────────────────────────────────────
+  // DoT empilhável (máx 4 stacks). Cada stack = 4 dano/turno.
+  // Diferente dos outros DoTs: não renova — empilha nova entrada se < 4 stacks.
+  registrar('radiacao', (alvo) => {
+    const stacks = alvo.efeitos.filter(e => e._origem === 'radiacao' && (e.duracao ?? 0) > 0).length;
+    if (stacks >= 4) return;
+    alvo.efeitos.push({
+      tipo: 'dot', valor: 4, gatilho: 'inicio_rodada',
+      duracao: 2, duracaoOriginal: 2, _origem: 'radiacao',
+    });
+  });
+
+  // ── Congelado ─────────────────────────────────────────────────────────────
+  // Controle: 50% de chance de perder o turno. Reutiliza tipo 'stun' —
+  // rodarEtapa1 em combat.js já verifica esse tipo.
+  registrar('congelado', (alvo) => {
+    _renovarOuCriar(alvo, 'congelado', () => {
+      alvo.efeitos.push({
+        tipo: 'stun', duracao: 2, duracaoOriginal: 2, _origem: 'congelado',
+      });
+    });
+  });
+
+  // ── Estática ──────────────────────────────────────────────────────────────
+  // Marca: qualquer habilidade com tag Elétrico usada no campo causa 5 de dano
+  // ao portador antes de resolver. Verificado em resolverAcao.
+  registrar('estatica', (alvo) => {
+    _renovarOuCriar(alvo, 'estatica', () => {
+      alvo.efeitos.push({
+        tipo: 'estatica', duracao: 2, duracaoOriginal: 2, _origem: 'estatica',
+      });
+    });
+  });
+
+  // ── Encantado ─────────────────────────────────────────────────────────────
+  // Controle: 50% de chance de redirecionar habilidade de alvo único para
+  // um aliado próprio. Não afeta Furtivos. Verificado em resolverAcao.
+  registrar('encantado', (alvo) => {
+    _renovarOuCriar(alvo, 'encantado', () => {
+      alvo.efeitos.push({
+        tipo: 'encantado', duracao: 2, duracaoOriginal: 2, _origem: 'encantado',
+      });
+    });
+  });
+
+  // ── Imagem Espelhada ──────────────────────────────────────────────────────
+  // Buff permanente até ser consumido: 50% de esquiva por ataque de alvo único
+  // (não funciona contra Furtivo). Ao esquivar, a entrada é removida.
+  // duracao: null = não expira por tempo; _deduzirEfeitos preserva.
+  registrar('imagem_espelhada', (alvo) => {
+    _renovarOuCriar(alvo, 'imagem_espelhada', () => {
+      alvo.efeitos.push({
+        tipo: 'imagem_espelhada', duracao: null, _origem: 'imagem_espelhada',
+      });
+    });
   });
 
   // ══════════════════════════════════════════════════════════════════════════
