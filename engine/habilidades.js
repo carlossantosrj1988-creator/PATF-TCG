@@ -317,7 +317,7 @@ const HABILIDADES = (() => {
       descricao: 'Ao nocautear um inimigo, compra 1 carta extra e ganha 1 rodada extra.',
     },
     esp_p3: {                         // ex-Gladiadora (Lorien ♠)
-      nome:      'Gladiadora',
+      nome:      'Gladiador',
       gatilho:   'Permanente',
       descricao: 'Abaixo de 20% de vida, ganha +2 ATQ e +2 DEF.',
     },

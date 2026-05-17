@@ -108,7 +108,7 @@ const PASSIVAS = (() => {
     c._rodadaExtraPending = true;
   });
 
-  // esp_p3 — Gladiadora
+  // esp_p3 — Gladiador
   // Abaixo de 20% de vida: +2 ATQ e +2 DEF permanentes (reavalia a cada recalc).
   registrar('esp_p3', 'recalc_stats', (c) => {
     if (!c.pvs) return;
