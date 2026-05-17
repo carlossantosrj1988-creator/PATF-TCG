@@ -119,6 +119,19 @@ const EFEITOS = (() => {
     if (!renovou) PASSIVAS.recalcularStats(alvo);
   });
 
+  // ── Enfraquecido ──────────────────────────────────────────────────────────
+  // -50% do ATQ base do alvo. Aplica via debuff_atq — recalcularStats já lê.
+  registrar('enfraquecido', (alvo) => {
+    const renovou = _renovarOuCriar(alvo, 'enfraquecido', () => {
+      const reducao = Math.floor((alvo.atqBase ?? alvo.atq ?? 0) * 0.5);
+      alvo.efeitos.push({
+        tipo: 'debuff_atq', valor: reducao, duracao: 2, duracaoOriginal: 2,
+        _origem: 'enfraquecido',
+      });
+    });
+    if (!renovou) PASSIVAS.recalcularStats(alvo);
+  });
+
   // ══════════════════════════════════════════════════════════════════════════
   // UI — destaque clicável de tags nas descrições
   // ══════════════════════════════════════════════════════════════════════════

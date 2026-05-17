@@ -65,6 +65,43 @@ const EFEITOS_HABILIDADES = (() => {
     ev.bonusPoder += 3 * debuffs;
   });
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Espadas
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Golpe de Abate (esp_h1_2)
+  // Crítico Alto: 50% de chance de dobrar o poder base.
+  registrar('esp_h1_2', 'modificar_poder', (c, ev) => {
+    if (Math.random() < 0.5) ev.bonusPoder += ev.poderBase;
+  });
+
+  // Corte Metamorphosis (esp_h1_5)
+  // Ao causar dano, cura 2 de vida do atacante.
+  registrar('esp_h1_5', 'ao_causar_dano', (c, ev) => {
+    if (!ev.causouDano) return;
+    c.hp = Math.min(c.pvs ?? c.hp, c.hp + 2);
+  });
+
+  // Redemoinho (esp_h2_2)
+  // Ao usar: ativa estado de contra-ataque no personagem.
+  // Dura até o início do próximo turno (duracao 2 — decrementado em iniciarRodada).
+  registrar('esp_h2_2', 'ao_usar', (c) => {
+    c.efeitos = c.efeitos.filter(e => e.tipo !== 'redemoinho_ativo');
+    c.efeitos.push({ tipo: 'redemoinho_ativo', duracao: 2, _origem: 'redemoinho' });
+  });
+
+  // Atropelar (esp_h3_1)
+  // Multiplica o poder por Exposto (×2), Enfraquecido (×2) ou ambos (×4).
+  registrar('esp_h3_1', 'modificar_poder', (c, ev) => {
+    if (!ev.alvo) return;
+    const temExposto     = ev.alvo.efeitos.some(e => e._origem === 'exposto'     && e.duracao > 0);
+    const temEnfraquecido = ev.alvo.efeitos.some(e => e._origem === 'enfraquecido' && e.duracao > 0);
+    let mult = 1;
+    if (temExposto)      mult *= 2;
+    if (temEnfraquecido) mult *= 2;
+    if (mult > 1) ev.bonusPoder += ev.poderBase * (mult - 1);
+  });
+
   return { disparar };
 
 })();

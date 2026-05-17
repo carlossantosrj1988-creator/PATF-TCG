@@ -257,6 +257,18 @@ const COMBAT = (() => {
       alvo.hp = Math.max(0, alvo.hp - danoReal);
       PASSIVAS.recalcularStats(alvo);   // passivas baseadas em HP reavaliam
       _log('dano', `${atacante.nome} causou ${danoReal} de dano em ${alvo.nome}`, { dano, defesa, danoReal });
+
+      // Nocauteado: dispara eventos nos aliados do nocauteado e no atacante
+      if (alvo.hp <= 0) {
+        for (const c of BATTLE_STATE.combatentes) {
+          if (c.lado === alvo.lado && c !== alvo && _estaVivo(c)) {
+            PASSIVAS.disparar('aliado_nocauteado', c, { nocauteado: alvo });
+          }
+        }
+        if (atacante.lado !== alvo.lado) {
+          PASSIVAS.disparar('ao_nocautear_inimigo', atacante, { nocauteado: alvo });
+        }
+      }
     }
 
     return {
@@ -336,8 +348,9 @@ const COMBAT = (() => {
       }
       const alvoReal = evIntercept.defensor ?? alvo;
 
-      // Modificador de poder por efeito da habilidade (ex: Urso Polar)
-      const evPoder = { alvo: alvoReal, bonusPoder: 0 };
+      // Modificador de poder por efeito da habilidade (ex: Urso Polar, Crítico Alto)
+      // poderBase exposto no evento para handlers multiplicativos (ex: Atropelar, Golpe de Abate)
+      const evPoder = { alvo: alvoReal, bonusPoder: 0, poderBase: poderEfetivo };
       EFEITOS_HABILIDADES.disparar(hab, 'modificar_poder', atacante, evPoder);
       let poderFinal = poderEfetivo + evPoder.bonusPoder;
 
@@ -389,6 +402,28 @@ const COMBAT = (() => {
             && typeof EFEITOS !== 'undefined' && EFEITOS.aplicar) {
           for (const tag of hab.tags) {
             EFEITOS.aplicar(tag, alvoReal, atacante);
+          }
+        }
+
+        // Redemoinho: aliados do alvo com estado ativo disparam contra-ataque simples.
+        // ATQ + poder (1) vs DEF do inimigo, sem carta. 50% só o agressor / 50% todos.
+        const redemoinheiros = BATTLE_STATE.combatentes.filter(c =>
+          c.lado === alvoReal.lado && _estaVivo(c) &&
+          c.efeitos.some(e => e.tipo === 'redemoinho_ativo' && e.duracao > 0)
+        );
+        for (const rd of redemoinheiros) {
+          const alvosContra = Math.random() < 0.5
+            ? [atacante]
+            : BATTLE_STATE.combatentes.filter(c => c.lado === atacante.lado && _estaVivo(c));
+          for (const ac of alvosContra) {
+            const danoContra   = (rd.atq ?? 0) + 1;
+            const defContra    = ac.def ?? 0;
+            const realContra   = Math.max(0, danoContra - defContra);
+            if (realContra > 0) {
+              ac.hp = Math.max(0, ac.hp - realContra);
+              PASSIVAS.recalcularStats(ac);
+              _log('dano', `${rd.nome} (Redemoinho) contra-atacou ${ac.nome} por ${realContra}`);
+            }
           }
         }
       }
