@@ -241,6 +241,9 @@ const COMBAT = (() => {
   function passarRodada(combatente) {
     _comprarCarta(combatente, 1);
     PASSIVAS.disparar('ao_passar_rodada', combatente);
+    for (const hab of (combatente.habilidades ?? [])) {
+      if (hab && hab._id) EFEITOS_HABILIDADES.disparar(hab, 'ao_passar_rodada', combatente, {});
+    }
     _log('acao', `${combatente.nome} passou a rodada e comprou 1 carta`);
   }
 
@@ -248,9 +251,9 @@ const COMBAT = (() => {
   // atacante/alvo: combatentes; poder: number; carta: objeto; ehEfeitoPuro: bool
   // defesaCarta: carta usada na defesa (null = DEF base)
   // Retorna { danoReal, efeitosSatisfeitos }
-  function etapa3_resolucaoDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro, defesaCarta) {
+  function etapa3_resolucaoDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro, defesaCarta, ignoraArmadura = false) {
     const dano   = DAMAGE.calcularDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro);
-    const defesa = DAMAGE.calcularDefesa(alvo, defesaCarta);
+    const defesa = ignoraArmadura ? 0 : DAMAGE.calcularDefesa(alvo, defesaCarta);
     const danoReal = DAMAGE.resolverDano(dano, defesa);
 
     if (danoReal > 0) {
@@ -295,6 +298,7 @@ const COMBAT = (() => {
   // consome a carta de defesa da mão do alvo e usa no cálculo de defesa.
   function resolverAcao(atacante, hab, cartaIdx, alvos, defesasPorAlvo = null) {
     if (!atacante || !hab || !Array.isArray(alvos) || alvos.length === 0) return null;
+    let alvosEfetivos = alvos;
 
     // 1. Consome carta
     let carta;
@@ -331,9 +335,35 @@ const COMBAT = (() => {
     }
     // Limpa efeitos expirados (rei_atq_bonus zerado, etc.)
     atacante.efeitos = atacante.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
+    const poderes = _parsePoder(poderEfetivo);
+
+    // Encantado: 50% redireciona ataque único não-Furtivo para aliado do atacante
+    if (hab.alvo === 'unico' && hab.acao !== 'F') {
+      const encEf = atacante.efeitos.find(e => e.tipo === 'encantado' && e.duracao > 0);
+      if (encEf && Math.random() < 0.5) {
+        const aliados = BATTLE_STATE.combatentes.filter(c =>
+          c.lado === atacante.lado && c !== atacante && _estaVivo(c)
+        );
+        if (aliados.length > 0) {
+          alvosEfetivos = [aliados[Math.floor(Math.random() * aliados.length)]];
+          _log('efeito', `${atacante.nome} (Encantado) atacou aliado ${alvosEfetivos[0].nome}`);
+        }
+      }
+    }
+
+    // Estática: habilidade Elétrica → 5 dano puro em portadores de Estática
+    if (_ehEletrico(hab.tipo)) {
+      for (const c of BATTLE_STATE.combatentes) {
+        if (c.efeitos.some(e => e.tipo === 'estatica' && e.duracao > 0)) {
+          c.hp = Math.max(0, c.hp - 5);
+          PASSIVAS.recalcularStats(c);
+          _log('efeito', `${c.nome} sofreu 5 de dano de Estática`);
+        }
+      }
+    }
 
     // 4. Resolve por alvo
-    for (const alvo of alvos) {
+    for (const alvo of alvosEfetivos) {
       if (!alvo || alvo.hp <= 0) continue;
 
       // Defender os Fracos: aliados do alvo podem interceptar
@@ -348,11 +378,21 @@ const COMBAT = (() => {
       }
       const alvoReal = evIntercept.defensor ?? alvo;
 
+      // Imagem Espelhada: 50% de esquiva para ataque único não-Furtivo; consome o efeito
+      if (hab.alvo === 'unico' && hab.acao !== 'F') {
+        const imagem = alvoReal.efeitos.find(e => e.tipo === 'imagem_espelhada');
+        if (imagem && Math.random() < 0.5) {
+          alvoReal.efeitos = alvoReal.efeitos.filter(e => e !== imagem);
+          _log('efeito', `${alvoReal.nome} esquivou com Imagem Espelhada`);
+          continue;
+        }
+      }
+
       // Modificador de poder por efeito da habilidade (ex: Urso Polar, Crítico Alto)
       // poderBase exposto no evento para handlers multiplicativos (ex: Atropelar, Golpe de Abate)
-      const evPoder = { alvo: alvoReal, bonusPoder: 0, poderBase: poderEfetivo };
+      const evPoder = { alvo: alvoReal, bonusPoder: 0, poderBase: poderes[0] };
       EFEITOS_HABILIDADES.disparar(hab, 'modificar_poder', atacante, evPoder);
-      let poderFinal = poderEfetivo + evPoder.bonusPoder;
+      let poderFinal = poderes[0] + evPoder.bonusPoder;
 
       // Amaciado: alvo marcado recebe poder dobrado de habilidades de Corte.
       if (_ehCorte(hab.tipo)
@@ -365,7 +405,9 @@ const COMBAT = (() => {
       // referência evita bug de índices quando múltiplos alvos defendem.
       let defesaCarta = null;
       const defesaRef = defesasPorAlvo ? defesasPorAlvo[alvo.id] : null;
-      if (defesaRef) {
+      // Armadura Derretida impede uso de carta de defesa
+      const temDerretar = alvoReal.efeitos.some(e => e.tipo === 'derretar_armadura' && e.duracao > 0);
+      if (defesaRef && !temDerretar) {
         if (alvoReal.lado === 'jogador') {
           const idx = BATTLE_STATE.maoJogador.indexOf(defesaRef);
           if (idx >= 0) {
@@ -381,8 +423,8 @@ const COMBAT = (() => {
         }
       }
 
-      // Dano (com defesa, se houver carta)
-      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta);
+      // Dano (com defesa, se houver carta; ignoraArmadura quando sinalizado pelo handler)
+      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta, evPoder.ignoraArmadura ?? false);
 
       // Acumula odio_bonus se o alvo estava em estado de Ódio ao sofrer dano
       if (resultado.causouDano) {
@@ -427,9 +469,28 @@ const COMBAT = (() => {
           }
         }
       }
+
+      // Passes adicionais: poder múltiplo (ex: '1/1' → segundo golpe sem efeitos extras)
+      for (let pi = 1; pi < poderes.length; pi++) {
+        if (alvoReal.hp <= 0) break;
+        const r2 = etapa3_resolucaoDano(atacante, alvoReal, poderes[pi], carta, hab.efeitoPuro, null);
+        if (r2.causouDano) {
+          PASSIVAS.disparar('ao_causar_dano', atacante, { alvo: alvoReal, ...r2 });
+          PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...r2 });
+        }
+      }
     }
 
     return { ok: true };
+  }
+
+  // Helper: parse poder simples ou múltiplo ('1/1' → [1,1]; 3 → [3]).
+  function _parsePoder(valor) {
+    if (typeof valor === 'string' && valor.includes('/')) {
+      return valor.split('/').map(Number).filter(n => !isNaN(n));
+    }
+    const n = Number(valor ?? 0);
+    return [isNaN(n) ? 0 : n];
   }
 
   // Helper: identifica habilidades de "Corte" pelo texto do tipo.
@@ -438,6 +499,12 @@ const COMBAT = (() => {
     if (!tipo || typeof tipo !== 'string') return false;
     const t = tipo.toLowerCase();
     return t.includes('corte') || t.includes('cortante');
+  }
+
+  // Helper: identifica habilidades Elétricas pelo tipo.
+  function _ehEletrico(tipo) {
+    if (!tipo || typeof tipo !== 'string') return false;
+    return tipo.toLowerCase().includes('elétr');
   }
 
   // Etapa 4 — Verifica se há ação extra (ação rápida ou rodada extra).
@@ -481,10 +548,10 @@ const COMBAT = (() => {
 
   function _deduzirEfeitos(combatente) {
     for (const e of combatente.efeitos) {
-      if (e.duracao > 0) e.duracao -= 1;
+      if (e.duracao !== null && e.duracao > 0) e.duracao -= 1;
     }
-    // Limpa efeitos expirados
-    combatente.efeitos = combatente.efeitos.filter(e => e.duracao > 0);
+    // Limpa efeitos expirados (duracao === null = permanente até consumo manual)
+    combatente.efeitos = combatente.efeitos.filter(e => e.duracao === null || e.duracao > 0);
 
     // Deduz cooldowns
     for (const hid in combatente.cooldowns) {
