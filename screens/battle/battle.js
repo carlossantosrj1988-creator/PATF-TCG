@@ -385,12 +385,13 @@ const BATTLE = (() => {
     const jogador0 = estado.combatentes.find(c => c.lado === 'jogador');
     const inimigo0 = estado.combatentes.find(c => c.lado === 'inimigo');
 
-    // ── Esquerda: turno + deck compartilhado do jogador ──
+    // ── Esquerda: turno + deck + mão do jogador ──
     const esq = document.createElement('div');
     esq.className = 'battle-topbar-esq';
     esq.innerHTML = `
       <span class="topbar-turno">TURNO ${turno}</span>
       <span class="topbar-deck">🂠 ${estado.baralhoJogador.length}</span>
+      <span class="topbar-mao">✋ ${estado.maoJogador.length}</span>
     `;
 
     // ── Centro: fila de iniciativa circular ──
