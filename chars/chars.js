@@ -39,11 +39,11 @@ function criarPersonagem(poolId, nome) {
     def:             base.def,
     inc:             base.inc,
     pvs:             base.pvs,
+    hpAtual:         base.pvs, // persiste entre batalhas no Survivor
     naipe:           null,
     naipeSecundario: null,
     naipeAtivo:      null,
     passivas:        [null, null],
-    // Slot de H1 nasce com a habilidade básica do arquétipo (starter).
     habilidades:     [`basico:${base.id}`, null, null],
     atlas:           {},
   };
@@ -52,8 +52,10 @@ function criarPersonagem(poolId, nome) {
 // ── Estado global do jogador ──────────────────────────────────────────────────
 
 const PLAYER_STATE = {
-  pontos:       0,
-  personagens:  [],
+  pontos:      0,
+  itens:       [], // itens não equipados — sobrevivem ao game over
+  reliquias:   [], // relíquias não equipadas — sobrevivem ao game over
+  personagens: [],
 };
 
 // ── Salvar / carregar estado ──────────────────────────────────────────────────
@@ -68,6 +70,8 @@ function carregarEstado() {
 
   const dados = JSON.parse(salvo);
   PLAYER_STATE.pontos      = dados.pontos      ?? 0;
+  PLAYER_STATE.itens       = dados.itens       ?? [];
+  PLAYER_STATE.reliquias   = dados.reliquias   ?? [];
   PLAYER_STATE.personagens = dados.personagens ?? [];
   return true;
 }
@@ -75,5 +79,25 @@ function carregarEstado() {
 function limparEstado() {
   localStorage.removeItem('patf_state');
   PLAYER_STATE.pontos      = 0;
+  PLAYER_STATE.itens       = [];
+  PLAYER_STATE.reliquias   = [];
   PLAYER_STATE.personagens = [];
+}
+
+// Copia o HP real de cada combatente de volta pro PLAYER_STATE após batalha.
+// Chamada sempre que uma batalha termina (vitória ou derrota).
+function sincronizarHpPosBatalha(combatentes) {
+  combatentes.forEach(c => {
+    if (c.lado !== 'jogador') return;
+    const p = PLAYER_STATE.personagens.find(p => p.poolId === c.poolId);
+    if (p) p.hpAtual = c.hp;
+  });
+  salvarEstado();
+}
+
+// Todos os personagens caíram sem possibilidade de revival.
+// Guarda pontos + itens + relíquias, apaga personagens, salva.
+function gameOver() {
+  PLAYER_STATE.personagens = [];
+  salvarEstado();
 }
