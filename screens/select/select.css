@@ -331,3 +331,78 @@
   display: flex;
   gap: 12px;
 }
+
+/* ── Introdução por passos ── */
+
+#select-intro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+#select-intro-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+#select-intro-box {
+  position: relative;
+  z-index: 1;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 36px 40px;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: sans-serif;
+}
+
+#select-intro-step {
+  font-size: 0.65rem;
+  color: #555;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#select-intro-titulo {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: 2px;
+}
+
+#select-intro-texto {
+  font-size: 0.85rem;
+  color: #aaa;
+  line-height: 1.7;
+}
+
+#select-intro-texto strong {
+  color: #fff;
+}
+
+#select-intro-btn {
+  align-self: flex-end;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #7a5c00, #c9a84c);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 28px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+#select-intro-btn:hover {
+  background: linear-gradient(135deg, #c9a84c, #e8c870);
+}

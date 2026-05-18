@@ -35,6 +35,64 @@ const SELECT = (() => {
 
   // ── Render principal ──────────────────────────────────────────────────────
 
+  // ── Introdução por passos ─────────────────────────────────────────────────
+
+  const INTRO_PASSOS = [
+    {
+      titulo: 'Bem-vindo ao PATF TCG',
+      texto:  'Este não é um jogo de um personagem. Você monta um <strong>time de 3</strong> — todos entram em campo ao mesmo tempo. Cada um age, cada um pode morrer.',
+    },
+    {
+      titulo: 'Conheça os 4',
+      texto:  'Há 4 tipos disponíveis. O que os diferencia é o <strong>atributo mais forte</strong> de cada um: um é mais resistente, outro ataca mais, outro age mais rápido, outro aguenta mais dano. Escolha conforme sua estratégia.',
+    },
+    {
+      titulo: 'Monte seu time',
+      texto:  'Você vai escolher <strong>3 personagens</strong>, um por vez. Para cada um, você dá um nome. Não existe combinação certa ou errada — pode escolher o mesmo tipo as 3 vezes se quiser.',
+    },
+  ];
+
+  function mostrarIntroducao() {
+    const screen = document.getElementById('screen-select');
+    let passo = 0;
+
+    function renderPasso() {
+      const anterior = document.getElementById('select-intro');
+      if (anterior) anterior.remove();
+
+      const dados   = INTRO_PASSOS[passo];
+      const total   = INTRO_PASSOS.length;
+      const ultimo  = passo === total - 1;
+
+      const overlay = document.createElement('div');
+      overlay.id = 'select-intro';
+      overlay.innerHTML = `
+        <div id="select-intro-overlay"></div>
+        <div id="select-intro-box">
+          <div id="select-intro-step">${passo + 1} / ${total}</div>
+          <div id="select-intro-titulo">${dados.titulo}</div>
+          <div id="select-intro-texto">${dados.texto}</div>
+          <button id="select-intro-btn">${ultimo ? 'ENTENDIDO ▶' : 'PRÓXIMO →'}</button>
+        </div>
+      `;
+
+      screen.appendChild(overlay);
+
+      overlay.querySelector('#select-intro-btn').addEventListener('click', () => {
+        if (ultimo) {
+          overlay.remove();
+        } else {
+          passo++;
+          renderPasso();
+        }
+      });
+    }
+
+    renderPasso();
+  }
+
+  // ── Render principal ──────────────────────────────────────────────────────
+
   function render() {
     const screen = document.getElementById('screen-select');
     screen.style.display = 'flex';
@@ -87,6 +145,10 @@ const SELECT = (() => {
 
     renderPool();
     bindEventos();
+
+    if (rodada === 0 && personagensMontados.length === 0) {
+      mostrarIntroducao();
+    }
   }
 
   // ── Render pool ───────────────────────────────────────────────────────────
