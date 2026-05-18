@@ -87,10 +87,10 @@ function limparEstado() {
 // Copia o HP real de cada combatente de volta pro PLAYER_STATE após batalha.
 // Chamada sempre que uma batalha termina (vitória ou derrota).
 function sincronizarHpPosBatalha(combatentes) {
-  combatentes.forEach(c => {
-    if (c.lado !== 'jogador') return;
-    const p = PLAYER_STATE.personagens.find(p => p.poolId === c.poolId);
-    if (p) p.hpAtual = c.hp;
+  const jogadores = combatentes.filter(c => c.lado === 'jogador');
+  // Sincroniza por índice — funciona mesmo com tipos duplicados no time
+  PLAYER_STATE.personagens.forEach((p, i) => {
+    if (jogadores[i]) p.hpAtual = jogadores[i].hp;
   });
   salvarEstado();
 }

@@ -70,8 +70,9 @@ const COMBAT = (() => {
   function criarCombatente(origem, lado, idExtra = '') {
     const baralho = lado === 'inimigo' ? DECK.embaralhar(DECK.criarBaralho()) : [];
     const c = {
-      id:              `${lado}_${origem.id ?? idExtra}`,
+      id:              `${lado}_${origem.id ?? 'unk'}${idExtra !== '' ? '_' + idExtra : ''}`,
       nome:            origem.nome ?? origem.label ?? '???',
+      poolId:          origem.poolId ?? null,  // arquétipo de origem (para sincronizar HP)
       lado,
       tipo:            origem.tipo ?? null,  // 'mob' | 'miniboss' | 'boss' | null (jogador)
       naipe:           origem.naipeAtivo ?? origem.naipe ?? null,
