@@ -48,6 +48,9 @@ const BATTLE = (() => {
   let _defesaSel         = null;  // { tipo: 'passar' | 'carta', idx? } — dupla confirmação
   let _especialPendente  = null;  // { carta, idx } — carta especial em uso (ex: Q aguardando alvo)
   let _statusPopupChar   = null;  // personagem sendo mostrado no popup de status (live update)
+  let _isTutorial        = false; // batalha do tutorial — exibe popups explicativos
+  let _tutorialIniVisto  = false; // tutorial de iniciativa já foi mostrado
+  let _tutorialBatVisto  = false; // tutorial de batalha já foi mostrado
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
@@ -56,7 +59,7 @@ const BATTLE = (() => {
   // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
   const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
-  // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota }
+  // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota, tutorial }
   function init(opts = {}) {
     _onVitoria         = opts.onVitoria ?? null;
     _onDerrota         = opts.onDerrota ?? null;
@@ -72,6 +75,9 @@ const BATTLE = (() => {
     _defesaSel         = null;
     _especialPendente  = null;
     _statusPopupChar   = null;
+    _isTutorial        = opts.tutorial  ?? false;
+    _tutorialIniVisto  = false;
+    _tutorialBatVisto  = false;
 
     const inimigos = opts.inimigos ?? [];
 
@@ -98,6 +104,91 @@ const BATTLE = (() => {
       c.mao     = ci;
       c.baralho = ri;
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TUTORIAL DA BATALHA — popups explicativos na primeira batalha do tutorial
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const _TUTORIAL_INI = [
+    {
+      titulo: 'A mão do time',
+      texto:  'Ao iniciar a batalha, são compradas <strong>10 cartas</strong> do deck — essa é a mão compartilhada do seu time. Cada carta tem um valor que vai influenciar a ordem de ação e o poder de ataque.',
+    },
+    {
+      titulo: 'Distribuição de cartas',
+      texto:  'Clique em uma carta da mão — ela ficará selecionada. Depois clique no personagem que vai usá-la. Você decide quem recebe qual carta, sem restrição.',
+    },
+    {
+      titulo: 'Confirmar',
+      texto:  'Repita para cada personagem. Quando estiver satisfeito, confirme. A ordem de ação é calculada pela carta escolhida somada à iniciativa de cada personagem — quem tiver o maior valor age primeiro.',
+    },
+  ];
+
+  const _TUTORIAL_BAT = [
+    {
+      titulo: 'Seus dois caminhos',
+      texto:  'A cada turno você tem duas opções: <strong>Habilidades</strong> ou <strong>Passar Rodada</strong>. Habilidades abre o painel com suas habilidades equipadas e as cartas na mão — escolha uma combinação e execute. Passar Rodada encerra o turno do personagem atual, compra novas cartas e avança para o próximo na ordem.',
+    },
+    {
+      titulo: 'Deck e mão',
+      texto:  'O número de cartas no <strong>deck</strong> (🂠) e na <strong>mão</strong> (✋) aparecem na topbar. O limite da mão é <strong>10 cartas</strong> — se passar disso, as excedentes são descartadas automaticamente antes de comprar novas.',
+    },
+    {
+      titulo: 'Turno',
+      texto:  'O contador de turno mostra em qual rodada a batalha está. Quanto mais turnos passam, mais os efeitos acumulam — fique de olho.',
+    },
+    {
+      titulo: 'Ordem de iniciativa',
+      texto:  'A barra central mostra a sequência de ação de todos os combatentes. Você sempre sabe quem age a seguir — use isso a seu favor.',
+    },
+    {
+      titulo: 'Personagem no campo',
+      texto:  'Clique em qualquer personagem no campo para abrir o status completo: habilidades equipadas, passivas ativas, buffs e debuffs em tempo real. Tudo atualizado a cada turno.',
+    },
+    {
+      titulo: 'Tags e ícones',
+      texto:  'Nas descrições de habilidades você verá termos destacados como <strong>Queimadura</strong>, <strong>Exposto</strong>, <strong>Enfraquecido</strong>. Clique neles para ver o que fazem. Quando um personagem estiver sob efeito, o ícone aparecerá no slot — clique para ver o efeito e sua duração.',
+    },
+  ];
+
+  function _mostrarTutorialSequencial(passos, onFim) {
+    const screen = document.getElementById('screen-battle');
+    let passo = 0;
+
+    function renderPasso() {
+      const anterior = document.getElementById('battle-tutorial-overlay');
+      if (anterior) anterior.remove();
+
+      const dados  = passos[passo];
+      const total  = passos.length;
+      const ultimo = passo === total - 1;
+
+      const el = document.createElement('div');
+      el.id = 'battle-tutorial-overlay';
+      el.innerHTML = `
+        <div id="battle-tut-bg"></div>
+        <div id="battle-tut-box">
+          <div id="battle-tut-step">${passo + 1} / ${total}</div>
+          <div id="battle-tut-titulo">${dados.titulo}</div>
+          <div id="battle-tut-texto">${dados.texto}</div>
+          <button id="battle-tut-btn">${ultimo ? 'ENTENDIDO ▶' : 'PRÓXIMO →'}</button>
+        </div>
+      `;
+      screen.appendChild(el);
+
+      el.querySelector('#battle-tut-btn').addEventListener('click', () => {
+        if (ultimo) {
+          el.remove();
+          if (onFim) onFim();
+        } else {
+          passo++;
+          renderPasso();
+        }
+      });
+    }
+
+    renderPasso();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -239,6 +330,11 @@ const BATTLE = (() => {
 
     screen.appendChild(tela);
 
+    if (_isTutorial && !_tutorialIniVisto) {
+      _tutorialIniVisto = true;
+      _mostrarTutorialSequencial(_TUTORIAL_INI, null);
+    }
+
     function _atualizarConfirmar() {
       const prontos = Object.keys(picks).length >= jogadores.length;
       btnConfirmar.disabled = !prontos;
@@ -334,6 +430,11 @@ const BATTLE = (() => {
     // Fim de batalha tem prioridade sobre tudo
     let resultado = COMBAT.verificarFimDeBatalha();
     if (resultado) { _fimDeBatalha(resultado); return; }
+
+    if (_isTutorial && !_tutorialBatVisto) {
+      _tutorialBatVisto = true;
+      _mostrarTutorialSequencial(_TUTORIAL_BAT, null);
+    }
 
     // Pula combatentes que morreram no meio do turno — corpo não tem rodada.
     // Se pular pra um novo vivo, inicia o turno dele (iniciarRodada é idempotente).
