@@ -79,6 +79,7 @@ const TUTORIAL_MAP = (() => {
         etapaIdx,
         pontos,
         inimigos: inimigo ? [inimigo] : [],
+        tutorial: etapaIdx === 0,
         onVitoria: () => {
           _salvarHP();
           _afterBattle(etapaIdx, onConcluida);

@@ -838,25 +838,11 @@
   position: relative;
 }
 
-/* separadores entre os 3 botões grandes (HABILIDADES | ESPECIAIS | PASSAR) */
-#battle-btn-habilidades::after,
-#battle-btn-especiais::after {
-  content: '';
-  position: absolute;
-  right: 0; top: 20%; bottom: 20%;
-  width: 1px;
-  background: #ffffff12;
-}
+#battle-btn-habilidades          { color: #c9a84c; border-color: #c9a84c44; }
+#battle-btn-habilidades:hover    { background: #c9a84c10; border-color: #c9a84c80; }
 
-#battle-btn-habilidades          { color: #c9a84c; }
-#battle-btn-habilidades:hover    { background: #c9a84c10; }
-
-#battle-btn-especiais            { color: #b070d0; }
-#battle-btn-especiais:hover      { background: #b070d010; }
-
-#battle-btn-passar               { color: #8899aa; }
-#battle-btn-passar:hover         { background: #ffffff08; }
-#battle-btn-passar.confirmando   { color: #55cc88; background: #55cc8812; }
+#battle-btn-passar:hover         { background: #ffffff08; border-color: #ffffff20; }
+#battle-btn-passar.confirmando   { color: #55cc88; background: #55cc8812; border-color: #55cc8844; }
 
 /* ── Etapa 2: habilidades (esq) + cartas (dir) ── */
 
@@ -1514,4 +1500,79 @@
 #battle-fim.derrota #battle-fim-btn:hover {
   background: rgba(212,96,96,0.20);
   transform: translateY(-2px);
+}
+
+/* ── Tutorial da batalha ── */
+
+#battle-tutorial-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+
+#battle-tut-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+#battle-tut-box {
+  position: relative;
+  z-index: 1;
+  background: #0e1220;
+  border: 1px solid #2a3040;
+  border-radius: 14px;
+  padding: 32px 40px;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: sans-serif;
+}
+
+#battle-tut-step {
+  font-size: 0.62rem;
+  color: #444;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#battle-tut-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: 1px;
+}
+
+#battle-tut-texto {
+  font-size: 0.82rem;
+  color: #99aabb;
+  line-height: 1.75;
+}
+
+#battle-tut-texto strong {
+  color: #ddeeff;
+}
+
+#battle-tut-btn {
+  align-self: flex-end;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #7a5c00, #c9a84c);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 26px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+#battle-tut-btn:hover {
+  background: linear-gradient(135deg, #c9a84c, #e8c870);
 }

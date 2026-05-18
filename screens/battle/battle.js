@@ -48,6 +48,9 @@ const BATTLE = (() => {
   let _defesaSel         = null;  // { tipo: 'passar' | 'carta', idx? } — dupla confirmação
   let _especialPendente  = null;  // { carta, idx } — carta especial em uso (ex: Q aguardando alvo)
   let _statusPopupChar   = null;  // personagem sendo mostrado no popup de status (live update)
+  let _isTutorial        = false; // batalha do tutorial — exibe popups explicativos
+  let _tutorialIniVisto  = false; // tutorial de iniciativa já foi mostrado
+  let _tutorialBatVisto  = false; // tutorial de batalha já foi mostrado
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
@@ -56,7 +59,7 @@ const BATTLE = (() => {
   // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
   const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
-  // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota }
+  // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota, tutorial }
   function init(opts = {}) {
     _onVitoria         = opts.onVitoria ?? null;
     _onDerrota         = opts.onDerrota ?? null;
@@ -72,6 +75,9 @@ const BATTLE = (() => {
     _defesaSel         = null;
     _especialPendente  = null;
     _statusPopupChar   = null;
+    _isTutorial        = opts.tutorial  ?? false;
+    _tutorialIniVisto  = false;
+    _tutorialBatVisto  = false;
 
     const inimigos = opts.inimigos ?? [];
 
@@ -98,6 +104,99 @@ const BATTLE = (() => {
       c.mao     = ci;
       c.baralho = ri;
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TUTORIAL DA BATALHA — popups explicativos na primeira batalha do tutorial
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const _TUTORIAL_INI = [
+    {
+      titulo: 'A mão do time',
+      texto:  'Ao iniciar a batalha, são compradas <strong>10 cartas</strong> do deck — essa é a mão compartilhada do seu time. Cada carta tem um valor que vai influenciar a ordem de ação e o poder de ataque.',
+    },
+    {
+      titulo: 'Bônus de naipe',
+      texto:  'Cada carta tem um naipe: ♥ ♣ ♦ ♠. Se a carta usada no ataque tiver o <strong>mesmo naipe do personagem</strong>, o valor dela é <strong>dobrado</strong>. Usar as cartas certas nos personagens certos faz diferença.',
+    },
+    {
+      titulo: 'Distribuição de cartas',
+      texto:  'Clique em uma carta da mão — ela ficará selecionada. Depois clique no personagem que vai usá-la. Você decide quem recebe qual carta, sem restrição.',
+    },
+    {
+      titulo: 'Confirmar',
+      texto:  'Repita para cada personagem. Quando estiver satisfeito, confirme. A ordem de ação é calculada pela carta escolhida somada à iniciativa de cada personagem — quem tiver o maior valor age primeiro.',
+    },
+  ];
+
+  const _TUTORIAL_BAT = [
+    {
+      titulo: 'O painel de combate',
+      texto:  'À esquerda: dois botões — <strong>Habilidades</strong> para atacar e <strong>Passar</strong> para encerrar o turno. À direita: sua mão está <strong>sempre visível</strong>. Você enxerga todas as suas cartas antes de decidir qualquer coisa.',
+    },
+    {
+      titulo: 'Deck e mão',
+      texto:  'O número de cartas no <strong>deck</strong> (🂠) e na <strong>mão</strong> (✋) aparecem na topbar. O limite da mão é <strong>10 cartas</strong> — se passar disso, as excedentes são descartadas automaticamente antes de comprar novas.',
+    },
+    {
+      titulo: 'Turno',
+      texto:  'O contador de turno mostra em qual rodada a batalha está. Quanto mais turnos passam, mais os efeitos acumulam — fique de olho.',
+    },
+    {
+      titulo: 'Ordem de iniciativa',
+      texto:  'A barra central mostra a sequência de ação de todos os combatentes. Você sempre sabe quem age a seguir — use isso a seu favor.',
+    },
+    {
+      titulo: 'Personagem no campo',
+      texto:  'Clique em qualquer personagem no campo para abrir o status completo: habilidades equipadas, passivas ativas, buffs e debuffs em tempo real. Tudo atualizado a cada turno.',
+    },
+    {
+      titulo: 'Tags e ícones',
+      texto:  'Nas descrições de habilidades você verá termos destacados como <strong>Queimadura</strong>, <strong>Exposto</strong>, <strong>Enfraquecido</strong>. Clique neles para ver o que fazem. Quando um personagem estiver sob efeito, o ícone aparecerá no slot — clique para ver o efeito e sua duração.',
+    },
+    {
+      titulo: 'Cartas especiais',
+      texto:  'Cartas especiais ficam visíveis na mão o tempo todo e podem ser usadas a qualquer momento — <strong>exceto após escolher uma habilidade</strong>, quando só cartas normais são aceitas para potencializá-la.<br><br><strong>Q — Dama:</strong> Remove penalidades de um aliado.<br><strong>K — Rei:</strong> +50% de poder no próximo ataque.<br><strong>A — Ás:</strong> Compra 1 carta extra do deck.<br><strong>★ — Coringa:</strong> Concede uma rodada extra.<br><br><strong>J — Valete:</strong> Aparece na mão mas está reservado para a fase defensiva. Quando o inimigo atacar, clique no Valete para <strong>esquivar</strong> do ataque.',
+    },
+  ];
+
+  function _mostrarTutorialSequencial(passos, onFim) {
+    const screen = document.getElementById('screen-battle');
+    let passo = 0;
+
+    function renderPasso() {
+      const anterior = document.getElementById('battle-tutorial-overlay');
+      if (anterior) anterior.remove();
+
+      const dados  = passos[passo];
+      const total  = passos.length;
+      const ultimo = passo === total - 1;
+
+      const el = document.createElement('div');
+      el.id = 'battle-tutorial-overlay';
+      el.innerHTML = `
+        <div id="battle-tut-bg"></div>
+        <div id="battle-tut-box">
+          <div id="battle-tut-step">${passo + 1} / ${total}</div>
+          <div id="battle-tut-titulo">${dados.titulo}</div>
+          <div id="battle-tut-texto">${dados.texto}</div>
+          <button id="battle-tut-btn">${ultimo ? 'ENTENDIDO ▶' : 'PRÓXIMO →'}</button>
+        </div>
+      `;
+      screen.appendChild(el);
+
+      el.querySelector('#battle-tut-btn').addEventListener('click', () => {
+        if (ultimo) {
+          el.remove();
+          if (onFim) onFim();
+        } else {
+          passo++;
+          renderPasso();
+        }
+      });
+    }
+
+    renderPasso();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -239,6 +338,11 @@ const BATTLE = (() => {
 
     screen.appendChild(tela);
 
+    if (_isTutorial && !_tutorialIniVisto) {
+      _tutorialIniVisto = true;
+      _mostrarTutorialSequencial(_TUTORIAL_INI, null);
+    }
+
     function _atualizarConfirmar() {
       const prontos = Object.keys(picks).length >= jogadores.length;
       btnConfirmar.disabled = !prontos;
@@ -335,6 +439,11 @@ const BATTLE = (() => {
     let resultado = COMBAT.verificarFimDeBatalha();
     if (resultado) { _fimDeBatalha(resultado); return; }
 
+    if (_isTutorial && !_tutorialBatVisto) {
+      _tutorialBatVisto = true;
+      _mostrarTutorialSequencial(_TUTORIAL_BAT, null);
+    }
+
     // Pula combatentes que morreram no meio do turno — corpo não tem rodada.
     // Se pular pra um novo vivo, inicia o turno dele (iniciarRodada é idempotente).
     let atual = COMBAT.combatenteAtual();
@@ -385,12 +494,13 @@ const BATTLE = (() => {
     const jogador0 = estado.combatentes.find(c => c.lado === 'jogador');
     const inimigo0 = estado.combatentes.find(c => c.lado === 'inimigo');
 
-    // ── Esquerda: turno + deck compartilhado do jogador ──
+    // ── Esquerda: turno + deck + mão do jogador ──
     const esq = document.createElement('div');
     esq.className = 'battle-topbar-esq';
     esq.innerHTML = `
       <span class="topbar-turno">TURNO ${turno}</span>
       <span class="topbar-deck">🂠 ${estado.baralhoJogador.length}</span>
+      <span class="topbar-mao">✋ ${estado.maoJogador.length}</span>
     `;
 
     // ── Centro: fila de iniciativa circular ──
@@ -615,35 +725,10 @@ const BATTLE = (() => {
       return painel;
     }
 
-    // ── Etapa 1: 3 botões grandes (HABILIDADES / ESPECIAIS / PASSAR) ──
+    // ── Etapa 1: esq=HABILIDADES+PASSAR, dir=mão completa (especiais clicáveis) ──
     if (_estadoPainel === 'etapa1') {
-      const btnHab = document.createElement('button');
-      btnHab.id        = 'battle-btn-habilidades';
-      btnHab.className = 'battle-panel-btn-grande';
-      btnHab.textContent = '⚔ HABILIDADES';
-      btnHab.addEventListener('click', () => {
-        _estadoPainel = 'sel_habilidade';
-        _renderizar();
-      });
-
-      const btnEsp = document.createElement('button');
-      btnEsp.id        = 'battle-btn-especiais';
-      btnEsp.className = 'battle-panel-btn-grande';
-      btnEsp.textContent = '✦ ESPECIAIS';
-      btnEsp.addEventListener('click', () => {
-        _estadoPainel = 'sel_especial';
-        _renderizar();
-      });
-
-      const btnPassar = document.createElement('button');
-      btnPassar.id        = 'battle-btn-passar';
-      btnPassar.className = 'battle-panel-btn-grande';
-      btnPassar.textContent = '⏭ PASSAR';
-      btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
-
-      painel.appendChild(btnHab);
-      painel.appendChild(btnEsp);
-      painel.appendChild(btnPassar);
+      painel.appendChild(_criarPainelBotoesEtapa1());
+      painel.appendChild(_criarPainelSelEspecial(atual));
       return painel;
     }
 
@@ -661,17 +746,17 @@ const BATTLE = (() => {
       return painel;
     }
 
-    // ── Sel habilidade: lista as 3 habilidades (esq) + mão de cartas (dir, view) ──
+    // ── Sel habilidade: lista habilidades (esq) + mão completa (dir, especiais clicáveis) ──
     if (_estadoPainel === 'sel_habilidade') {
       painel.appendChild(_criarPainelSelHab(atual));
-      painel.appendChild(_criarPainelMaoView(atual, false));
+      painel.appendChild(_criarPainelSelEspecial(atual));
       return painel;
     }
 
-    // ── Sel carta: ficha da habilidade (esq) + mão de cartas (dir, clicável) ──
+    // ── Sel carta: ficha da habilidade (esq) + só cartas normais clicáveis (dir) ──
     if (_estadoPainel === 'sel_carta') {
       painel.appendChild(_criarPainelHabDetalhe(_habSel));
-      painel.appendChild(_criarPainelMaoView(atual, true));
+      painel.appendChild(_criarPainelMaoNormais(atual));
       return painel;
     }
 
@@ -683,6 +768,33 @@ const BATTLE = (() => {
     }
 
     return painel;
+  }
+
+  // ── Painel esquerdo de etapa1: HABILIDADES + PASSAR ──
+  function _criarPainelBotoesEtapa1() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+
+    const btnHab = document.createElement('button');
+    btnHab.id        = 'battle-btn-habilidades';
+    btnHab.className = 'battle-btn-hab';
+    btnHab.textContent = '⚔  HABILIDADES';
+    btnHab.addEventListener('click', () => {
+      _estadoPainel = 'sel_habilidade';
+      _renderizar();
+    });
+
+    const btnPassar = document.createElement('button');
+    btnPassar.id        = 'battle-btn-passar';
+    btnPassar.className = 'battle-btn-hab';
+    btnPassar.style.color       = '#8899aa';
+    btnPassar.style.borderColor = '#ffffff12';
+    btnPassar.textContent = '⏭  PASSAR';
+    btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
+
+    div.appendChild(btnHab);
+    div.appendChild(btnPassar);
+    return div;
   }
 
   // ── Painel esquerdo: lista das habilidades equipadas (selecionável) ──
@@ -756,6 +868,44 @@ const BATTLE = (() => {
         });
       } else {
         el.disabled = true;
+      }
+      div.appendChild(el);
+    });
+
+    return div;
+  }
+
+  // ── Painel direito (sel_carta): só cartas normais clicáveis; especiais/J grayed ──
+  function _criarPainelMaoNormais(combatente) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-cartas';
+
+    const mao = combatente.lado === 'jogador' ? COMBAT.estado.maoJogador : (combatente.mao ?? []);
+    if (!mao || mao.length === 0) {
+      div.innerHTML = `<div class="battle-mao-vazia">—</div>`;
+      return div;
+    }
+
+    mao.forEach((carta, i) => {
+      const ehEspecial = carta.tipo === 'especial' || carta.tipo === 'coringa' || carta.valor === 'J';
+      const el = document.createElement('button');
+      el.className = 'battle-carta' + (ehEspecial ? ' nao-clicavel' : '');
+      el.dataset.naipe = carta.naipe ?? '';
+      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      if (ehEspecial) {
+        el.disabled = true;
+      } else {
+        el.addEventListener('click', () => {
+          _cartaSel    = carta;
+          _cartaSelIdx = i;
+          const alvosAuto = _calcularAlvosAuto(_habSel, combatente);
+          if (alvosAuto) {
+            _executarAcao(alvosAuto);
+          } else {
+            _estadoPainel = 'sel_alvo';
+            _renderizar();
+          }
+        });
       }
       div.appendChild(el);
     });

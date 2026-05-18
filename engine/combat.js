@@ -591,6 +591,8 @@ const COMBAT = (() => {
   // O baralho não recicla o descarte. Esgotá-lo é condição de fim de batalha:
   //   - time jogador sem cartas → derrota
   //   - inimigo sem cartas      → esse inimigo é derrotado na hora
+  const MAX_MAO_JOGADOR = 10;
+
   function _comprarCarta(combatente, n) {
     if (combatente.lado === 'jogador') {
       if (BATTLE_STATE.baralhoJogador.length < n) {
@@ -599,6 +601,13 @@ const COMBAT = (() => {
       const { cartas, resto } = DECK.comprar(BATTLE_STATE.baralhoJogador, n);
       BATTLE_STATE.maoJogador     = BATTLE_STATE.maoJogador.concat(cartas);
       BATTLE_STATE.baralhoJogador = resto;
+
+      // Descarte automático: mão não pode passar de 10 cartas
+      if (BATTLE_STATE.maoJogador.length > MAX_MAO_JOGADOR) {
+        BATTLE_STATE.descarteJogador = BATTLE_STATE.descarteJogador.concat(
+          BATTLE_STATE.maoJogador.splice(MAX_MAO_JOGADOR)
+        );
+      }
     } else {
       if (combatente.baralho.length < n) {
         combatente.hp = 0;
