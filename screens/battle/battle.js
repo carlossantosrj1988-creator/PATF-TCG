@@ -1491,6 +1491,23 @@ const BATTLE = (() => {
     overlay.querySelector('#battle-fim-btn').addEventListener('click', () => {
       screen.style.display = 'none';
       screen.innerHTML = '';
+
+      // Sincroniza HP de volta pro PLAYER_STATE
+      if (typeof sincronizarHpPosBatalha === 'function') {
+        sincronizarHpPosBatalha(COMBAT.estado.combatentes);
+      }
+
+      // Verifica game over: todos os personagens com hpAtual = 0
+      const todosCalidos = PLAYER_STATE.personagens.length > 0 &&
+        PLAYER_STATE.personagens.every(p => p.hpAtual <= 0);
+
+      if (todosCalidos) {
+        if (typeof gameOver === 'function') gameOver();
+        window.irParaTela('screen-gameover');
+        if (typeof GAMEOVER !== 'undefined') GAMEOVER.init();
+        return;
+      }
+
       if (ehVitoria) { if (_onVitoria) _onVitoria(); }
       else           { if (_onDerrota) _onDerrota(); }
     });
