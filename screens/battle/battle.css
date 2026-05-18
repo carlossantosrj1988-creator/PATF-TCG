@@ -1217,7 +1217,20 @@
   letter-spacing: -1px;
 }
 
-/* ── Botão confirmar ── */
+/* ── Progresso e botão confirmar ── */
+
+#battle-ini-progresso {
+  font-size: 0.65rem;
+  color: #8899aa55;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  transition: color 0.3s;
+}
+
+#battle-ini-progresso.pronto {
+  color: #44dd8899;
+}
 
 #battle-ini-btn-confirmar {
   padding: 15px 64px;
@@ -1228,7 +1241,7 @@
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 5px;
-  cursor: not-allowed;
+  cursor: pointer;
   font-family: sans-serif;
   transition: all 0.3s;
   text-transform: uppercase;
@@ -1238,7 +1251,6 @@
   border-color: #c9a84c;
   background: linear-gradient(135deg, #c9a84c, #e0c060);
   color: #1a1000;
-  cursor: pointer;
   box-shadow: 0 4px 24px rgba(201,168,76,0.32);
 }
 
@@ -1246,6 +1258,20 @@
   background: linear-gradient(135deg, #e0c060, #f0d070);
   box-shadow: 0 6px 32px rgba(201,168,76,0.48);
   transform: translateY(-2px);
+}
+
+@keyframes ini-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
+
+#battle-ini-btn-confirmar.shake {
+  animation: ini-shake 0.45s ease;
+  border-color: #cc5555;
+  color: #cc5555;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

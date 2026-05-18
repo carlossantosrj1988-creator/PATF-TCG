@@ -324,13 +324,22 @@ const BATTLE = (() => {
     });
     tela.appendChild(maoDiv);
 
+    // ── Contador de progresso ──
+    const lblProgresso = document.createElement('div');
+    lblProgresso.id = 'battle-ini-progresso';
+    lblProgresso.textContent = `0 / ${jogadores.length} personagens`;
+    tela.appendChild(lblProgresso);
+
     // ── Botão confirmar ──
     const btnConfirmar = document.createElement('button');
     btnConfirmar.id          = 'battle-ini-btn-confirmar';
     btnConfirmar.textContent = 'CONFIRMAR INICIATIVA →';
-    btnConfirmar.disabled    = true;
     btnConfirmar.addEventListener('click', () => {
-      if (Object.keys(picks).length < jogadores.length) return;
+      if (Object.keys(picks).length < jogadores.length) {
+        btnConfirmar.classList.add('shake');
+        setTimeout(() => btnConfirmar.classList.remove('shake'), 500);
+        return;
+      }
       tela.remove();
       _confirmarIniciativa(picks);
     });
@@ -344,9 +353,11 @@ const BATTLE = (() => {
     }
 
     function _atualizarConfirmar() {
-      const prontos = Object.keys(picks).length >= jogadores.length;
-      btnConfirmar.disabled = !prontos;
+      const feitos  = Object.keys(picks).length;
+      const prontos = feitos >= jogadores.length;
       btnConfirmar.classList.toggle('pronto', prontos);
+      lblProgresso.textContent = `${feitos} / ${jogadores.length} personagens`;
+      lblProgresso.classList.toggle('pronto', prontos);
     }
   }
 
