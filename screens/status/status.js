@@ -1,7 +1,35 @@
 // screens/status/status.js
 
 const STATUS = (() => {
-  let charIdx = 0;
+  let charIdx    = 0;
+  let _introVista = false;
+
+  const _INTRO_STATUS = [
+    {
+      titulo: 'O Atlas do personagem',
+      texto:  'Esta tela mostra o perfil completo do seu personagem e o <strong>Atlas</strong> — a árvore de habilidades. Aqui você gasta pontos para desbloquear habilidades e passivas que definem como vai jogar em batalha.',
+    },
+    {
+      titulo: 'Primeiro passo: escolha um naipe',
+      texto:  'No centro do Atlas há 4 naipes: <strong>♥ Copas · ♣ Paus · ♦ Ouro · ♠ Espadas</strong>. Escolha um — ele define os bônus de atributo do personagem, sua vantagem e desvantagem em batalha, e quais habilidades estarão disponíveis na árvore.',
+    },
+    {
+      titulo: 'Bônus de naipe em combate',
+      texto:  'Em batalha, se a carta usada tiver o <strong>mesmo naipe do personagem</strong>, o valor dela é dobrado no cálculo de dano. Usar as cartas certas nos personagens certos não é opcional — é a diferença entre ganhar e perder.',
+    },
+    {
+      titulo: 'Comprando habilidades',
+      texto:  'Com o naipe definido, a árvore se abre em 4 ramos: <strong>H1</strong> (básicas), <strong>H2</strong> (intermediárias), <strong>H3</strong> (avançadas) e <strong>Passivas</strong>. Clique em um nó para ver o que ele faz e o custo. Quanto mais você compra no mesmo ramo, maior fica o custo — pense na sua build.',
+    },
+    {
+      titulo: 'Equipando nos slots',
+      texto:  'Comprar um nó <strong>não o equipa automaticamente</strong>. Clique nos slots à direita para equipar o que você comprou. Cada slot de habilidade aceita uma categoria específica: H1, H2 ou H3. Os 2 slots de passiva funcionam automaticamente em batalha — sem precisar ativar.',
+    },
+    {
+      titulo: 'Seus pontos são permanentes',
+      texto:  'Pontos ganhos nas etapas ficam na conta — <strong>mesmo após um Game Over</strong>. Se o time todo morrer, você perde os personagens, mas seus pontos e itens não equipados sobrevivem. Cada nova run começa com mais recurso do que a anterior.',
+    },
+  ];
 
   // ── Canvas 2000×2000, centro (1000,1000) ─────────────────────────────────
   const CX = 1000, CY = 1000;
@@ -112,7 +140,7 @@ const STATUS = (() => {
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
-  function init() {
+  function init(opts = {}) {
     if (!document.getElementById('screen-status')) {
       const el = document.createElement('div');
       el.id = 'screen-status';
@@ -120,6 +148,49 @@ const STATUS = (() => {
     }
     garantirEstadoPersonagens();
     renderTela();
+    if (opts.tutorial && !_introVista) {
+      _introVista = true;
+      _mostrarIntroStatus();
+    }
+  }
+
+  function _mostrarIntroStatus() {
+    const screen = document.getElementById('screen-status');
+    let passo = 0;
+
+    function renderPasso() {
+      const anterior = document.getElementById('status-intro-overlay');
+      if (anterior) anterior.remove();
+
+      const dados  = _INTRO_STATUS[passo];
+      const total  = _INTRO_STATUS.length;
+      const ultimo = passo === total - 1;
+
+      const el = document.createElement('div');
+      el.id = 'status-intro-overlay';
+      el.innerHTML = `
+        <div id="status-intro-bg"></div>
+        <div id="status-intro-box">
+          <div id="status-intro-step">${passo + 1} / ${total}</div>
+          <div id="status-intro-tag">ATLAS</div>
+          <div id="status-intro-titulo">${dados.titulo}</div>
+          <div id="status-intro-texto">${dados.texto}</div>
+          <button id="status-intro-btn">${ultimo ? 'ENTENDIDO ▶' : 'PRÓXIMO →'}</button>
+        </div>
+      `;
+      screen.appendChild(el);
+
+      el.querySelector('#status-intro-btn').addEventListener('click', () => {
+        if (ultimo) {
+          el.remove();
+        } else {
+          passo++;
+          renderPasso();
+        }
+      });
+    }
+
+    renderPasso();
   }
 
   function garantirEstadoPersonagens() {
