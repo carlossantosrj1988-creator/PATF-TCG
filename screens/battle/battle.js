@@ -131,8 +131,8 @@ const BATTLE = (() => {
 
   const _TUTORIAL_BAT = [
     {
-      titulo: 'Seus dois caminhos',
-      texto:  'A cada turno você tem duas opções: <strong>Habilidades</strong> ou <strong>Passar Rodada</strong>. Habilidades abre o painel com suas habilidades equipadas e as cartas na mão — escolha uma combinação e execute. Passar Rodada encerra o turno do personagem atual, compra novas cartas e avança para o próximo na ordem.',
+      titulo: 'O painel de combate',
+      texto:  'À esquerda: dois botões — <strong>Habilidades</strong> para atacar e <strong>Passar</strong> para encerrar o turno. À direita: sua mão está <strong>sempre visível</strong>. Você enxerga todas as suas cartas antes de decidir qualquer coisa.',
     },
     {
       titulo: 'Deck e mão',
@@ -156,7 +156,7 @@ const BATTLE = (() => {
     },
     {
       titulo: 'Cartas especiais',
-      texto:  'Algumas cartas têm efeitos únicos além do valor numérico:<br><br><strong>J — Valete:</strong> Esquiva — cancela um ataque recebido.<br><strong>Q — Dama:</strong> Remove penalidades de um aliado.<br><strong>K — Rei:</strong> +50% de poder no próximo ataque, cura ou defesa.<br><strong>A — Ás:</strong> Compra 1 carta extra do deck.<br><strong>★ — Coringa:</strong> Concede uma rodada extra ao personagem.',
+      texto:  'Cartas especiais ficam visíveis na mão o tempo todo e podem ser usadas a qualquer momento — <strong>exceto após escolher uma habilidade</strong>, quando só cartas normais são aceitas para potencializá-la.<br><br><strong>Q — Dama:</strong> Remove penalidades de um aliado.<br><strong>K — Rei:</strong> +50% de poder no próximo ataque.<br><strong>A — Ás:</strong> Compra 1 carta extra do deck.<br><strong>★ — Coringa:</strong> Concede uma rodada extra.<br><br><strong>J — Valete:</strong> Aparece na mão mas está reservado para a fase defensiva. Quando o inimigo atacar, clique no Valete para <strong>esquivar</strong> do ataque.',
     },
   ];
 
