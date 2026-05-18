@@ -838,25 +838,11 @@
   position: relative;
 }
 
-/* separadores entre os 3 botões grandes (HABILIDADES | ESPECIAIS | PASSAR) */
-#battle-btn-habilidades::after,
-#battle-btn-especiais::after {
-  content: '';
-  position: absolute;
-  right: 0; top: 20%; bottom: 20%;
-  width: 1px;
-  background: #ffffff12;
-}
+#battle-btn-habilidades          { color: #c9a84c; border-color: #c9a84c44; }
+#battle-btn-habilidades:hover    { background: #c9a84c10; border-color: #c9a84c80; }
 
-#battle-btn-habilidades          { color: #c9a84c; }
-#battle-btn-habilidades:hover    { background: #c9a84c10; }
-
-#battle-btn-especiais            { color: #b070d0; }
-#battle-btn-especiais:hover      { background: #b070d010; }
-
-#battle-btn-passar               { color: #8899aa; }
-#battle-btn-passar:hover         { background: #ffffff08; }
-#battle-btn-passar.confirmando   { color: #55cc88; background: #55cc8812; }
+#battle-btn-passar:hover         { background: #ffffff08; border-color: #ffffff20; }
+#battle-btn-passar.confirmando   { color: #55cc88; background: #55cc8812; border-color: #55cc8844; }
 
 /* ── Etapa 2: habilidades (esq) + cartas (dir) ── */
 

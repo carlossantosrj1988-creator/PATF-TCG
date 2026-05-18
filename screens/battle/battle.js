@@ -725,35 +725,10 @@ const BATTLE = (() => {
       return painel;
     }
 
-    // ── Etapa 1: 3 botões grandes (HABILIDADES / ESPECIAIS / PASSAR) ──
+    // ── Etapa 1: esq=HABILIDADES+PASSAR, dir=mão completa (especiais clicáveis) ──
     if (_estadoPainel === 'etapa1') {
-      const btnHab = document.createElement('button');
-      btnHab.id        = 'battle-btn-habilidades';
-      btnHab.className = 'battle-panel-btn-grande';
-      btnHab.textContent = '⚔ HABILIDADES';
-      btnHab.addEventListener('click', () => {
-        _estadoPainel = 'sel_habilidade';
-        _renderizar();
-      });
-
-      const btnEsp = document.createElement('button');
-      btnEsp.id        = 'battle-btn-especiais';
-      btnEsp.className = 'battle-panel-btn-grande';
-      btnEsp.textContent = '✦ ESPECIAIS';
-      btnEsp.addEventListener('click', () => {
-        _estadoPainel = 'sel_especial';
-        _renderizar();
-      });
-
-      const btnPassar = document.createElement('button');
-      btnPassar.id        = 'battle-btn-passar';
-      btnPassar.className = 'battle-panel-btn-grande';
-      btnPassar.textContent = '⏭ PASSAR';
-      btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
-
-      painel.appendChild(btnHab);
-      painel.appendChild(btnEsp);
-      painel.appendChild(btnPassar);
+      painel.appendChild(_criarPainelBotoesEtapa1());
+      painel.appendChild(_criarPainelSelEspecial(atual));
       return painel;
     }
 
@@ -771,17 +746,17 @@ const BATTLE = (() => {
       return painel;
     }
 
-    // ── Sel habilidade: lista as 3 habilidades (esq) + mão de cartas (dir, view) ──
+    // ── Sel habilidade: lista habilidades (esq) + mão completa (dir, especiais clicáveis) ──
     if (_estadoPainel === 'sel_habilidade') {
       painel.appendChild(_criarPainelSelHab(atual));
-      painel.appendChild(_criarPainelMaoView(atual, false));
+      painel.appendChild(_criarPainelSelEspecial(atual));
       return painel;
     }
 
-    // ── Sel carta: ficha da habilidade (esq) + mão de cartas (dir, clicável) ──
+    // ── Sel carta: ficha da habilidade (esq) + só cartas normais clicáveis (dir) ──
     if (_estadoPainel === 'sel_carta') {
       painel.appendChild(_criarPainelHabDetalhe(_habSel));
-      painel.appendChild(_criarPainelMaoView(atual, true));
+      painel.appendChild(_criarPainelMaoNormais(atual));
       return painel;
     }
 
@@ -793,6 +768,33 @@ const BATTLE = (() => {
     }
 
     return painel;
+  }
+
+  // ── Painel esquerdo de etapa1: HABILIDADES + PASSAR ──
+  function _criarPainelBotoesEtapa1() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+
+    const btnHab = document.createElement('button');
+    btnHab.id        = 'battle-btn-habilidades';
+    btnHab.className = 'battle-btn-hab';
+    btnHab.textContent = '⚔  HABILIDADES';
+    btnHab.addEventListener('click', () => {
+      _estadoPainel = 'sel_habilidade';
+      _renderizar();
+    });
+
+    const btnPassar = document.createElement('button');
+    btnPassar.id        = 'battle-btn-passar';
+    btnPassar.className = 'battle-btn-hab';
+    btnPassar.style.color       = '#8899aa';
+    btnPassar.style.borderColor = '#ffffff12';
+    btnPassar.textContent = '⏭  PASSAR';
+    btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
+
+    div.appendChild(btnHab);
+    div.appendChild(btnPassar);
+    return div;
   }
 
   // ── Painel esquerdo: lista das habilidades equipadas (selecionável) ──
@@ -866,6 +868,44 @@ const BATTLE = (() => {
         });
       } else {
         el.disabled = true;
+      }
+      div.appendChild(el);
+    });
+
+    return div;
+  }
+
+  // ── Painel direito (sel_carta): só cartas normais clicáveis; especiais/J grayed ──
+  function _criarPainelMaoNormais(combatente) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-cartas';
+
+    const mao = combatente.lado === 'jogador' ? COMBAT.estado.maoJogador : (combatente.mao ?? []);
+    if (!mao || mao.length === 0) {
+      div.innerHTML = `<div class="battle-mao-vazia">—</div>`;
+      return div;
+    }
+
+    mao.forEach((carta, i) => {
+      const ehEspecial = carta.tipo === 'especial' || carta.tipo === 'coringa' || carta.valor === 'J';
+      const el = document.createElement('button');
+      el.className = 'battle-carta' + (ehEspecial ? ' nao-clicavel' : '');
+      el.dataset.naipe = carta.naipe ?? '';
+      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      if (ehEspecial) {
+        el.disabled = true;
+      } else {
+        el.addEventListener('click', () => {
+          _cartaSel    = carta;
+          _cartaSelIdx = i;
+          const alvosAuto = _calcularAlvosAuto(_habSel, combatente);
+          if (alvosAuto) {
+            _executarAcao(alvosAuto);
+          } else {
+            _estadoPainel = 'sel_alvo';
+            _renderizar();
+          }
+        });
       }
       div.appendChild(el);
     });
