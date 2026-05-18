@@ -6,28 +6,28 @@ const STATUS = (() => {
 
   const _INTRO_STATUS = [
     {
-      titulo: 'O Atlas do personagem',
-      texto:  'Esta tela mostra o perfil completo do seu personagem e o <strong>Atlas</strong> — a árvore de habilidades. Aqui você gasta pontos para desbloquear habilidades e passivas que definem como vai jogar em batalha.',
+      titulo: 'O perfil do personagem',
+      texto:  'Esta tela mostra tudo que o seu personagem tem: atributos, naipe, equipamento, relíquia, habilidades nos slots e passivas nos slots. Se está equipado nele, aparece aqui.',
     },
     {
-      titulo: 'Primeiro passo: escolha um naipe',
-      texto:  'No centro do Atlas há 4 naipes: <strong>♥ Copas · ♣ Paus · ♦ Ouro · ♠ Espadas</strong>. Escolha um — ele define os bônus de atributo do personagem, sua vantagem e desvantagem em batalha, e quais habilidades estarão disponíveis na árvore.',
+      titulo: 'Escolha um naipe',
+      texto:  'O primeiro passo é escolher o naipe do personagem: <strong>♥ Copas · ♣ Paus · ♦ Ouro · ♠ Espadas</strong>. O naipe define os bônus de atributo, a vantagem e desvantagem em batalha, e quais habilidades aparecem na árvore.',
     },
     {
       titulo: 'Bônus de naipe em combate',
-      texto:  'Em batalha, se a carta usada tiver o <strong>mesmo naipe do personagem</strong>, o valor dela é dobrado no cálculo de dano. Usar as cartas certas nos personagens certos não é opcional — é a diferença entre ganhar e perder.',
+      texto:  'Em batalha, se a carta usada tiver o mesmo naipe do personagem, o valor dela é <strong>dobrado</strong> no cálculo de dano. Colocar a carta certa no personagem certo não é detalhe — é decisivo.',
     },
     {
       titulo: 'Comprando habilidades',
-      texto:  'Com o naipe definido, a árvore se abre em 4 ramos: <strong>H1</strong> (básicas), <strong>H2</strong> (intermediárias), <strong>H3</strong> (avançadas) e <strong>Passivas</strong>. Clique em um nó para ver o que ele faz e o custo. Quanto mais você compra no mesmo ramo, maior fica o custo — pense na sua build.',
+      texto:  'Com o naipe definido, a árvore se abre em 4 ramos: <strong>H1</strong> (básicas), <strong>H2</strong> (intermediárias), <strong>H3</strong> (avançadas) e <strong>Passivas</strong>. Clique num nó para ver o que ele faz e o custo. Quanto mais você compra no mesmo ramo, mais caro fica — planeje a build com cuidado.',
     },
     {
       titulo: 'Equipando nos slots',
-      texto:  'Comprar um nó <strong>não o equipa automaticamente</strong>. Clique nos slots à direita para equipar o que você comprou. Cada slot de habilidade aceita uma categoria específica: H1, H2 ou H3. Os 2 slots de passiva funcionam automaticamente em batalha — sem precisar ativar.',
+      texto:  'Comprar uma habilidade ou passiva <strong>não a equipa automaticamente</strong>. Clique nos slots à direita para ativar o que você comprou. O jogo é flexível — você pode deixar slots vazios. Um personagem com uma única habilidade e o resto vazio ainda é uma build válida.',
     },
     {
       titulo: 'Seus pontos são permanentes',
-      texto:  'Pontos ganhos nas etapas ficam na conta — <strong>mesmo após um Game Over</strong>. Se o time todo morrer, você perde os personagens, mas seus pontos e itens não equipados sobrevivem. Cada nova run começa com mais recurso do que a anterior.',
+      texto:  'Os pontos que você ganha ao vencer etapas ficam na sua conta — <strong>mesmo após um Game Over</strong>. Você perde o personagem, mas os pontos e itens não equipados sobrevivem. Cada nova tentativa começa com mais recurso do que a anterior.',
     },
   ];
 
