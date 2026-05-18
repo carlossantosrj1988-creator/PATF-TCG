@@ -116,6 +116,10 @@ const BATTLE = (() => {
       texto:  'Ao iniciar a batalha, são compradas <strong>10 cartas</strong> do deck — essa é a mão compartilhada do seu time. Cada carta tem um valor que vai influenciar a ordem de ação e o poder de ataque.',
     },
     {
+      titulo: 'Bônus de naipe',
+      texto:  'Cada carta tem um naipe: ♥ ♣ ♦ ♠. Se a carta usada no ataque tiver o <strong>mesmo naipe do personagem</strong>, o valor dela é <strong>dobrado</strong>. Usar as cartas certas nos personagens certos faz diferença.',
+    },
+    {
       titulo: 'Distribuição de cartas',
       texto:  'Clique em uma carta da mão — ela ficará selecionada. Depois clique no personagem que vai usá-la. Você decide quem recebe qual carta, sem restrição.',
     },
@@ -149,6 +153,10 @@ const BATTLE = (() => {
     {
       titulo: 'Tags e ícones',
       texto:  'Nas descrições de habilidades você verá termos destacados como <strong>Queimadura</strong>, <strong>Exposto</strong>, <strong>Enfraquecido</strong>. Clique neles para ver o que fazem. Quando um personagem estiver sob efeito, o ícone aparecerá no slot — clique para ver o efeito e sua duração.',
+    },
+    {
+      titulo: 'Cartas especiais',
+      texto:  'Algumas cartas têm efeitos únicos além do valor numérico:<br><br><strong>J — Valete:</strong> Esquiva — cancela um ataque recebido.<br><strong>Q — Dama:</strong> Remove penalidades de um aliado.<br><strong>K — Rei:</strong> +50% de poder no próximo ataque, cura ou defesa.<br><strong>A — Ás:</strong> Compra 1 carta extra do deck.<br><strong>★ — Coringa:</strong> Concede uma rodada extra ao personagem.',
     },
   ];
 
