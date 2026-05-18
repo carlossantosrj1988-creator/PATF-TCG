@@ -81,9 +81,9 @@ const BATTLE = (() => {
 
     const inimigos = opts.inimigos ?? [];
 
-    const personagens = PLAYER_STATE.personagens.map(p => {
+    const personagens = PLAYER_STATE.personagens.map((p, i) => {
       const sim = _NAIPE_SIM[p.naipe] ?? _NAIPE_SIM[p.naipeAtivo] ?? null;
-      return { ...p, id: p.poolId, naipe: sim, naipeAtivo: sim };
+      return { ...p, id: `${p.poolId}_${i}`, naipe: sim, naipeAtivo: sim };
     });
 
     COMBAT.init(personagens, inimigos);

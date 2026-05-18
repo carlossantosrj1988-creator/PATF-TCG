@@ -110,18 +110,15 @@ const TUTORIAL_MAP = (() => {
   // ── Salva HP atual do combate de volta para TUTORIAL_STATE ────────────────
 
   function _salvarHP() {
-    for (const c of COMBAT.estado.combatentes) {
-      if (c.lado !== 'jogador') continue;
-      const poolId = c.id.replace('jogador_', '');
-      if (TUTORIAL_STATE.hp[poolId]) {
-        TUTORIAL_STATE.hp[poolId].cur = c.hp;
-      }
-    }
-    // Sincroniza PLAYER_STATE para o painel de chars no mapa
-    for (const p of PLAYER_STATE.personagens) {
-      const salvo = TUTORIAL_STATE.hp[p.poolId];
-      if (salvo) p.hpAtual = salvo.cur;
-    }
+    const jogadores = COMBAT.estado.combatentes.filter(c => c.lado === 'jogador');
+    // Sincroniza por índice — garante mapeamento correto mesmo com tipos duplicados
+    PLAYER_STATE.personagens.forEach((p, i) => {
+      const c = jogadores[i];
+      if (!c) return;
+      p.hpAtual = c.hp;
+      const entry = TUTORIAL_STATE.hp[p.poolId];
+      if (entry) entry.cur = c.hp;
+    });
   }
 
   // ── Pós-batalha ───────────────────────────────────────────────────────────
