@@ -511,6 +511,99 @@
   background: #e0c060;
 }
 
+/* ── Intro em passos (Momento 1) ── */
+
+#tutorial-intro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+#tutorial-intro-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+#tutorial-intro-box {
+  position: relative;
+  z-index: 1;
+  background: #0e1220;
+  border: 1px solid #2a3040;
+  border-radius: 14px;
+  padding: 36px 44px;
+  max-width: 500px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: sans-serif;
+}
+
+#tutorial-intro-step {
+  font-size: 0.62rem;
+  color: #444;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#tutorial-intro-tag {
+  font-size: 0.65rem;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+#tutorial-intro-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 1px;
+  line-height: 1.3;
+}
+
+#tutorial-intro-texto {
+  font-size: 0.83rem;
+  color: #99aabb;
+  line-height: 1.75;
+}
+
+#tutorial-intro-texto strong {
+  color: #ddeeff;
+}
+
+#tutorial-intro-btn {
+  align-self: flex-end;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #7a5c00, #c9a84c);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+#tutorial-intro-btn:hover {
+  background: linear-gradient(135deg, #c9a84c, #e8c870);
+}
+
+/* ── Popup de entrada (mini boss / boss) ── */
+
+#tutorial-popup-tag {
+  font-size: 0.65rem;
+  color: #c9a84c;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  min-height: 14px;
+}
+
 /* ── Placeholder de status ── */
 #tutorial-status-placeholder {
   position: absolute;
