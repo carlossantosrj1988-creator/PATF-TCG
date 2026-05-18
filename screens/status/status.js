@@ -1,7 +1,35 @@
 // screens/status/status.js
 
 const STATUS = (() => {
-  let charIdx = 0;
+  let charIdx    = 0;
+  let _introVista = false;
+
+  const _INTRO_STATUS = [
+    {
+      titulo: 'O perfil do personagem',
+      texto:  'Esta tela mostra tudo que o seu personagem tem: atributos, naipe, equipamento, relíquia, habilidades nos slots e passivas nos slots. Se está equipado nele, aparece aqui.',
+    },
+    {
+      titulo: 'Escolha um naipe',
+      texto:  'O primeiro passo é escolher o naipe do personagem: <strong>♥ Copas · ♣ Paus · ♦ Ouro · ♠ Espadas</strong>. O naipe define os bônus de atributo, a vantagem e desvantagem em batalha, e quais habilidades aparecem na árvore.',
+    },
+    {
+      titulo: 'Bônus de naipe em combate',
+      texto:  'Em batalha, se a carta usada tiver o mesmo naipe do personagem, o valor dela é <strong>dobrado</strong> no cálculo de dano. Colocar a carta certa no personagem certo não é detalhe — é decisivo.',
+    },
+    {
+      titulo: 'Comprando habilidades',
+      texto:  'Com o naipe definido, a árvore se abre em 4 ramos: <strong>H1</strong> (básicas), <strong>H2</strong> (intermediárias), <strong>H3</strong> (avançadas) e <strong>Passivas</strong>. Clique num nó para ver o que ele faz e o custo. Quanto mais você compra no mesmo ramo, mais caro fica — planeje a build com cuidado.',
+    },
+    {
+      titulo: 'Equipando nos slots',
+      texto:  'Comprar uma habilidade ou passiva <strong>não a equipa automaticamente</strong>. Clique nos slots à direita para ativar o que você comprou. O jogo é flexível — você pode deixar slots vazios. Um personagem com uma única habilidade e o resto vazio ainda é uma build válida.',
+    },
+    {
+      titulo: 'Seus pontos são permanentes',
+      texto:  'Os pontos que você ganha ao vencer etapas ficam na sua conta — <strong>mesmo após um Game Over</strong>. Você perde o personagem, mas os pontos e itens não equipados sobrevivem. Cada nova tentativa começa com mais recurso do que a anterior.',
+    },
+  ];
 
   // ── Canvas 2000×2000, centro (1000,1000) ─────────────────────────────────
   const CX = 1000, CY = 1000;
@@ -112,7 +140,7 @@ const STATUS = (() => {
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
-  function init() {
+  function init(opts = {}) {
     if (!document.getElementById('screen-status')) {
       const el = document.createElement('div');
       el.id = 'screen-status';
@@ -120,6 +148,49 @@ const STATUS = (() => {
     }
     garantirEstadoPersonagens();
     renderTela();
+    if (opts.tutorial && !_introVista) {
+      _introVista = true;
+      _mostrarIntroStatus();
+    }
+  }
+
+  function _mostrarIntroStatus() {
+    const screen = document.getElementById('screen-status');
+    let passo = 0;
+
+    function renderPasso() {
+      const anterior = document.getElementById('status-intro-overlay');
+      if (anterior) anterior.remove();
+
+      const dados  = _INTRO_STATUS[passo];
+      const total  = _INTRO_STATUS.length;
+      const ultimo = passo === total - 1;
+
+      const el = document.createElement('div');
+      el.id = 'status-intro-overlay';
+      el.innerHTML = `
+        <div id="status-intro-bg"></div>
+        <div id="status-intro-box">
+          <div id="status-intro-step">${passo + 1} / ${total}</div>
+          <div id="status-intro-tag">ATLAS</div>
+          <div id="status-intro-titulo">${dados.titulo}</div>
+          <div id="status-intro-texto">${dados.texto}</div>
+          <button id="status-intro-btn">${ultimo ? 'ENTENDIDO ▶' : 'PRÓXIMO →'}</button>
+        </div>
+      `;
+      screen.appendChild(el);
+
+      el.querySelector('#status-intro-btn').addEventListener('click', () => {
+        if (ultimo) {
+          el.remove();
+        } else {
+          passo++;
+          renderPasso();
+        }
+      });
+    }
+
+    renderPasso();
   }
 
   function garantirEstadoPersonagens() {

@@ -465,7 +465,7 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
         mostrarMomento3();
       }
     };
-    if (typeof STATUS !== 'undefined') STATUS.init();
+    if (typeof STATUS !== 'undefined') STATUS.init({ tutorial: true });
     window.irParaTela('screen-status');
   }
 
