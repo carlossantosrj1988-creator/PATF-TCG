@@ -205,7 +205,7 @@ const BATTLE = (() => {
 
   const _COR_INI = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
 
-  // Tela de seleção: char rows no topo + mão compartilhada embaixo.
+  // Tela de seleção: clicar na carta auto-atribui ao primeiro char sem carta.
   function _telaIniciativa() {
     let screen = document.getElementById('screen-battle');
     if (!screen) {
@@ -218,12 +218,10 @@ const BATTLE = (() => {
 
     const estado    = COMBAT.estado;
     const jogadores = estado.combatentes.filter(c => c.lado === 'jogador');
-    const maoShared = estado.maoJogador; // mão compartilhada do time
+    const maoShared = estado.maoJogador;
 
-    // picks: charId → { idx (na maoShared), carta, btnEl }
+    // picks: charId → { idx, carta }
     const picks = {};
-    // carta selecionada no momento
-    let selected = null;
 
     const tela = document.createElement('div');
     tela.id = 'battle-ini-tela';
@@ -233,101 +231,23 @@ const BATTLE = (() => {
     header.id = 'battle-ini-header';
     header.innerHTML = `
       <div class="battle-ini-titulo">⚔ ESCOLHA DE INICIATIVA</div>
-      <div class="battle-ini-sub">Selecione uma carta e toque no personagem para atribuir</div>
+      <div class="battle-ini-sub">Clique em uma carta — ela vai para o próximo personagem sem carta</div>
     `;
     tela.appendChild(header);
 
     // ── Linhas de personagens ──
     const charsDiv = document.createElement('div');
     charsDiv.id = 'battle-ini-chars';
-
-    for (const c of jogadores) {
-      const cor = _COR_INI[c.naipe] ?? '#888';
-      const { bg, borda } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
-      const row = document.createElement('div');
-      row.className = 'battle-ini-char-row';
-      row.dataset.charId = c.id;
-      row.style.color = cor; // alimenta o ::before colorido
-      row.innerHTML = `
-        <div class="bic-card" style="background:${bg}; border-color:${borda};">
-          <span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
-          <span class="bic-card-nome">${c.nome}</span>
-        </div>
-        <span class="bic-inc">INC +${c.inc}</span>
-        <div class="bic-slot vazio">— escolha uma carta —</div>
-      `;
-
-      row.addEventListener('click', () => {
-        const slotEl = row.querySelector('.bic-slot');
-        if (selected) {
-          // Libera carta anterior deste char (se havia)
-          if (picks[c.id]) {
-            picks[c.id].btnEl.classList.remove('usada');
-          }
-          // Atribui carta selecionada
-          picks[c.id] = { idx: selected.idx, carta: selected.carta, btnEl: selected.btnEl };
-          selected.btnEl.classList.add('usada');
-          selected.btnEl.classList.remove('selecionada');
-
-          const corCarta  = _COR_INI[selected.carta.naipe] ?? '#c9a84c';
-          const naipeAtrib = selected.carta.naipe ?? '★';
-          slotEl.className = 'bic-slot atribuida';
-          slotEl.innerHTML = `
-            <span style="color:${corCarta}">${naipeAtrib}</span>
-            <strong>${selected.carta.valor}</strong>
-          `;
-
-          selected = null;
-          _atualizarConfirmar();
-        } else if (picks[c.id]) {
-          // Libera carta deste char de volta à mão
-          picks[c.id].btnEl.classList.remove('usada');
-          delete picks[c.id];
-          slotEl.className = 'bic-slot vazio';
-          slotEl.textContent = '— escolha uma carta —';
-          _atualizarConfirmar();
-        }
-      });
-
-      charsDiv.appendChild(row);
-    }
     tela.appendChild(charsDiv);
 
     // ── Mão compartilhada ──
     const maoDiv = document.createElement('div');
     maoDiv.id = 'battle-ini-mao';
-
-    maoShared.forEach((carta, idx) => {
-      const cor   = _COR_INI[carta.naipe] ?? '#c9a84c';
-      const naipe = carta.naipe ?? '★';
-      const btn = document.createElement('button');
-      btn.className = 'battle-ini-carta';
-      btn.dataset.idx = idx;
-      btn.innerHTML = `
-        <span class="ini-carta-naipe-top" style="color:${cor}">${naipe}</span>
-        <span class="ini-carta-val">${carta.valor}</span>
-      `;
-
-      btn.addEventListener('click', () => {
-        if (btn.classList.contains('usada')) return;
-        if (selected?.btnEl === btn) {
-          btn.classList.remove('selecionada');
-          selected = null;
-          return;
-        }
-        if (selected) selected.btnEl.classList.remove('selecionada');
-        selected = { idx, carta, btnEl: btn };
-        btn.classList.add('selecionada');
-      });
-
-      maoDiv.appendChild(btn);
-    });
     tela.appendChild(maoDiv);
 
     // ── Contador de progresso ──
     const lblProgresso = document.createElement('div');
     lblProgresso.id = 'battle-ini-progresso';
-    lblProgresso.textContent = `0 / ${jogadores.length} personagens`;
     tela.appendChild(lblProgresso);
 
     // ── Botão confirmar ──
@@ -347,9 +267,90 @@ const BATTLE = (() => {
 
     screen.appendChild(tela);
 
-    if (_isTutorial && !_tutorialIniVisto) {
-      _tutorialIniVisto = true;
-      _mostrarTutorialSequencial(_TUTORIAL_INI, null);
+    // ── Render helpers ──
+    function _renderChars() {
+      charsDiv.innerHTML = '';
+      for (const c of jogadores) {
+        const cor          = _COR_INI[c.naipe] ?? '#888';
+        const { bg, borda } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
+        const pick         = picks[c.id];
+
+        const row = document.createElement('div');
+        row.className   = 'battle-ini-char-row' + (pick ? ' com-carta' : '');
+        row.dataset.charId = c.id;
+
+        if (pick) {
+          const corCarta  = _COR_INI[pick.carta.naipe] ?? '#c9a84c';
+          const cartaNaipe = pick.carta.naipe ?? '★';
+          const cartaVal   = DECK.valorIniciativa(pick.carta);
+          const total      = cartaVal + c.inc;
+          row.innerHTML = `
+            <div class="bic-card" style="background:${bg}; border-color:${borda};">
+              <span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+              <span class="bic-card-nome">${c.nome}</span>
+            </div>
+            <span class="bic-inc">INC +${c.inc}</span>
+            <div class="bic-slot atribuida">
+              <span class="bic-formula">
+                <span style="color:${corCarta}">${pick.carta.valor}${cartaNaipe}</span>
+                <span class="bic-formula-plus">(+${c.inc})</span>
+                = <strong>${total}</strong>
+              </span>
+              <button class="bic-limpar">✕</button>
+            </div>
+          `;
+          row.querySelector('.bic-limpar').addEventListener('click', e => {
+            e.stopPropagation();
+            delete picks[c.id];
+            _renderChars();
+            _renderCards();
+            _atualizarConfirmar();
+          });
+        } else {
+          row.innerHTML = `
+            <div class="bic-card" style="background:${bg}; border-color:${borda};">
+              <span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+              <span class="bic-card-nome">${c.nome}</span>
+            </div>
+            <span class="bic-inc">INC +${c.inc}</span>
+            <div class="bic-slot vazio">— escolha uma carta —</div>
+          `;
+        }
+        charsDiv.appendChild(row);
+      }
+    }
+
+    function _renderCards() {
+      maoDiv.innerHTML = '';
+      const usados = new Set(Object.values(picks).map(p => p.idx));
+      maoShared.forEach((carta, idx) => {
+        const cor   = _COR_INI[carta.naipe] ?? '#c9a84c';
+        const naipe = carta.naipe ?? '★';
+        const used  = usados.has(idx);
+        const btn   = document.createElement('button');
+        btn.className    = 'battle-ini-carta' + (used ? ' usada' : '');
+        btn.dataset.idx  = idx;
+        btn.innerHTML    = `
+          <span class="ini-carta-naipe-top" style="color:${cor}">${naipe}</span>
+          <span class="ini-carta-val">${carta.valor}</span>
+        `;
+        if (!used) {
+          btn.addEventListener('click', () => {
+            // Remove atribuição anterior desta carta, se houver
+            for (const [cid, p] of Object.entries(picks)) {
+              if (p.idx === idx) { delete picks[cid]; break; }
+            }
+            // Atribui ao primeiro char sem carta
+            const semCarta = jogadores.find(c => picks[c.id] === undefined);
+            if (!semCarta) return;
+            picks[semCarta.id] = { idx, carta };
+            _renderChars();
+            _renderCards();
+            _atualizarConfirmar();
+          });
+        }
+        maoDiv.appendChild(btn);
+      });
     }
 
     function _atualizarConfirmar() {
@@ -358,6 +359,15 @@ const BATTLE = (() => {
       btnConfirmar.classList.toggle('pronto', prontos);
       lblProgresso.textContent = `${feitos} / ${jogadores.length} personagens`;
       lblProgresso.classList.toggle('pronto', prontos);
+    }
+
+    _renderChars();
+    _renderCards();
+    _atualizarConfirmar();
+
+    if (_isTutorial && !_tutorialIniVisto) {
+      _tutorialIniVisto = true;
+      _mostrarTutorialSequencial(_TUTORIAL_INI, null);
     }
   }
 
@@ -394,51 +404,134 @@ const BATTLE = (() => {
     _revelarOrdem();
   }
 
-  // Overlay com a ordem final — cada entrada aparece em sequência; clique ou timeout avança.
-  function _revelarOrdem() {
+  // Cinemática de iniciativa — sequência completa: verificação → rattle → ordem definida.
+  async function _revelarOrdem() {
     const screen = document.getElementById('screen-battle');
-    const ordem  = COMBAT.estado.ordem;
+    const estado = COMBAT.estado;
+    const ordem  = estado.ordem;
 
     const overlay = document.createElement('div');
     overlay.id = 'battle-ini-revelar';
     overlay.innerHTML = `
       <div id="battle-ini-rev-bg"></div>
       <div id="battle-ini-rev-content">
-        <div id="battle-ini-rev-titulo">ORDEM DE INICIATIVA</div>
+        <div id="battle-ini-rev-titulo"></div>
         <div id="battle-ini-rev-lista"></div>
-        <div id="battle-ini-rev-hint">toque para avançar</div>
+        <div id="battle-ini-rev-divider"></div>
       </div>
     `;
     screen.appendChild(overlay);
 
-    const lista = overlay.querySelector('#battle-ini-rev-lista');
+    const titleEl = overlay.querySelector('#battle-ini-rev-titulo');
+    const lista   = overlay.querySelector('#battle-ini-rev-lista');
+    const divider = overlay.querySelector('#battle-ini-rev-divider');
 
-    ordem.forEach((c, i) => {
-      setTimeout(() => {
-        const cor   = _COR_INI[c.naipe] ?? '#888';
-        const total = c.cartaIniciativa ? DECK.valorIniciativa(c.cartaIniciativa) + c.inc : c.inc;
+    const _delay = ms => new Promise(r => setTimeout(r, ms));
 
-        const entrada = document.createElement('div');
-        entrada.className = 'battle-ini-rev-entrada' + (c.lado === 'inimigo' ? ' inimigo' : '');
-        entrada.innerHTML = `
-          <span class="rev-pos">#${i + 1}</span>
-          <span class="rev-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
-          <span class="rev-nome">${c.nome}</span>
-          <span class="rev-carta">${c.cartaIniciativa?.label ?? '—'}</span>
-          <span class="rev-score">${total}</span>
-        `;
-        lista.appendChild(entrada);
-      }, 180 + i * 320);
+    // ── Fase 1: VERIFICANDO COMBATENTES ──
+    titleEl.textContent = 'VERIFICANDO COMBATENTES...';
+    titleEl.classList.add('show');
+    await _delay(600);
+
+    // Jogadores primeiro, depois inimigos
+    const todos = [
+      ...estado.combatentes.filter(c => c.lado === 'jogador'),
+      ...estado.combatentes.filter(c => c.lado === 'inimigo'),
+    ];
+    const rowEls = {}; // charId → DOM row
+
+    for (const c of todos) {
+      const cor      = _COR_INI[c.naipe] ?? '#888';
+      const ladoCls  = c.lado === 'jogador' ? 'jogador' : 'inimigo';
+      const row      = document.createElement('div');
+      row.className  = `battle-cine-row ${ladoCls}`;
+      row.id         = `cine-row-${c.id}`;
+      row.innerHTML  = `
+        <span class="cine-row-suit" style="color:${cor}">${c.naipe ?? '?'}</span>
+        <span class="cine-row-name">${c.nome.toUpperCase()}</span>
+        <span class="cine-row-right" id="cine-score-${c.id}">—</span>
+      `;
+      lista.appendChild(row);
+      rowEls[c.id] = row;
+
+      await _delay(50);
+      row.classList.add('show');
+      await _delay(200);
+
+      const scoreEl = document.getElementById(`cine-score-${c.id}`);
+      if (scoreEl) { scoreEl.textContent = '✔'; scoreEl.className = 'cine-row-right confirm'; }
+      await _delay(60);
+    }
+
+    await _delay(300);
+
+    // ── Fase 2: ROLANDO INICIATIVA ──
+    titleEl.classList.remove('show');
+    await _delay(250);
+    titleEl.textContent = 'ROLANDO INICIATIVA...';
+    titleEl.classList.add('show');
+    await _delay(400);
+
+    for (const c of todos) {
+      const entry   = ordem.find(e => e.id === c.id);
+      if (!entry) continue;
+      const scoreEl = document.getElementById(`cine-score-${c.id}`);
+      if (!scoreEl) continue;
+
+      scoreEl.className = 'cine-row-right roll';
+      for (let i = 0; i < 5; i++) {
+        scoreEl.textContent = Math.floor(Math.random() * 20) + 1;
+        await _delay(55);
+      }
+      const total = entry.cartaIniciativa
+        ? DECK.valorIniciativa(entry.cartaIniciativa) + entry.inc
+        : entry.inc;
+      scoreEl.textContent = total;
+      await _delay(90);
+    }
+
+    await _delay(450);
+
+    // ── Fase 3: Re-ordenar linhas + badges ──
+    ordem.forEach((entry, rank) => {
+      const rowEl = rowEls[entry.id];
+      if (!rowEl) return;
+      lista.appendChild(rowEl);
+
+      if (rank === 0) {
+        const scoreEl = document.getElementById(`cine-score-${entry.id}`);
+        if (scoreEl) scoreEl.className = 'cine-row-right first';
+        rowEl.style.borderColor = '#c9a84c';
+        rowEl.style.background  = 'rgba(201,168,76,0.07)';
+      }
+
+      const badge = document.createElement('span');
+      badge.className   = 'cine-order-badge';
+      badge.textContent = '#' + (rank + 1);
+      rowEl.appendChild(badge);
+      setTimeout(() => badge.classList.add('show'), 100 * rank);
     });
 
-    const avançar = () => {
-      overlay.remove();
-      const primeiro = COMBAT.combatenteAtual();
-      if (primeiro) _iniciarTurno(primeiro);   // primeira rodada começa aqui
-      _renderizar();
-    };
-    const timer   = setTimeout(avançar, 180 + ordem.length * 320 + 1600);
-    overlay.addEventListener('click', () => { clearTimeout(timer); avançar(); });
+    await _delay(250);
+    divider.classList.add('show');
+
+    // ── Fase 4: ORDEM DE TURNO DEFINIDA ──
+    titleEl.classList.remove('show');
+    await _delay(280);
+    titleEl.textContent   = 'ORDEM DE TURNO DEFINIDA';
+    titleEl.style.animation = 'cine-pulse-gold 2s infinite';
+    titleEl.classList.add('show');
+    await _delay(1400);
+
+    // Fade out
+    overlay.style.transition = 'opacity 0.5s ease';
+    overlay.style.opacity    = '0';
+    await _delay(500);
+    overlay.remove();
+
+    const primeiro = COMBAT.combatenteAtual();
+    if (primeiro) _iniciarTurno(primeiro);
+    _renderizar();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
