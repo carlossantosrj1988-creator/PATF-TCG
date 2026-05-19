@@ -1339,9 +1339,13 @@ const BATTLE = (() => {
       // Ás: compra 1 carta do baralho compartilhado
       COMBAT.comprarCarta(c, 1);
     } else if (carta.valor === '★') {
-      // Coringa: injeta rodada extra na fila imediatamente após a posição atual
+      // Coringa: injeta rodada extra na fila logo após a posição atual.
+      // Limite: máximo 1 extra por combatente na fila — ignora se já há uma.
       const estado = COMBAT.estado;
-      estado.ordem.splice(estado.indiceAtual + 1, 0, c);
+      const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(c);
+      if (!jaTemExtra) {
+        estado.ordem.splice(estado.indiceAtual + 1, 0, c);
+      }
     }
 
     // Instantânea: volta pra etapa1 sem avançar turno
