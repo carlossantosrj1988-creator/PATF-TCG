@@ -243,10 +243,13 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
       const hpAtual = TUTORIAL_MAP.state.hp[p.poolId]?.cur ?? p.hpAtual ?? hpMax;
       const pct    = Math.max(0, Math.min(100, (hpAtual / hpMax) * 100));
 
+      const sprHtml = (typeof CHAR_SPRITE !== 'undefined')
+        ? CHAR_SPRITE.imgHTML(p.poolId, { h: 44 })
+        : '?';
       painel.innerHTML += `
         <div class="tutorial-char-card">
           <div class="tutorial-char-top">
-            <div class="tutorial-char-avatar">?</div>
+            <div class="tutorial-char-avatar">${sprHtml}</div>
             <div class="tutorial-char-nome">${p.nome}</div>
           </div>
           <div class="tutorial-char-hp-bar">

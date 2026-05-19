@@ -980,6 +980,17 @@
   50%       { box-shadow: 0 0 22px rgba(201,168,76,0.55), inset 0 0 14px rgba(201,168,76,0.12); }
 }
 
+/* Sprite-mode: glow já está no filter do img — sem retângulo no div */
+.battle-char-slot.ativo .battle-char-grad.sprite-mode,
+.battle-char-slot.selecionavel .battle-char-grad.sprite-mode {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+.battle-char-slot:hover .battle-char-grad.sprite-mode {
+  border-color: transparent;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    PAINEL DE AÇÃO (180px)
 ══════════════════════════════════════════════════════════════════════════ */
