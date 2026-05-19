@@ -161,7 +161,7 @@ const SELECT = (() => {
       const card = document.createElement('div');
       card.className = 'pool-card' + (selecionado === char.id ? ' selecionado' : '');
       card.dataset.id = char.id;
-      const spr = (typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(char.id, { width: 52 }) : '';
+      const spr = (typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(char.id, { h: 58 }) : '';
       card.innerHTML = `
         ${spr}
         <span style="font-size:0.6rem;color:#ccc;text-align:center;line-height:1.2">${char.label}</span>
@@ -177,7 +177,7 @@ const SELECT = (() => {
     const central = document.getElementById('select-card-central');
     central.classList.remove('vazio');
     central.innerHTML = `
-      <div class="card-simbolo">${(typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(char.id, { width: 88 }) : '?'}</div>
+      <div class="card-simbolo">${(typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(char.id, { h: 92 }) : '?'}</div>
       <div class="card-stats">
         <div>ATQ</div><div><span>${char.atq}</span></div>
         <div>DEF</div><div><span>${char.def}</span></div>
@@ -241,7 +241,7 @@ const SELECT = (() => {
       <div class="painel-box">
         <div class="painel-titulo">Confirmar personagem?</div>
         <div class="painel-card">
-          <div class="painel-simbolo">${(typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(char.id, { width: 56 }) : '?'}</div>
+          <div class="painel-simbolo">${(typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(char.id, { h: 68 }) : '?'}</div>
           <div class="painel-info">
             <div class="painel-nome">${nome}</div>
             <div class="painel-tipo">${char.label}</div>
