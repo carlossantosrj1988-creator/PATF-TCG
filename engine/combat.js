@@ -188,8 +188,9 @@ const COMBAT = (() => {
       c.acaoExtra    = false;
       c.perdeuRodada = false;
     }
-    // Compra 1 carta por jogador vivo para a mão compartilhada
-    if (jogadoresVivos > 0) _comprarCarta({ lado: 'jogador' }, jogadoresVivos);
+    // Compra apenas 1 carta por turno para a mão compartilhada do time jogador.
+    // Cartas extras vêm de: passar a rodada, Ás, ou outros efeitos específicos.
+    if (jogadoresVivos > 0) _comprarCarta({ lado: 'jogador' }, 1);
 
     _log('turno', `Turno ${BATTLE_STATE.turno} iniciado`);
   }

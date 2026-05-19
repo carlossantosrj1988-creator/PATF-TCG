@@ -446,6 +446,115 @@
   50%      { box-shadow: 0 0 24px rgba(204,68,68,0.75), inset 0 0 14px rgba(204,68,68,0.20); }
 }
 
+/* ── Animações de combate estilo RPG ───────────────────────────────────────── */
+
+/* Lunge do atacante — jogador vai pra direita, inimigo pra esquerda */
+.battle-char-slot.atacando .battle-char-grad {
+  animation: slot-lunge 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.battle-char-slot[data-lado="inimigo"].atacando .battle-char-grad {
+  animation: slot-lunge-esq 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes slot-lunge {
+  0%   { transform: translateX(0)     scale(1); }
+  35%  { transform: translateX(22px)  scale(1.08); }
+  65%  { transform: translateX(14px)  scale(1.04); }
+  100% { transform: translateX(0)     scale(1); }
+}
+@keyframes slot-lunge-esq {
+  0%   { transform: translateX(0)     scale(1); }
+  35%  { transform: translateX(-22px) scale(1.08); }
+  65%  { transform: translateX(-14px) scale(1.04); }
+  100% { transform: translateX(0)     scale(1); }
+}
+
+/* Tremida do alvo ao receber dano — shake + flash vermelho */
+.battle-char-slot.recebendo-dano .battle-char-grad {
+  animation: slot-shake 0.55s ease;
+}
+
+@keyframes slot-shake {
+  0%   { transform: translateX(0);    filter: brightness(1); }
+  10%  { transform: translateX(-9px); filter: brightness(3) sepia(1) saturate(10) hue-rotate(-10deg); }
+  25%  { transform: translateX(9px);  filter: brightness(2.5) sepia(1) saturate(8); }
+  40%  { transform: translateX(-6px); filter: brightness(2) sepia(0.6); }
+  55%  { transform: translateX(6px);  filter: brightness(1.6); }
+  70%  { transform: translateX(-3px); filter: brightness(1.2); }
+  85%  { transform: translateX(3px);  filter: brightness(1.05); }
+  100% { transform: translateX(0);    filter: brightness(1); }
+}
+
+/* ── Floats de dano / cura / eventos ───────────────────────────────────────── */
+
+/* position:fixed para não ser cortado por overflow:hidden do campo */
+.battle-float {
+  position: fixed;
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 9000;
+  transform: translateX(-50%);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 20px currentColor;
+  animation: float-subir 1.4s ease-out forwards;
+  white-space: nowrap;
+}
+
+.battle-float.dano    { font-size: 26px; color: #ff4040; }
+.battle-float.cura    { font-size: 20px; color: #55ff88; }
+.battle-float.esquiva { font-size: 16px; color: #ffdd44; letter-spacing: 2px; }
+.battle-float.bloqueado { font-size: 14px; color: #6699ee; letter-spacing: 1px; }
+
+@keyframes float-subir {
+  0%   { opacity: 0;   transform: translateX(-50%) translateY(0)     scale(0.6); }
+  12%  { opacity: 1;   transform: translateX(-50%) translateY(-10px)  scale(1.25); }
+  40%  { opacity: 1;   transform: translateX(-50%) translateY(-28px)  scale(1.0); }
+  100% { opacity: 0;   transform: translateX(-50%) translateY(-65px)  scale(0.8); }
+}
+
+/* ── Log de batalha — canto inferior esquerdo do campo ─────────────────────── */
+
+#battle-log-panel {
+  position: absolute;
+  bottom: 10px;
+  left: 8px;
+  width: 190px;
+  pointer-events: none;
+  z-index: 40;
+}
+
+#battle-log-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.blog-linha {
+  font-size: 9px;
+  line-height: 1.35;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(4px);
+  border-left: 2px solid transparent;
+  color: #99a;
+  letter-spacing: 0.2px;
+}
+
+.blog-linha.atk    { color: #e8c050; border-left-color: #e8c05055; }
+.blog-linha.dmg    { color: #ee6655; border-left-color: #ee665555; }
+.blog-linha.cura   { color: #55cc88; border-left-color: #55cc8855; }
+.blog-linha.def    { color: #6699dd; border-left-color: #6699dd55; }
+.blog-linha.info   { color: #8899aa; border-left-color: #8899aa33; }
+.blog-linha.turno  {
+  color: #c9a84c;
+  border-left-color: #c9a84c77;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  background: rgba(201,168,76,0.08);
+}
+
 /* Carta na mão em modo visual (não-clicável) — sel_habilidade */
 .battle-carta.nao-clicavel {
   opacity: 0.85;

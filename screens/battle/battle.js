@@ -52,6 +52,84 @@ const BATTLE = (() => {
   let _tutorialIniVisto  = false; // tutorial de iniciativa já foi mostrado
   let _tutorialBatVisto  = false; // tutorial de batalha já foi mostrado
 
+  // ── Log de batalha — persiste entre renders ───────────────────────────────
+  const _LOG_MAX    = 40;
+  const _LOG_VIS    = 6;   // linhas visíveis de uma vez
+  const _logEntries = [];  // { msg, tipo }
+
+  function _logUI(msg, tipo = 'info') {
+    _logEntries.push({ msg, tipo });
+    if (_logEntries.length > _LOG_MAX) _logEntries.shift();
+    // Live-update do painel de log se já estiver na tela
+    const lista = document.getElementById('battle-log-lista');
+    if (lista) _renderizarLog(lista);
+  }
+
+  function _renderizarLog(listaEl) {
+    listaEl.innerHTML = '';
+    const ultimas = _logEntries.slice(-_LOG_VIS);
+    for (const e of ultimas) {
+      const div = document.createElement('div');
+      div.className = `blog-linha ${e.tipo}`;
+      div.textContent = e.msg;
+      listaEl.appendChild(div);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ANIMAÇÕES — shake/lunge de slot + floats de dano estilo RPG
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const _ANIM_DUR = 260; // ms do lunge do atacante antes de resolver dano
+
+  // Adiciona classe de animação ao slot do combatente; remove após duração.
+  function _animarSlot(charId, cls, durMs = 550) {
+    const slot = document.querySelector(`.battle-char-slot[data-id="${charId}"]`);
+    if (!slot) return;
+    slot.classList.remove('atacando', 'recebendo-dano');
+    void slot.offsetWidth; // força reflow para reiniciar animation
+    slot.classList.add(cls);
+    setTimeout(() => slot.classList.remove(cls), durMs);
+  }
+
+  // Cria texto flutuante de dano/cura/esquiva em posição fixa sobre o slot.
+  // Usa position:fixed + body para não ser cortado por overflow:hidden do campo.
+  function _floatTexto(charId, texto, tipo = 'dano') {
+    const slot = document.querySelector(`.battle-char-slot[data-id="${charId}"]`);
+    if (!slot) return;
+    const rect = slot.getBoundingClientRect();
+
+    const el = document.createElement('div');
+    el.className = `battle-float ${tipo}`;
+    el.textContent = texto;
+    el.style.left = (rect.left + rect.width / 2) + 'px';
+    el.style.top  = (rect.top  + rect.height * 0.15) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1400);
+  }
+
+  // Captura HP de todos os combatentes para comparar depois do resolve.
+  function _capturaHP() {
+    const snap = {};
+    for (const c of COMBAT.estado.combatentes) snap[c.id] = c.hp;
+    return snap;
+  }
+
+  // Mostra floats + shake para todos os combatentes que sofreram dano ou cura.
+  function _mostrarResultados(hpAntes) {
+    for (const c of COMBAT.estado.combatentes) {
+      const antes = hpAntes[c.id] ?? c.hp;
+      const diff  = antes - c.hp;          // positivo = tomou dano
+      const cura  = c.hp - antes;          // positivo = foi curado
+      if (diff > 0) {
+        _animarSlot(c.id, 'recebendo-dano');
+        _floatTexto(c.id, `-${diff}`, 'dano');
+      } else if (cura > 0) {
+        _floatTexto(c.id, `+${cura}`, 'cura');
+      }
+    }
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════════════════════════════════════
@@ -78,6 +156,7 @@ const BATTLE = (() => {
     _isTutorial        = opts.tutorial  ?? false;
     _tutorialIniVisto  = false;
     _tutorialBatVisto  = false;
+    _logEntries.length = 0; // limpa log da batalha anterior
 
     const inimigos = opts.inimigos ?? [];
 
@@ -718,6 +797,16 @@ const BATTLE = (() => {
 
     campo.appendChild(esq);
     campo.appendChild(dir);
+
+    // Log de batalha — canto inferior esquerdo do campo
+    const logPanel = document.createElement('div');
+    logPanel.id = 'battle-log-panel';
+    const logLista = document.createElement('div');
+    logLista.id = 'battle-log-lista';
+    _renderizarLog(logLista);
+    logPanel.appendChild(logLista);
+    campo.appendChild(logPanel);
+
     return campo;
   }
 
@@ -1300,8 +1389,25 @@ const BATTLE = (() => {
   function _executarAcao(alvos) {
     const atacante = COMBAT.combatenteAtual();
     if (!atacante || !_habSel) return;
-    COMBAT.resolverAcao(atacante, _habSel, _cartaSelIdx, alvos);
-    _finalizarTurno(atacante);
+
+    const hab = _habSel;
+    _logUI(`⚔ ${atacante.nome} usa ${hab.nome}`, 'atk');
+    _animarSlot(atacante.id, 'atacando');
+
+    // Aguarda lunge antes de resolver para o jogador "ver" o ataque
+    setTimeout(() => {
+      const hpAntes = _capturaHP();
+      COMBAT.resolverAcao(atacante, hab, _cartaSelIdx, alvos);
+      _mostrarResultados(hpAntes);
+
+      // Log dos danos causados
+      for (const alvo of alvos) {
+        const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+        if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+      }
+
+      setTimeout(() => _finalizarTurno(atacante), 600);
+    }, _ANIM_DUR);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1542,8 +1648,12 @@ const BATTLE = (() => {
 
   // Finaliza o turno: roda etapa5 (fim de rodada), avança combatente e renderiza.
   function _finalizarTurno(c) {
+    const turnoAntes = COMBAT.estado.turno;
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
+    if (COMBAT.estado.turno > turnoAntes) {
+      _logUI(`── TURNO ${COMBAT.estado.turno} ──`, 'turno');
+    }
     const proximo = COMBAT.combatenteAtual();
     if (proximo) _iniciarTurno(proximo);
     _aguardando        = false;
@@ -1623,17 +1733,27 @@ const BATTLE = (() => {
       return;
     }
 
-    // Tela de defesa pra qualquer ataque de dano que atinja jogador(es).
-    // Área dispara defesa por alvo, em sequência (cada um escolhe).
+    _logUI(`⚔ ${c.nome} usa ${decisao.hab.nome}`, 'atk');
+    _animarSlot(c.id, 'atacando');
+
     const alvosPlayer = decisao.alvos.filter(a => a.lado === 'jogador' && a.hp > 0);
     const ehAtaqueComDefesa = !decisao.hab.efeitoPuro && alvosPlayer.length > 0;
 
-    if (ehAtaqueComDefesa) {
-      _iniciarDefesa(c, decisao, alvosPlayer);
-    } else {
-      COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
-      _finalizarTurno(c);
-    }
+    setTimeout(() => {
+      if (ehAtaqueComDefesa) {
+        // Defesa: o resolve acontece depois que o jogador escolhe — animações lá
+        _iniciarDefesa(c, decisao, alvosPlayer);
+      } else {
+        const hpAntes = _capturaHP();
+        COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
+        _mostrarResultados(hpAntes);
+        for (const alvo of decisao.alvos) {
+          const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+          if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+        }
+        setTimeout(() => _finalizarTurno(c), 600);
+      }
+    }, _ANIM_DUR);
   }
 
   // Configura a tela de defesa: vira uma fila de alvos jogador (1 ou mais).
@@ -1655,12 +1775,35 @@ const BATTLE = (() => {
     if (!_defesaPendente) return;
     if (_defesaPendente.fila.length === 0) {
       const { atacante, decisao, defesasColetadas } = _defesaPendente;
-      // Limpa antes — defesasPorAlvo vazio vira null
       const defesas = Object.keys(defesasColetadas).length > 0 ? defesasColetadas : null;
+
+      // Captura HP antes do resolve para mostrar floats
+      const hpAntes = _capturaHP();
+
       _defesaPendente = null;
       _defesaSel      = null;
       COMBAT.resolverAcao(atacante, decisao.hab, decisao.cartaIdx, decisao.alvos, defesas);
-      _finalizarTurno(atacante);
+
+      // Floats de dano e log pós-defesa
+      for (const alvo of decisao.alvos) {
+        const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+        if (dano > 0) {
+          _animarSlot(alvo.id, 'recebendo-dano');
+          _floatTexto(alvo.id, `-${dano}`, 'dano');
+          _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+        } else {
+          // Esquiva total (J) ou dano zerado por defesa
+          const cartaDef = defesas?.[alvo.id];
+          if (cartaDef?.valor === 'J') {
+            _floatTexto(alvo.id, 'ESQUIVA!', 'esquiva');
+            _logUI(`✨ ${alvo.nome} esquivou com o Valete!`, 'info');
+          } else if (hpAntes[alvo.id] !== undefined) {
+            _floatTexto(alvo.id, 'BLOQUEADO', 'bloqueado');
+          }
+        }
+      }
+
+      setTimeout(() => _finalizarTurno(atacante), 600);
       return;
     }
 
