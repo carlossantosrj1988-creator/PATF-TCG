@@ -137,6 +137,9 @@ const BATTLE = (() => {
   // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
   const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
+  // Retorna símbolo de naipe do combatente (aceita 'copas' ou '♥')
+  function _naipeSim(c) { return _NAIPE_SIM[c?.naipe] ?? c?.naipe ?? null; }
+
   // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota, tutorial }
   function init(opts = {}) {
     _onVitoria         = opts.onVitoria ?? null;
@@ -1067,11 +1070,15 @@ const BATTLE = (() => {
       return div;
     }
 
+    const naipeSinerg = _naipeSim(combatente);
     mao.forEach((carta, i) => {
+      const ehNormal = carta.tipo === 'numerica';
+      const ehSinerg = naipeSinerg && carta.naipe === naipeSinerg && ehNormal;
+      const corCarta = _COR_INI[carta.naipe] ?? '#c9a84c';
       const el = document.createElement('button');
-      el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel');
+      el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
       if (clicavel) {
         el.addEventListener('click', () => {
           _cartaSel    = carta;
@@ -1104,12 +1111,15 @@ const BATTLE = (() => {
       return div;
     }
 
+    const naipeSinerg = _naipeSim(combatente);
     mao.forEach((carta, i) => {
       const ehEspecial = carta.tipo === 'especial' || carta.tipo === 'coringa' || carta.valor === 'J';
+      const ehSinerg   = naipeSinerg && carta.naipe === naipeSinerg && !ehEspecial;
+      const corCarta   = _COR_INI[carta.naipe] ?? '#c9a84c';
       const el = document.createElement('button');
-      el.className = 'battle-carta' + (ehEspecial ? ' nao-clicavel' : '');
+      el.className = 'battle-carta' + (ehEspecial ? ' nao-clicavel' : '') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
       if (ehEspecial) {
         el.disabled = true;
       } else {
@@ -1250,15 +1260,18 @@ const BATTLE = (() => {
       return div;
     }
 
+    const naipeSinerg = _naipeSim(combatente);
     mao.forEach((carta, i) => {
       const ehJ        = carta.valor === 'J';
       const ehEspecial = carta.tipo === 'especial' || carta.tipo === 'coringa';
       const clicavel   = ehEspecial && !ehJ;
+      const ehSinerg   = naipeSinerg && carta.naipe === naipeSinerg && !ehEspecial && !ehJ;
+      const corCarta   = _COR_INI[carta.naipe] ?? '#c9a84c';
 
       const el = document.createElement('button');
-      el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel');
+      el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
+      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
       if (clicavel) {
         el.addEventListener('click', () => _usarEspecial(carta, i));
       } else {

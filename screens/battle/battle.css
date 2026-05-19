@@ -1095,21 +1095,40 @@
   border: 1px solid #ffffff18;
   border-radius: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   cursor: pointer;
   font-family: inherit;
-  transition: transform 0.12s, border-color 0.12s;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
 
 .battle-carta:hover              { transform: translateY(-8px); border-color: #c9a84c70; }
 
-.carta-valor                     { font-size: 16px; font-weight: 700; color: #cccccc; }
+/* ── 4 cores e tints por naipe ── */
+.battle-carta[data-naipe="♥"] { background: #1e0f0f; border-color: #e0606028; }
+.battle-carta[data-naipe="♦"] { background: #1e1a08; border-color: #e8c05028; }
+.battle-carta[data-naipe="♠"] { background: #0a0e20; border-color: #7aade828; }
+.battle-carta[data-naipe="♣"] { background: #0a160e; border-color: #5ac88028; }
 
-.battle-carta[data-naipe="♥"] .carta-valor,
-.battle-carta[data-naipe="♦"] .carta-valor { color: #e05555; }
-.battle-carta[data-naipe="♠"] .carta-valor { color: #5588cc; }
-.battle-carta[data-naipe="♣"] .carta-valor { color: #55aa77; }
+.carta-valor     { font-size: 18px; font-weight: 700; line-height: 1; }
+.carta-naipe-icon { font-size: 13px; line-height: 1; }
+
+/* ── Sinergia de naipe: glow colorido + flutuação ── */
+@keyframes sinergica-pulse {
+  0%, 100% { transform: translateY(-3px); }
+  50%       { transform: translateY(-8px); }
+}
+.battle-carta.sinergica { animation: sinergica-pulse 1.3s ease-in-out infinite; }
+
+.battle-carta.sinergica[data-naipe="♥"] { border-color: rgba(224,96,96,0.9);  box-shadow: 0 0 14px rgba(224,96,96,0.55),  0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♦"] { border-color: rgba(232,192,80,0.9); box-shadow: 0 0 14px rgba(232,192,80,0.55), 0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♠"] { border-color: rgba(122,173,232,0.9);box-shadow: 0 0 14px rgba(122,173,232,0.55),0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♣"] { border-color: rgba(90,200,128,0.9); box-shadow: 0 0 14px rgba(90,200,128,0.55), 0 2px 6px rgba(0,0,0,0.5); }
+
+/* Sinergia em carta desabilitada (preview no etapa1/sel_habilidade) */
+.battle-carta.sinergica.nao-clicavel { opacity: 0.65; }
 
 .battle-mao-vazia                { color: #ffffff20; font-size: 20px; margin: auto; }
 
