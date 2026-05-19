@@ -134,15 +134,6 @@ const BATTLE = (() => {
   // INIT
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Mapa de sprites por poolId do personagem jogador.
-  // Inimigos (poolId null) usam fallback de card.
-  const _SPRITES = {
-    vigor:     'assets/sprites/vigor.png',
-    ofensivo:  'assets/sprites/ofensivo.png',
-    defensivo: 'assets/sprites/defensivo.png',
-    agil:      'assets/sprites/agil.png',
-  };
-
   // Mapa de naipe (chave em português, igual NAIPES_DATA) → símbolo
   const _NAIPE_SIM = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
 
@@ -372,9 +363,12 @@ const BATTLE = (() => {
           const cartaNaipe = pick.carta.naipe ?? '★';
           const cartaVal   = DECK.valorIniciativa(pick.carta);
           const total      = cartaVal + c.inc;
+          const bicInner = (typeof CHAR_SPRITE !== 'undefined' && CHAR_SPRITE.MAP[c.poolId])
+            ? `<img class="csp-img fill" src="${CHAR_SPRITE.MAP[c.poolId]}" draggable="false" alt="">`
+            : `<span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>`;
           row.innerHTML = `
             <div class="bic-card" style="background:${bg}; border-color:${borda};">
-              <span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+              ${bicInner}
               <span class="bic-card-nome">${c.nome}</span>
             </div>
             <span class="bic-inc">INC +${c.inc}</span>
@@ -395,9 +389,12 @@ const BATTLE = (() => {
             _atualizarConfirmar();
           });
         } else {
+          const bicInner2 = (typeof CHAR_SPRITE !== 'undefined' && CHAR_SPRITE.MAP[c.poolId])
+            ? `<img class="csp-img fill" src="${CHAR_SPRITE.MAP[c.poolId]}" draggable="false" alt="">`
+            : `<span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>`;
           row.innerHTML = `
             <div class="bic-card" style="background:${bg}; border-color:${borda};">
-              <span class="bic-card-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+              ${bicInner2}
               <span class="bic-card-nome">${c.nome}</span>
             </div>
             <span class="bic-inc">INC +${c.inc}</span>
@@ -845,7 +842,7 @@ const BATTLE = (() => {
     slot.style.zIndex    = idx + 1;
     slot.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
-    const spriteSrc = _SPRITES[c.poolId ?? ''] ?? null;
+    const spriteSrc = (typeof CHAR_SPRITE !== 'undefined') ? (CHAR_SPRITE.MAP[c.poolId ?? ''] ?? null) : null;
 
     if (spriteSrc) {
       // ── Modo sprite: imagem pixel art ──
@@ -1896,10 +1893,13 @@ const BATTLE = (() => {
       const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
       const vivo   = c.hp > 0;
       const hpPct  = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
+      const fimInner = (typeof CHAR_SPRITE !== 'undefined' && CHAR_SPRITE.MAP[c.poolId])
+        ? `<img class="csp-img fill" src="${CHAR_SPRITE.MAP[c.poolId]}" draggable="false" alt="">`
+        : `<span class="battle-fim-char-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>`;
       return `
         <div class="battle-fim-char${vivo ? '' : ' morto'}">
           <div class="battle-fim-char-card" style="background:${bg};">
-            <span class="battle-fim-char-naipe" style="color:${cor}">${c.naipe ?? '?'}</span>
+            ${fimInner}
             <span class="battle-fim-char-nome">${c.nome}</span>
           </div>
           <div class="battle-fim-char-hp-bar">
