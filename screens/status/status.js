@@ -256,7 +256,7 @@ const STATUS = (() => {
       ? `color:${naipeInfo.cor};border-color:${naipeInfo.cor}55;background:${naipeInfo.cor}12;border-style:solid;`
       : '';
     painel.innerHTML = `
-      <div id="status-char-avatar">?</div>
+      <div id="status-char-avatar">${(typeof CHAR_SPRITE !== 'undefined') ? CHAR_SPRITE.imgHTML(p.poolId, { width: 110 }) : '?'}</div>
       <div id="status-char-nome">${p.nome || '—'}</div>
       <div id="status-char-pool">${p.poolId || '—'}</div>
       <div class="status-attr-linha"><span class="label">ATQ</span><span class="valor">${p.atq ?? 0}</span></div>

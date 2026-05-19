@@ -1,0 +1,23 @@
+/* chars/char-sprite.css — shared sprite styles across all screens */
+
+.csp-img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* fill: sprite covers parent container (parent must be position:relative + overflow:hidden) */
+.csp-img.fill {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  object-position: center bottom;
+}
+
+.csp-placeholder {
+  color: #444;
+  font-size: 2rem;
+}

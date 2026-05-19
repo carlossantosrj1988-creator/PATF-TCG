@@ -182,8 +182,11 @@ const TUTORIAL_MAP = (() => {
 
       const card = document.createElement('div');
       card.className = 'tmap-trans-char-card';
+      const sprHtml = (typeof CHAR_SPRITE !== 'undefined')
+        ? CHAR_SPRITE.imgHTML(p.poolId, { width: 80 })
+        : `<span class="tmap-card-naipe" style="color:${cor}">${sim ?? '?'}</span>`;
       card.innerHTML = `
-        <span class="tmap-card-naipe" style="color:${cor}">${sim ?? '?'}</span>
+        <div class="tmap-card-sprite">${sprHtml}</div>
         <span class="tmap-card-nome">${p.nome}</span>
         <div class="tmap-card-hp-bar">
           <div class="tmap-card-hp-fill ${hpCls}" style="width:${pct}%"></div>

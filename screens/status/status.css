@@ -122,11 +122,12 @@
   height: 140px;
   background: linear-gradient(135deg, #111827, #0d111c);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   font-size: 3rem;
   color: #333;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 #status-char-nome {
