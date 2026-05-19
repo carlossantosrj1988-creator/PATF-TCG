@@ -931,6 +931,19 @@
 
 .battle-mao-vazia                { color: #ffffff20; font-size: 20px; margin: auto; }
 
+/* ── Labels especiais nas cartas de defesa ── */
+.carta-def-label {
+  display: block;
+  font-size: 7px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  line-height: 1;
+}
+.carta-def-label.esquiva  { color: #55cc88; }
+.carta-def-label.sem-efeito { color: #555566; }
+
 /* ── Turno do inimigo ── */
 
 .battle-inimigo-turno {

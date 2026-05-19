@@ -1219,6 +1219,7 @@ const BATTLE = (() => {
   }
 
   // ── Defesa direita: cartas da mão (clica → seleciona → clica de novo → confirma) ──
+  // J = esquiva total (clicável). Outros especiais (Q/K/A/★) = sem efeito defensivo (grayed).
   // Cartas já reservadas por jogadores anteriores na mesma área ficam grayed.
   function _criarPainelDefesaDir() {
     const div = document.createElement('div');
@@ -1235,15 +1236,29 @@ const BATTLE = (() => {
     );
 
     mao.forEach((carta, i) => {
-      const sel       = _defesaSel && _defesaSel.tipo === 'carta' && _defesaSel.idx === i;
-      const reservada = reservadas.has(carta);
+      const sel         = _defesaSel && _defesaSel.tipo === 'carta' && _defesaSel.idx === i;
+      const reservada   = reservadas.has(carta);
+      const ehJ         = carta.valor === 'J';
+      // Outros especiais (Q/K/A/★) não têm efeito defensivo — ficam grayed
+      const ehOutroEsp  = !ehJ && DECK.ehEspecial(carta);
+      const bloqueada   = reservada || ehOutroEsp;
+
       const el = document.createElement('button');
       el.className = 'battle-carta'
-        + (sel ? ' selecionada' : '')
-        + (reservada ? ' nao-clicavel' : '');
+        + (sel      ? ' selecionada' : '')
+        + (bloqueada ? ' nao-clicavel' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor">${carta.label}</span>`;
-      if (reservada) {
+
+      // Label especial para J (esquiva) e outros especiais (sem efeito)
+      const extraLabel = ehJ
+        ? `<span class="carta-def-label esquiva">ESQUIVA</span>`
+        : ehOutroEsp
+          ? `<span class="carta-def-label sem-efeito">SEM EFEITO</span>`
+          : '';
+
+      el.innerHTML = `<span class="carta-valor">${carta.label}</span>${extraLabel}`;
+
+      if (bloqueada) {
         el.disabled = true;
       } else {
         el.addEventListener('click', () => _selecionarDefesa({ tipo: 'carta', idx: i }));
@@ -1302,6 +1317,7 @@ const BATTLE = (() => {
   }
 
   // Dispatcher: identifica a especial e roteia. Q vai pra alvo; resto resolve.
+  // K/A/Q/★ são AÇÕES RÁPIDAS — não consomem o turno do jogador.
   function _usarEspecial(carta, idx) {
     const c = COMBAT.combatenteAtual();
     if (!c) return;
@@ -1314,48 +1330,55 @@ const BATTLE = (() => {
       return;
     }
 
-    // K, A, ★ resolvem imediatamente
+    // K, A, ★ resolvem como ação rápida (sem avançar turno)
     _consumirEspecialDaMao(idx);
-    if      (carta.valor === 'K') _aplicarRei(c);
-    else if (carta.valor === 'A') _aplicarAs(c);
-    else if (carta.valor === '★') _aplicarCoringa(c);
-    _finalizarTurno(c);
+    if (carta.valor === 'K') {
+      // Rei: próxima habilidade de dano ganha +card.nv de poder
+      const valor = DECK.valorIniciativa(carta) || 13;
+      c.efeitos.push({ tipo: 'rei_atq_bonus', valor, duracao: 1 });
+    } else if (carta.valor === 'A') {
+      // Ás: compra 1 carta do baralho compartilhado
+      COMBAT.comprarCarta(c, 1);
+    } else if (carta.valor === '★') {
+      // Coringa: injeta rodada extra na fila imediatamente após a posição atual
+      const estado = COMBAT.estado;
+      estado.ordem.splice(estado.indiceAtual + 1, 0, c);
+    }
+
+    // Ação rápida: volta pra etapa1 sem avançar turno
+    _estadoPainel      = 'etapa1';
+    _habSel            = null;
+    _cartaSel          = null;
+    _cartaSelIdx       = -1;
+    _especialPendente  = null;
+    _passarConfirmando = false;
+    _renderizar();
   }
 
-  // K — Rei: próxima habilidade de dano ganha +10 (ATQ via poder efetivo).
-  // resolverAcao consome 'rei_atq_bonus' antes do cálculo (mesmo padrão do Ódio).
-  function _aplicarRei(c) {
-    c.efeitos.push({ tipo: 'rei_atq_bonus', valor: 10, duracao: 1 });
-  }
-
-  // A — Ás: compra 1 carta do baralho (compartilhado pra jogador).
-  function _aplicarAs(c) {
-    COMBAT.comprarCarta(c, 1);
-  }
-
-  // ★ — Coringa: concede rodada extra. _finalizarTurno checa essa flag e,
-  // se true, pula etapa 5 + avançar e roda outra etapa 1 pro mesmo c.
-  function _aplicarCoringa(c) {
-    c._rodadaExtraPending = true;
-  }
-
-  // Q — Dama: remove 1 debuff aleatório do aliado escolhido.
+  // Q — Dama: remove TODOS os efeitos negativos do aliado escolhido (ação rápida).
   // Chamado quando o jogador clica num aliado em sel_alvo_especial.
   function _resolverDama(alvoAliado) {
     const c = COMBAT.combatenteAtual();
     if (!c || !_especialPendente) return;
     _consumirEspecialDaMao(_especialPendente.idx);
-    const debuffs = (alvoAliado.efeitos ?? []).filter(e =>
-      typeof e.tipo === 'string' && e.tipo.startsWith('debuff_')
+
+    // Remove todos os efeitos negativos do aliado
+    const _NEGATIVOS = new Set(['dot', 'frozen', 'stun', 'amaciado', 'encantado',
+      'derretar_armadura', 'estatica', 'imagem_espelhada']);
+    alvoAliado.efeitos = (alvoAliado.efeitos ?? []).filter(e =>
+      !e.tipo.startsWith('debuff_') && !_NEGATIVOS.has(e.tipo)
     );
-    if (debuffs.length > 0) {
-      const escolhido = debuffs[Math.floor(Math.random() * debuffs.length)];
-      escolhido.duracao = 0;
-      alvoAliado.efeitos = alvoAliado.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
-      PASSIVAS.recalcularStats(alvoAliado);
-    }
+    PASSIVAS.recalcularStats(alvoAliado);
+
     _especialPendente = null;
-    _finalizarTurno(c);
+
+    // Ação rápida: volta pra etapa1 sem avançar turno
+    _estadoPainel      = 'etapa1';
+    _habSel            = null;
+    _cartaSel          = null;
+    _cartaSelIdx       = -1;
+    _passarConfirmando = false;
+    _renderizar();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1514,22 +1537,8 @@ const BATTLE = (() => {
     // existirem como efeitos registrados.)
   }
 
-  // Finaliza o turno. Em rodada extra (★ ou outros), pula etapa5 + avançar
-  // e re-roda só a Etapa 1 pro mesmo combatente (Início não repete).
+  // Finaliza o turno: roda etapa5 (fim de rodada), avança combatente e renderiza.
   function _finalizarTurno(c) {
-    if (c && c._rodadaExtraPending) {
-      c._rodadaExtraPending = false;
-      COMBAT.rodarEtapa1(c);          // re-roda só Etapa 1 — Início é once-per-round
-      _estadoPainel      = 'etapa1';
-      _habSel            = null;
-      _cartaSel          = null;
-      _cartaSelIdx       = -1;
-      _especialPendente  = null;
-      _passarConfirmando = false;
-      _aguardando        = false;
-      _renderizar();
-      return;
-    }
     COMBAT.etapa5_fimRodada(c);
     COMBAT.avancarCombatente();
     const proximo = COMBAT.combatenteAtual();
@@ -1558,7 +1567,7 @@ const BATTLE = (() => {
       setTimeout(() => {
         if (_passarConfirmando) {
           _passarConfirmando = false;
-          btn.textContent = '⏭ PASSAR A RODADA';
+          btn.textContent = '⏭  PASSAR';
           btn.classList.remove('confirmando');
         }
       }, 3000);
