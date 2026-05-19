@@ -170,8 +170,9 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 100px;
+  height: 96px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .card-stats {

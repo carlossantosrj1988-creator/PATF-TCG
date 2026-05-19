@@ -6,6 +6,7 @@
   display: block;
   object-fit: contain;
   flex-shrink: 0;
+  max-width: 100%;
 }
 
 /* fill: sprite covers parent container (parent must be position:relative + overflow:hidden) */
