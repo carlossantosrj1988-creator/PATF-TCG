@@ -108,6 +108,38 @@ const BATTLE = (() => {
     setTimeout(() => el.remove(), 1400);
   }
 
+  // Flash dourado no sprite/card do atacante quando vantagem de naipe ativa.
+  function _flashVantagem(charId) {
+    const slot = document.querySelector(`.battle-char-slot[data-id="${charId}"]`);
+    if (!slot) return;
+    const target = slot.querySelector('.battle-char-sprite') || slot.querySelector('.battle-char-grad');
+    if (!target) return;
+    target.classList.remove('vantagem-flash');
+    void target.offsetWidth;
+    target.classList.add('vantagem-flash');
+    setTimeout(() => target.classList.remove('vantagem-flash'), 820);
+  }
+
+  // Gera HTML de ícones de efeitos ativos (buff/debuff) para o slot do campo.
+  function _efeitosIconsHtml(c) {
+    if (!c.efeitos) return '';
+    const ativos = c.efeitos.filter(e => e.duracao > 0);
+    if (!ativos.length) return '';
+    const _SIM = {
+      dot: '🔥', frozen: '❄', stun: '⊗',
+      buff_atq: '↑', debuff_atq: '↓',
+      buff_def: '▲', debuff_def: '▽',
+      rei_atq_bonus: '♛', odio_bonus: '⊕',
+      amaciado: '⬇', encantado: '✦',
+    };
+    return ativos.map(e => {
+      const cls   = _classeEfeito(e);
+      const label = _efeitoLabel(e);
+      const sim   = _SIM[e.tipo] ?? '●';
+      return `<span class="bchar-ef-icon ${cls}" title="${label} (${e.duracao})">${sim}</span>`;
+    }).join('');
+  }
+
   // Captura HP de todos os combatentes para comparar depois do resolve.
   function _capturaHP() {
     const snap = {};
@@ -846,6 +878,7 @@ const BATTLE = (() => {
     slot.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
     const spriteSrc = (typeof CHAR_SPRITE !== 'undefined') ? (CHAR_SPRITE.MAP[c.poolId ?? ''] ?? null) : null;
+    const efHtml    = _efeitosIconsHtml(c);
 
     if (spriteSrc) {
       // ── Modo sprite: imagem pixel art ──
@@ -860,6 +893,7 @@ const BATTLE = (() => {
           </div>
           <div class="battle-char-hp-txt">${c.hp}/${c.pvs}</div>
         </div>
+        ${efHtml ? `<div class="battle-char-efeitos-row">${efHtml}</div>` : ''}
       `;
     } else {
       // ── Fallback card (inimigos sem sprite) ──
@@ -881,6 +915,7 @@ const BATTLE = (() => {
           <div class="bcs-item"><span class="bcs-l">DEF</span><span class="bcs-v ${defCls}">${c.def}</span></div>
           <div class="bcs-item"><span class="bcs-l">HP</span><span class="bcs-v">${c.hp}</span></div>
         </div>
+        ${efHtml ? `<div class="battle-char-efeitos-row">${efHtml}</div>` : ''}
       `;
     }
 
@@ -1430,13 +1465,40 @@ const BATTLE = (() => {
 
     const hab = _habSel;
     _logUI(`⚔ ${atacante.nome} usa ${hab.nome}`, 'atk');
+    _floatTexto(atacante.id, hab.nome, 'hab-nome');
     _animarSlot(atacante.id, 'atacando');
+
+    // Detecta sinergia e vantagem antes do resolve (carta ainda na mão)
+    const temSinerg = !hab.efeitoPuro && !!_cartaSel && _cartaSel.naipe === atacante.naipe;
+    const temVantag = !hab.efeitoPuro && alvos.some(a => DAMAGE.temVantagem(atacante.naipe, a.naipe));
 
     // Aguarda lunge antes de resolver para o jogador "ver" o ataque
     setTimeout(() => {
       const hpAntes = _capturaHP();
       COMBAT.resolverAcao(atacante, hab, _cartaSelIdx, alvos);
-      _mostrarResultados(hpAntes);
+
+      // Floats ricos: tipo varia por contexto de naipe
+      for (const c of COMBAT.estado.combatentes) {
+        const antes = hpAntes[c.id] ?? c.hp;
+        const diff  = antes - c.hp;
+        const cura  = c.hp - antes;
+        if (diff > 0) {
+          _animarSlot(c.id, 'recebendo-dano');
+          const ehAlvo = alvos.some(a => a.id === c.id);
+          let tipo = 'dano';
+          if (ehAlvo && temVantag) tipo = 'dano-vantagem';
+          else if (ehAlvo && temSinerg) tipo = 'dano-sinerg';
+          _floatTexto(c.id, `-${diff}`, tipo);
+        } else if (cura > 0) {
+          _floatTexto(c.id, `+${cura}`, 'cura');
+        }
+      }
+
+      // Flash + float de vantagem de naipe no atacante
+      if (temVantag) {
+        _flashVantagem(atacante.id);
+        setTimeout(() => _floatTexto(atacante.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+      }
 
       // Log dos danos causados
       for (const alvo of alvos) {
@@ -1482,6 +1544,7 @@ const BATTLE = (() => {
     } else if (carta.valor === 'A') {
       // Ás: compra 1 carta do baralho compartilhado
       COMBAT.comprarCarta(c, 1);
+      _floatTexto(c.id, '✦ CARTA +1', 'carta-comprada');
     } else if (carta.valor === '★') {
       // Coringa: injeta rodada extra na fila logo após a posição atual.
       // Limite: máximo 1 extra por combatente na fila — ignora se já há uma.
@@ -1733,6 +1796,7 @@ const BATTLE = (() => {
     if (!c || c.lado !== 'jogador') return;
     // iniciarRodada já foi chamado em _iniciarTurno quando o turno começou.
     COMBAT.passarRodada(c);
+    _floatTexto(c.id, '✦ CARTA +1', 'carta-comprada');
     _finalizarTurno(c);
   }
 
@@ -1772,10 +1836,12 @@ const BATTLE = (() => {
     }
 
     _logUI(`⚔ ${c.nome} usa ${decisao.hab.nome}`, 'atk');
+    _floatTexto(c.id, decisao.hab.nome, 'hab-nome');
     _animarSlot(c.id, 'atacando');
 
     const alvosPlayer = decisao.alvos.filter(a => a.lado === 'jogador' && a.hp > 0);
     const ehAtaqueComDefesa = !decisao.hab.efeitoPuro && alvosPlayer.length > 0;
+    const temVantagIni = !decisao.hab.efeitoPuro && decisao.alvos.some(a => DAMAGE.temVantagem(c.naipe, a.naipe));
 
     setTimeout(() => {
       if (ehAtaqueComDefesa) {
@@ -1785,6 +1851,10 @@ const BATTLE = (() => {
         const hpAntes = _capturaHP();
         COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
         _mostrarResultados(hpAntes);
+        if (temVantagIni) {
+          _flashVantagem(c.id);
+          setTimeout(() => _floatTexto(c.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+        }
         for (const alvo of decisao.alvos) {
           const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
           if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
