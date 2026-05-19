@@ -1317,7 +1317,7 @@ const BATTLE = (() => {
   }
 
   // Dispatcher: identifica a especial e roteia. Q vai pra alvo; resto resolve.
-  // K/A/Q/★ são AÇÕES RÁPIDAS — não consomem o turno do jogador.
+  // K/A/Q/★ são INSTANTÂNEAS — não consomem o turno. Pode usar quantas quiser.
   function _usarEspecial(carta, idx) {
     const c = COMBAT.combatenteAtual();
     if (!c) return;
@@ -1333,19 +1333,22 @@ const BATTLE = (() => {
     // K, A, ★ resolvem como ação rápida (sem avançar turno)
     _consumirEspecialDaMao(idx);
     if (carta.valor === 'K') {
-      // Rei: próxima habilidade de dano ganha +card.nv de poder
-      const valor = DECK.valorIniciativa(carta) || 13;
-      c.efeitos.push({ tipo: 'rei_atq_bonus', valor, duracao: 1 });
+      // Rei: +10 de bônus no próximo ataque (valor fixo do efeito do Rei)
+      c.efeitos.push({ tipo: 'rei_atq_bonus', valor: 10, duracao: 1 });
     } else if (carta.valor === 'A') {
       // Ás: compra 1 carta do baralho compartilhado
       COMBAT.comprarCarta(c, 1);
     } else if (carta.valor === '★') {
-      // Coringa: injeta rodada extra na fila imediatamente após a posição atual
+      // Coringa: injeta rodada extra na fila logo após a posição atual.
+      // Limite: máximo 1 extra por combatente na fila — ignora se já há uma.
       const estado = COMBAT.estado;
-      estado.ordem.splice(estado.indiceAtual + 1, 0, c);
+      const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(c);
+      if (!jaTemExtra) {
+        estado.ordem.splice(estado.indiceAtual + 1, 0, c);
+      }
     }
 
-    // Ação rápida: volta pra etapa1 sem avançar turno
+    // Instantânea: volta pra etapa1 sem avançar turno
     _estadoPainel      = 'etapa1';
     _habSel            = null;
     _cartaSel          = null;
@@ -1355,7 +1358,7 @@ const BATTLE = (() => {
     _renderizar();
   }
 
-  // Q — Dama: remove TODOS os efeitos negativos do aliado escolhido (ação rápida).
+  // Q — Dama: remove TODOS os efeitos negativos do aliado escolhido (instantânea).
   // Chamado quando o jogador clica num aliado em sel_alvo_especial.
   function _resolverDama(alvoAliado) {
     const c = COMBAT.combatenteAtual();
@@ -1372,7 +1375,7 @@ const BATTLE = (() => {
 
     _especialPendente = null;
 
-    // Ação rápida: volta pra etapa1 sem avançar turno
+    // Instantânea: volta pra etapa1 sem avançar turno
     _estadoPainel      = 'etapa1';
     _habSel            = null;
     _cartaSel          = null;
