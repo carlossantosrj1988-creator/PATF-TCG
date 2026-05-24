@@ -606,6 +606,7 @@
 .bchar-ef-icon.buff   { color: #55cc88; background: rgba(85,204,136,0.18); border: 1px solid rgba(85,204,136,0.35); }
 .bchar-ef-icon.debuff { color: #dd5555; background: rgba(204,85,85,0.18);  border: 1px solid rgba(204,85,85,0.35); }
 .bchar-ef-icon.neutro { color: #c9a84c; background: rgba(201,168,76,0.18); border: 1px solid rgba(201,168,76,0.35); }
+.bchar-ef-icon.gasto  { color: #666; background: rgba(80,80,80,0.18); border: 1px solid rgba(120,120,120,0.3); opacity: 0.5; }
 
 /* ── Flash de vantagem de naipe ─────────────────────────────────────────────── */
 

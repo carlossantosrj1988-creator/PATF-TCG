@@ -340,8 +340,13 @@ const COMBAT = (() => {
     atacante.efeitos = atacante.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
     const poderes = _parsePoder(poderEfetivo);
 
+    // clubs_furtivo: skill Normal do Paus vira Furtiva enquanto o efeito estiver ativo
+    const acaoEfetiva = (!hab.efeitoPuro && hab.acao === 'N'
+      && atacante.efeitos.some(e => e.tipo === 'clubs_furtivo' && e.duracao > 0))
+      ? 'F' : (hab.acao ?? 'N');
+
     // Encantado: 50% redireciona ataque único não-Furtivo para aliado do atacante
-    if (hab.alvo === 'unico' && hab.acao !== 'F') {
+    if (hab.alvo === 'unico' && acaoEfetiva !== 'F') {
       const encEf = atacante.efeitos.find(e => e.tipo === 'encantado' && e.duracao > 0);
       if (encEf && Math.random() < 0.5) {
         const aliados = BATTLE_STATE.combatentes.filter(c =>
@@ -382,7 +387,7 @@ const COMBAT = (() => {
       const alvoReal = evIntercept.defensor ?? alvo;
 
       // Imagem Espelhada: 50% de esquiva para ataque único não-Furtivo; consome o efeito
-      if (hab.alvo === 'unico' && hab.acao !== 'F') {
+      if (hab.alvo === 'unico' && acaoEfetiva !== 'F') {
         const imagem = alvoReal.efeitos.find(e => e.tipo === 'imagem_espelhada');
         if (imagem && Math.random() < 0.5) {
           alvoReal.efeitos = alvoReal.efeitos.filter(e => e !== imagem);
@@ -427,7 +432,7 @@ const COMBAT = (() => {
       }
 
       // ♠ Espadas → ♥ Copas: dano bruto dobrado (não se aplica em Furtivo)
-      const danoMult = (!hab.efeitoPuro && hab.acao !== 'F' && hab.acao !== 'R'
+      const danoMult = (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
         && atacante.naipe === '♠' && alvoReal.naipe === '♥') ? 2 : 1;
 
       // Dano (com defesa, se houver carta; ignoraArmadura quando sinalizado pelo handler)
@@ -488,7 +493,7 @@ const COMBAT = (() => {
       }
 
       // Efeitos pós-dano de vantagem de naipe
-      if (!hab.efeitoPuro && hab.acao !== 'F' && hab.acao !== 'R'
+      if (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
           && atacante.naipe && alvoReal.naipe) {
         _aplicarVantagemNaipe(atacante, alvoReal);
       }

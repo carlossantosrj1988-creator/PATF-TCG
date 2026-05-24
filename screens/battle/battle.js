@@ -122,22 +122,39 @@ const BATTLE = (() => {
 
   // Gera HTML de ícones de efeitos ativos (buff/debuff) para o slot do campo.
   function _efeitosIconsHtml(c) {
-    if (!c.efeitos) return '';
-    const ativos = c.efeitos.filter(e => e.duracao > 0);
-    if (!ativos.length) return '';
     const _SIM = {
       dot: '🔥', frozen: '❄', stun: '⊗',
       buff_atq: '↑', debuff_atq: '↓',
       buff_def: '▲', debuff_def: '▽',
       rei_atq_bonus: '♛', odio_bonus: '⊕',
       amaciado: '⬇', encantado: '✦',
+      hearts_adv: '❤', clubs_furtivo: '🌿',
+      imagem_espelhada: '◈', derretar_armadura: '⚗',
+      congelado: '❄', radiacao: '☢', estatica: '⚡',
     };
-    return ativos.map(e => {
+
+    const partes = [];
+
+    // Efeitos ativos
+    for (const e of (c.efeitos ?? [])) {
+      if ((e.duracao ?? 1) <= 0) continue;
       const cls   = _classeEfeito(e);
       const label = _efeitoLabel(e);
       const sim   = _SIM[e.tipo] ?? '●';
-      return `<span class="bchar-ef-icon ${cls}" title="${label} (${e.duracao})">${sim}</span>`;
-    }).join('');
+      partes.push(`<span class="bchar-ef-icon ${cls}" title="${label} (${e.duracao}t)">${sim}</span>`);
+    }
+
+    // Ação Rápida / Rodada Extra — ícone pendente ou gasto
+    if (c._acaoDuplicadaPending) {
+      partes.push(`<span class="bchar-ef-icon buff" title="Ação Rápida disponível">⚡+</span>`);
+    } else if (c.acaoExtra) {
+      partes.push(`<span class="bchar-ef-icon gasto" title="Ação extra já usada neste turno">⚡✓</span>`);
+    }
+    if (c._rodadaExtraPending) {
+      partes.push(`<span class="bchar-ef-icon buff" title="Rodada Extra disponível">♦+</span>`);
+    }
+
+    return partes.join('');
   }
 
   // ── Cor por tipo de habilidade — banner e glow ───────────────────────────────
