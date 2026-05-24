@@ -93,4 +93,18 @@ const EFEITOS_DATA = {
     descricao: '50% de esquiva ao ser atacado (não funciona contra Furtivo). Consumida ao esquivar.',
   },
 
+  // ── Vantagens de naipe ────────────────────────────────────────────────────
+
+  hearts_adv: {
+    nome:      'Vantagem Copas',
+    categoria: 'buff_marca',
+    descricao: 'ATQ e DEF dobrados por 2 turnos. Ativa ao interagir com ♣ Paus.',
+  },
+
+  clubs_furtivo: {
+    nome:      'Furtivo (Paus)',
+    categoria: 'buff_marca',
+    descricao: 'Ações normais tornam-se Furtivas. Contra-ataca qualquer atacante enquanto ativo. 2 turnos.',
+  },
+
 };

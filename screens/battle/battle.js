@@ -140,6 +140,274 @@ const BATTLE = (() => {
     }).join('');
   }
 
+  // ── Cor por tipo de habilidade — banner e glow ───────────────────────────────
+  const _TIPO_COR = {
+    'Fogo':             '#ff6030', 'Elétrico':         '#60c0ff',
+    'Frio':             '#80e8ff', 'Energia':          '#c080ff',
+    'Corporal':         '#e8c04c', 'Cortante':         '#e8e8e8',
+    'Corte e Contusão': '#e8e8e8', 'Perfurante':       '#c0e860',
+    'Distância':        '#80c0ff', 'Invocação':        '#a060e0',
+    'Químico':          '#80e880', 'Ácido':            '#80e880',
+    'Mágico':           '#e080ff', 'Cura':             '#60e8a0',
+    'Encanto':          '#e060c0', 'Melhoria':         '#c0c060',
+    'Suporte':          '#c0c060', 'Terrestre':        '#c08040',
+    'Concussivo':       '#e8a040', 'Sagrado':          '#ffe080',
+    'Psíquico':         '#d080ff', 'Radiação':         '#80ff80',
+    'Explosão':         '#ff8844',
+  };
+
+  // ── Skill banner — overlay com nome da habilidade ────────────────────────────
+  // Retorna Promise; resolve após o banner fechar (~1150ms). Pausa o fluxo.
+  function _showSkillBanner(hab, atacante) {
+    return new Promise(resolve => {
+      const screen = document.getElementById('screen-battle');
+      if (!screen) { console.warn('[banner] screen-battle não encontrado'); resolve(); return; }
+
+      const overlay = document.getElementById('battle-skill-banner');
+      if (!overlay) { console.warn('[banner] battle-skill-banner não encontrado'); resolve(); return; }
+
+      console.log('[banner] exibindo:', hab.nome);
+
+      const nameEl  = overlay.querySelector('#bsb-name');
+      const subEl   = overlay.querySelector('#bsb-sub');
+      const content = overlay.querySelector('#bsb-content');
+      if (!nameEl || !content) { resolve(); return; }
+
+      const cor = _TIPO_COR[hab.tipo] ?? '#c9a84c';
+
+      nameEl.textContent = hab.nome;
+      nameEl.style.color = cor;
+      subEl.textContent  = (atacante.nome + (hab.tipo ? ' — ' + hab.tipo : '')).toUpperCase();
+      subEl.style.color  = cor;
+      overlay.style.setProperty('--bsb-color', cor);
+
+      // Reset
+      overlay.style.opacity    = '0';
+      content.style.animation  = 'none';
+      void content.offsetWidth;
+
+      // Fade in + entrada elástica
+      overlay.classList.add('ativo');
+      requestAnimationFrame(() => {
+        overlay.style.transition = 'opacity 200ms ease';
+        overlay.style.opacity    = '1';
+        content.style.animation  = 'bsb-in 350ms cubic-bezier(0.2,1.4,0.4,1) forwards';
+      });
+
+      // Estrelas ao redor do nome
+      const vfx = document.getElementById('battle-vfx-layer');
+      if (vfx) {
+        const cx = screen.offsetWidth  / 2;
+        const cy = screen.offsetHeight / 2;
+        const sims = ['★','✦','✧','⭐','⚡','💥'];
+        for (let i = 0; i < 8; i++) {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            const angle = (i / 8) * Math.PI * 2;
+            const dist  = 80 + Math.random() * 100;
+            const sx = cx + Math.cos(angle) * dist;
+            const sy = cy + Math.sin(angle) * dist;
+            const sz = 16 + Math.random() * 22;
+            el.style.cssText = `position:absolute;left:${sx}px;top:${sy}px;font-size:${sz}px;color:${cor};text-shadow:0 0 12px ${cor},0 0 24px ${cor};transform:translate(-50%,-50%);animation:bsb-star 700ms ease forwards;pointer-events:none;z-index:9997`;
+            el.textContent = sims[Math.floor(Math.random() * sims.length)];
+            vfx.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+          }, i * 40 + 100);
+        }
+        // Raios horizontais
+        for (let r = 0; r < 3; r++) {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            const ry = cy + (r - 1) * 30;
+            const w  = 60 + Math.random() * 120;
+            const side = Math.random() > 0.5 ? 1 : -1;
+            const rx = cx + side * (150 + Math.random() * 100);
+            el.style.cssText = `position:absolute;left:${rx}px;top:${ry}px;width:${w}px;height:3px;background:linear-gradient(90deg,transparent,${cor},transparent);box-shadow:0 0 8px ${cor};transform:translate(-50%,-50%);animation:bsb-ray 500ms ease forwards;pointer-events:none;z-index:9997`;
+            vfx.appendChild(el);
+            setTimeout(() => el.remove(), 600);
+          }, r * 80 + 50);
+        }
+      }
+
+      // Hold 900ms → fade out 250ms → resolve
+      setTimeout(() => {
+        content.style.animation  = 'bsb-out 250ms ease forwards';
+        overlay.style.transition = 'opacity 250ms ease';
+        overlay.style.opacity    = '0';
+        setTimeout(() => {
+          overlay.classList.remove('ativo');
+          overlay.style.opacity = '';
+          resolve();
+        }, 250);
+      }, 900);
+    });
+  }
+
+  // ── Float de dano com contagem animada e escala por valor ────────────────────
+  // Conta de 1 até finalVal em ~900ms; tamanho cresce de 22px (≤5) até 80px (≥50).
+  function _floatDanoContado(charId, finalVal, tipo = 'dano') {
+    const slot = document.querySelector(`.battle-char-slot[data-id="${charId}"]`);
+    if (!slot) return;
+    const rect = slot.getBoundingClientRect();
+
+    const COR_TIPO = { 'dano': '#ff4040', 'dano-sinerg': '#66ddff', 'dano-vantagem': '#ffcc33' };
+    const color = COR_TIPO[tipo] ?? '#ff4040';
+
+    function _fs(v) {
+      const n = Math.abs(Number(v)) || 0;
+      if (n <= 5)  return 22;
+      if (n >= 50) return 80;
+      return Math.round(22 + (n - 5) / 45 * 58);
+    }
+    function _shadow(fs) {
+      const r1 = fs > 40 ? 50 : fs > 22 ? 30 : 16;
+      const r2 = fs > 40 ? 90 : fs > 22 ? 60 : 32;
+      const r3 = fs > 40 ? 140 : fs > 22 ? 90 : 48;
+      return `0 2px 12px rgba(0,0,0,1),0 0 ${r1}px ${color},0 0 ${r2}px ${color}88,0 0 ${r3}px ${color}44`;
+    }
+
+    const cx = rect.left + rect.width  / 2;
+    const cy = rect.top  + rect.height * 0.15;
+
+    const f = document.createElement('div');
+    const startFs = _fs(Math.min(1, finalVal));
+    f.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;color:${color};font-size:${startFs}px;text-shadow:${_shadow(startFs)};font-family:'Cinzel',serif;font-weight:900;pointer-events:none;z-index:9000;transform:translateX(-50%);white-space:nowrap;transition:font-size 0.08s ease`;
+    f.textContent = '-' + Math.min(1, finalVal);
+    document.body.appendChild(f);
+
+    const TOTAL_MS = 900;
+    const isBig    = finalVal >= 20;
+    const animName = isBig ? 'float-subir-big' : 'float-subir';
+    const animDur  = isBig ? '2.0s' : '1.4s';
+    const removMs  = isBig ? 2100 : 1400;
+
+    if (finalVal <= 1) {
+      f.style.animation = `${animName} ${animDur} ease forwards`;
+      setTimeout(() => f.remove(), removMs);
+      return;
+    }
+
+    const steps  = finalVal - 1;
+    const stepMs = TOTAL_MS / steps;
+    let current  = 1;
+    const interval = setInterval(() => {
+      current++;
+      const fs = _fs(current);
+      f.style.fontSize   = fs + 'px';
+      f.style.textShadow = _shadow(fs);
+      f.textContent = '-' + current;
+      if (current >= finalVal) {
+        clearInterval(interval);
+        f.style.animation = `${animName} ${animDur} ease forwards`;
+        setTimeout(() => f.remove(), removMs);
+      }
+    }, stepMs);
+
+    setTimeout(() => { clearInterval(interval); f.remove(); }, TOTAL_MS + removMs + 200);
+  }
+
+  // ── Screen shake com flash branco e VFX por nível de dano ────────────────────
+  function _screenShake(dmg) {
+    const screen = document.getElementById('screen-battle');
+    if (!screen) return;
+    const flash = document.getElementById('battle-screen-flash');
+    const vfx   = document.getElementById('battle-vfx-layer');
+
+    const lvl = dmg >= 50 ? 4 : dmg >= 40 ? 3 : dmg >= 30 ? 2 : 1;
+    const cls = lvl >= 3 ? 'battle-shake-insane' : lvl === 2 ? 'battle-shake-heavy' : 'battle-shake-med';
+    const dur = lvl >= 3 ? 750 : lvl === 2 ? 600 : 450;
+
+    screen.classList.remove('battle-shake-med', 'battle-shake-heavy', 'battle-shake-insane');
+    void screen.offsetWidth;
+    screen.classList.add(cls);
+    setTimeout(() => screen.classList.remove(cls), dur);
+    if (lvl >= 3) {
+      setTimeout(() => {
+        screen.classList.remove(cls); void screen.offsetWidth; screen.classList.add(cls);
+        setTimeout(() => screen.classList.remove(cls), dur);
+      }, dur - 100);
+    }
+
+    if (flash) {
+      const op = lvl === 4 ? 0.55 : lvl === 3 ? 0.38 : lvl === 2 ? 0.22 : 0.12;
+      flash.style.transition = 'none';
+      flash.style.opacity = op;
+      setTimeout(() => {
+        flash.style.transition = `opacity ${lvl >= 3 ? '0.6s' : '0.35s'} ease`;
+        flash.style.opacity = '0';
+      }, 80);
+    }
+
+    if (!vfx) return;
+
+    const cx = screen.offsetWidth  / 2;
+    const cy = screen.offsetHeight / 2;
+    const cors = ['#ff4040','#ff8820','#ffdd00','#ffffff'];
+    const cor  = cors[lvl - 1];
+
+    if (lvl >= 2) _spawnVfxParticles(cx, cy, cor, lvl >= 3 ? 16 : 10);
+
+    if (lvl >= 3) {
+      const sc = lvl >= 4 ? 12 : 7;
+      for (let i = 0; i < sc; i++) {
+        setTimeout(() => {
+          const sx = cx + (Math.random() - 0.5) * 300;
+          const sy = cy + (Math.random() - 0.5) * 300;
+          const sz = lvl >= 4 ? 24 + Math.random() * 28 : 16 + Math.random() * 20;
+          _spawnVfxStar(sx, sy, cor, sz, 600 + Math.random() * 400);
+        }, i * 60);
+      }
+    }
+
+    if (lvl >= 4) {
+      _spawnVfxMegaPulse(cx, cy, '#ffffff');
+      setTimeout(() => _spawnVfxMegaPulse(cx, cy, cor), 150);
+      for (let j = 0; j < 6; j++) {
+        setTimeout(() => {
+          const sx = cx + (Math.random() - 0.5) * 200;
+          const sy = cy + (Math.random() - 0.5) * 200;
+          _spawnVfxStar(sx, sy, '#ffffff', 32 + Math.random() * 24, 800);
+        }, j * 80);
+      }
+    }
+  }
+
+  function _spawnVfxStar(x, y, color, size, dur) {
+    const vfx = document.getElementById('battle-vfx-layer');
+    if (!vfx) return;
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;left:${x}px;top:${y}px;font-size:${size}px;color:${color};text-shadow:0 0 12px ${color},0 0 24px ${color};transform-origin:center;animation:vfx-star-spin ${dur}ms ease forwards;pointer-events:none`;
+    el.textContent = ['★','✦','✧','⭐','💥','✨'][Math.floor(Math.random() * 6)];
+    vfx.appendChild(el);
+    setTimeout(() => el.remove(), dur + 100);
+  }
+
+  function _spawnVfxParticles(cx, cy, color, count) {
+    const vfx = document.getElementById('battle-vfx-layer');
+    if (!vfx) return;
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      const angle = (i / count) * Math.PI * 2;
+      const dist  = 80 + Math.random() * 120;
+      const px = Math.cos(angle) * dist;
+      const py = Math.sin(angle) * dist;
+      const sz = 6 + Math.random() * 10;
+      const d  = 500 + Math.random() * 400;
+      el.style.cssText = `position:absolute;left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;border-radius:50%;background:${color};box-shadow:0 0 8px ${color};--px:${px}px;--py:${py}px;animation:vfx-particle-out ${d}ms ease forwards;pointer-events:none`;
+      vfx.appendChild(el);
+      setTimeout(() => el.remove(), d + 100);
+    }
+  }
+
+  function _spawnVfxMegaPulse(cx, cy, color) {
+    const vfx = document.getElementById('battle-vfx-layer');
+    if (!vfx) return;
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;left:${cx}px;top:${cy}px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,${color}cc 0%,${color}44 40%,transparent 70%);transform-origin:center;animation:vfx-mega-pulse 0.8s ease forwards;pointer-events:none`;
+    vfx.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
   // Captura HP de todos os combatentes para comparar depois do resolve.
   function _capturaHP() {
     const snap = {};
@@ -694,6 +962,20 @@ const BATTLE = (() => {
     screen.appendChild(_criarCampo());
     screen.appendChild(_criarPainel());
     screen.appendChild(_criarBtnDebug());
+
+    // VFX layer + flash + skill banner — recriados a cada render
+    const vfxLayer = document.createElement('div');
+    vfxLayer.id = 'battle-vfx-layer';
+    screen.appendChild(vfxLayer);
+
+    const flashEl = document.createElement('div');
+    flashEl.id = 'battle-screen-flash';
+    screen.appendChild(flashEl);
+
+    const banner = document.createElement('div');
+    banner.id = 'battle-skill-banner';
+    banner.innerHTML = '<div id="bsb-bg"></div><div id="bsb-content"><div id="bsb-name"></div><div id="bsb-sub"></div></div>';
+    screen.appendChild(banner);
 
     // Se o turno atual é do inimigo, agenda a ação automática
     if (atual && atual.lado === 'inimigo' && !_aguardando) {
@@ -1465,49 +1747,52 @@ const BATTLE = (() => {
 
     const hab = _habSel;
     _logUI(`⚔ ${atacante.nome} usa ${hab.nome}`, 'atk');
-    _floatTexto(atacante.id, hab.nome, 'hab-nome');
-    _animarSlot(atacante.id, 'atacando');
 
-    // Detecta sinergia e vantagem antes do resolve (carta ainda na mão)
+    // Detecta sinergia e vantagem antes do banner (carta ainda na mão)
     const temSinerg = !hab.efeitoPuro && !!_cartaSel && _cartaSel.naipe === atacante.naipe;
     const temVantag = !hab.efeitoPuro && alvos.some(a => DAMAGE.temVantagem(atacante.naipe, a.naipe));
 
-    // Aguarda lunge antes de resolver para o jogador "ver" o ataque
-    setTimeout(() => {
-      const hpAntes = _capturaHP();
-      COMBAT.resolverAcao(atacante, hab, _cartaSelIdx, alvos);
+    // Banner pausa ~1150ms; lunge e dano resolvem depois
+    _showSkillBanner(hab, atacante).then(() => {
+      _animarSlot(atacante.id, 'atacando');
 
-      // Floats ricos: tipo varia por contexto de naipe
-      for (const c of COMBAT.estado.combatentes) {
-        const antes = hpAntes[c.id] ?? c.hp;
-        const diff  = antes - c.hp;
-        const cura  = c.hp - antes;
-        if (diff > 0) {
-          _animarSlot(c.id, 'recebendo-dano');
-          const ehAlvo = alvos.some(a => a.id === c.id);
-          let tipo = 'dano';
-          if (ehAlvo && temVantag) tipo = 'dano-vantagem';
-          else if (ehAlvo && temSinerg) tipo = 'dano-sinerg';
-          _floatTexto(c.id, `-${diff}`, tipo);
-        } else if (cura > 0) {
-          _floatTexto(c.id, `+${cura}`, 'cura');
+      setTimeout(() => {
+        const hpAntes = _capturaHP();
+        COMBAT.resolverAcao(atacante, hab, _cartaSelIdx, alvos);
+
+        let totalDano = 0;
+        for (const c of COMBAT.estado.combatentes) {
+          const antes = hpAntes[c.id] ?? c.hp;
+          const diff  = antes - c.hp;
+          const cura  = c.hp - antes;
+          if (diff > 0) {
+            _animarSlot(c.id, 'recebendo-dano');
+            const ehAlvo = alvos.some(a => a.id === c.id);
+            let tipo = 'dano';
+            if (ehAlvo && temVantag) tipo = 'dano-vantagem';
+            else if (ehAlvo && temSinerg) tipo = 'dano-sinerg';
+            _floatDanoContado(c.id, diff, tipo);
+            if (ehAlvo) totalDano += diff;
+          } else if (cura > 0) {
+            _floatTexto(c.id, `+${cura}`, 'cura');
+          }
         }
-      }
 
-      // Flash + float de vantagem de naipe no atacante
-      if (temVantag) {
-        _flashVantagem(atacante.id);
-        setTimeout(() => _floatTexto(atacante.id, '▲ NAIPE', 'vantagem-naipe'), 120);
-      }
+        if (totalDano > 0) _screenShake(totalDano);
 
-      // Log dos danos causados
-      for (const alvo of alvos) {
-        const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
-        if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
-      }
+        if (temVantag) {
+          _flashVantagem(atacante.id);
+          setTimeout(() => _floatTexto(atacante.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+        }
 
-      setTimeout(() => _finalizarTurno(atacante), 600);
-    }, _ANIM_DUR);
+        for (const alvo of alvos) {
+          const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+          if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+        }
+
+        setTimeout(() => _finalizarTurno(atacante), 600);
+      }, _ANIM_DUR);
+    });
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1751,6 +2036,18 @@ const BATTLE = (() => {
   function _finalizarTurno(c) {
     const turnoAntes = COMBAT.estado.turno;
     COMBAT.etapa5_fimRodada(c);
+
+    // Rodada extra pendente (naipe ♦, passiva Novo Level, etc.)
+    const estado = COMBAT.estado;
+    for (const cb of estado.combatentes) {
+      if (cb._rodadaExtraPending && cb.hp > 0) {
+        cb._rodadaExtraPending = false;
+        const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(cb);
+        if (!jaTemExtra) estado.ordem.splice(estado.indiceAtual + 1, 0, cb);
+        _floatTexto(cb.id, '♦ +RODADA!', 'vantagem-naipe');
+      }
+    }
+
     COMBAT.avancarCombatente();
     if (COMBAT.estado.turno > turnoAntes) {
       _logUI(`── TURNO ${COMBAT.estado.turno} ──`, 'turno');
@@ -1836,32 +2133,48 @@ const BATTLE = (() => {
     }
 
     _logUI(`⚔ ${c.nome} usa ${decisao.hab.nome}`, 'atk');
-    _floatTexto(c.id, decisao.hab.nome, 'hab-nome');
-    _animarSlot(c.id, 'atacando');
 
-    const alvosPlayer = decisao.alvos.filter(a => a.lado === 'jogador' && a.hp > 0);
-    const ehAtaqueComDefesa = !decisao.hab.efeitoPuro && alvosPlayer.length > 0;
-    const temVantagIni = !decisao.hab.efeitoPuro && decisao.alvos.some(a => DAMAGE.temVantagem(c.naipe, a.naipe));
+    const alvosPlayer    = decisao.alvos.filter(a => a.lado === 'jogador' && a.hp > 0);
+    const ehAtaqueComDef = !decisao.hab.efeitoPuro && alvosPlayer.length > 0;
+    const temVantagIni   = !decisao.hab.efeitoPuro && decisao.alvos.some(a => DAMAGE.temVantagem(c.naipe, a.naipe));
 
-    setTimeout(() => {
-      if (ehAtaqueComDefesa) {
-        // Defesa: o resolve acontece depois que o jogador escolhe — animações lá
-        _iniciarDefesa(c, decisao, alvosPlayer);
-      } else {
-        const hpAntes = _capturaHP();
-        COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
-        _mostrarResultados(hpAntes);
-        if (temVantagIni) {
-          _flashVantagem(c.id);
-          setTimeout(() => _floatTexto(c.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+    _showSkillBanner(decisao.hab, c).then(() => {
+      _animarSlot(c.id, 'atacando');
+
+      setTimeout(() => {
+        if (ehAtaqueComDef) {
+          _iniciarDefesa(c, decisao, alvosPlayer);
+        } else {
+          const hpAntes = _capturaHP();
+          COMBAT.resolverAcao(c, decisao.hab, decisao.cartaIdx, decisao.alvos);
+
+          let totalDano = 0;
+          for (const cc of COMBAT.estado.combatentes) {
+            const antes = hpAntes[cc.id] ?? cc.hp;
+            const diff  = antes - cc.hp;
+            const cura  = cc.hp - antes;
+            if (diff > 0) {
+              _animarSlot(cc.id, 'recebendo-dano');
+              _floatDanoContado(cc.id, diff, 'dano');
+              totalDano += diff;
+            } else if (cura > 0) {
+              _floatTexto(cc.id, `+${cura}`, 'cura');
+            }
+          }
+          if (totalDano > 0) _screenShake(totalDano);
+
+          if (temVantagIni) {
+            _flashVantagem(c.id);
+            setTimeout(() => _floatTexto(c.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+          }
+          for (const alvo of decisao.alvos) {
+            const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+            if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+          }
+          setTimeout(() => _finalizarTurno(c), 600);
         }
-        for (const alvo of decisao.alvos) {
-          const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
-          if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
-        }
-        setTimeout(() => _finalizarTurno(c), 600);
-      }
-    }, _ANIM_DUR);
+      }, _ANIM_DUR);
+    });
   }
 
   // Configura a tela de defesa: vira uma fila de alvos jogador (1 ou mais).
@@ -1893,14 +2206,15 @@ const BATTLE = (() => {
       COMBAT.resolverAcao(atacante, decisao.hab, decisao.cartaIdx, decisao.alvos, defesas);
 
       // Floats de dano e log pós-defesa
+      let totalDanoDef = 0;
       for (const alvo of decisao.alvos) {
         const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
         if (dano > 0) {
           _animarSlot(alvo.id, 'recebendo-dano');
-          _floatTexto(alvo.id, `-${dano}`, 'dano');
+          _floatDanoContado(alvo.id, dano, 'dano');
           _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+          totalDanoDef += dano;
         } else {
-          // Esquiva total (J) ou dano zerado por defesa
           const cartaDef = defesas?.[alvo.id];
           if (cartaDef?.valor === 'J') {
             _floatTexto(alvo.id, 'ESQUIVA!', 'esquiva');
@@ -1910,6 +2224,7 @@ const BATTLE = (() => {
           }
         }
       }
+      if (totalDanoDef > 0) _screenShake(totalDanoDef);
 
       setTimeout(() => _finalizarTurno(atacante), 600);
       return;

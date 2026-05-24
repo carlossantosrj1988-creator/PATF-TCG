@@ -253,10 +253,11 @@ const COMBAT = (() => {
   // atacante/alvo: combatentes; poder: number; carta: objeto; ehEfeitoPuro: bool
   // defesaCarta: carta usada na defesa (null = DEF base)
   // Retorna { danoReal, efeitosSatisfeitos }
-  function etapa3_resolucaoDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro, defesaCarta, ignoraArmadura = false) {
-    const dano   = DAMAGE.calcularDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro);
-    const defesa = ignoraArmadura ? 0 : DAMAGE.calcularDefesa(alvo, defesaCarta);
-    const danoReal = DAMAGE.resolverDano(dano, defesa);
+  function etapa3_resolucaoDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro, defesaCarta, ignoraArmadura = false, danoMult = 1) {
+    const danoBruto = DAMAGE.calcularDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro);
+    const dano      = danoMult !== 1 ? Math.floor(danoBruto * danoMult) : danoBruto;
+    const defesa    = ignoraArmadura ? 0 : DAMAGE.calcularDefesa(alvo, defesaCarta);
+    const danoReal  = DAMAGE.resolverDano(dano, defesa);
 
     if (danoReal > 0) {
       alvo.hp = Math.max(0, alvo.hp - danoReal);
@@ -425,8 +426,12 @@ const COMBAT = (() => {
         }
       }
 
+      // ♠ Espadas → ♥ Copas: dano bruto dobrado (não se aplica em Furtivo)
+      const danoMult = (!hab.efeitoPuro && hab.acao !== 'F' && hab.acao !== 'R'
+        && atacante.naipe === '♠' && alvoReal.naipe === '♥') ? 2 : 1;
+
       // Dano (com defesa, se houver carta; ignoraArmadura quando sinalizado pelo handler)
-      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta, evPoder.ignoraArmadura ?? false);
+      const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta, evPoder.ignoraArmadura ?? false, danoMult);
 
       // Acumula odio_bonus se o alvo estava em estado de Ódio ao sofrer dano
       if (resultado.causouDano) {
@@ -481,9 +486,106 @@ const COMBAT = (() => {
           PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...r2 });
         }
       }
+
+      // Efeitos pós-dano de vantagem de naipe
+      if (!hab.efeitoPuro && hab.acao !== 'F' && hab.acao !== 'R'
+          && atacante.naipe && alvoReal.naipe) {
+        _aplicarVantagemNaipe(atacante, alvoReal);
+      }
+
+      // Ataque em conjunto: aliados do atacante com essa capacidade entram junto
+      if (alvoReal.hp > 0) {
+        for (const aliado of BATTLE_STATE.combatentes) {
+          if (aliado.lado !== atacante.lado || aliado === atacante || !_estaVivo(aliado)) continue;
+          const ev = { alvo: alvoReal, atacantePrincipal: atacante, ataqueConjunto: false };
+          PASSIVAS.disparar('ao_aliado_atacar', aliado, ev);
+          if (ev.ataqueConjunto) _executarContraAtaque(aliado, alvoReal);
+        }
+      }
     }
 
     return { ok: true };
+  }
+
+  // Aplica efeitos de vantagem de naipe APÓS o dano (exceto ♠→♥ que já entrou no danoMult).
+  function _aplicarVantagemNaipe(atacante, alvo) {
+    // ♥↔♣: Copas ganha ATQ/DEF ×2 por 2 turnos ao interagir com Paus
+    if (atacante.naipe === '♥' && alvo.naipe === '♣') _renovarHeartsAdv(atacante);
+    if (atacante.naipe === '♣' && alvo.naipe === '♥') _renovarHeartsAdv(alvo);
+
+    // ♦→♠: Ouros atacante ganha rodada extra
+    if (atacante.naipe === '♦' && alvo.naipe === '♠' && !atacante._rodadaExtraPending) {
+      atacante._rodadaExtraPending = true;
+      _log('naipe', `${atacante.nome} (♦→♠) ganhou rodada extra`);
+    }
+
+    // ♠→♦: Ouros defensor ganha rodada extra
+    if (atacante.naipe === '♠' && alvo.naipe === '♦' && alvo.hp > 0 && !alvo._rodadaExtraPending) {
+      alvo._rodadaExtraPending = true;
+      _log('naipe', `${alvo.nome} (♦ reage a ♠) ganhou rodada extra`);
+    }
+
+    // ♦→♣: Paus ganha Furtivo 2t + contra-ataca com 1ª habilidade de dano
+    if (atacante.naipe === '♦' && alvo.naipe === '♣' && alvo.hp > 0) {
+      const existFurtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo');
+      if (existFurtivo) {
+        existFurtivo.duracao = 2;
+      } else {
+        alvo.efeitos.push({ tipo: 'clubs_furtivo', duracao: 2, duracaoOriginal: 2 });
+      }
+      _log('naipe', `${alvo.nome} (♣) ficou Furtivo por 2 turnos`);
+      _executarContraAtaque(alvo, atacante);
+    }
+
+    // ♣ com Furtivo ativo: contra-ataca qualquer atacante não-♦
+    if (alvo.naipe === '♣' && atacante.naipe !== '♦' && alvo.hp > 0) {
+      const furtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
+      if (furtivo) _executarContraAtaque(alvo, atacante);
+    }
+  }
+
+  // Executa contra-ataque com a 1ª habilidade de dano do contra-atacante.
+  // Fórmula: ATQ atual + poder vs DEF atual do alvo. Sem carta, sem tela de defesa.
+  // Aplica tags da habilidade e dispara passivas — o valor do contra-ataque está nos efeitos.
+  function _executarContraAtaque(contraAtacante, alvo) {
+    if (!contraAtacante || !alvo || alvo.hp <= 0) return;
+    const hab = (contraAtacante.habilidades ?? []).find(h => h && !h.efeitoPuro);
+    if (!hab) return;
+
+    const poder      = typeof hab.poder === 'number' ? hab.poder : 0;
+    const danoContra = Math.max(0, contraAtacante.atq + poder - alvo.def);
+
+    const causouDano = danoContra > 0;
+
+    if (causouDano) {
+      alvo.hp = Math.max(0, alvo.hp - danoContra);
+      PASSIVAS.recalcularStats(alvo);
+      _log('dano', `${contraAtacante.nome} (contra-ataque: ${hab.nome}) → ${alvo.nome}: ${danoContra} dano`);
+    }
+
+    // Efeitos puro: aplica sem precisar de dano.
+    // Habilidade de dano: só aplica efeitos se causou pelo menos 1 de dano.
+    const aplicaEfeitos = hab.efeitoPuro || causouDano;
+    if (aplicaEfeitos && Array.isArray(hab.tags) && hab.tags.length > 0 && typeof EFEITOS !== 'undefined') {
+      for (const tag of hab.tags) EFEITOS.aplicar(tag, alvo, contraAtacante);
+    }
+
+    if (causouDano) {
+      PASSIVAS.disparar('ao_causar_dano', contraAtacante, { alvo, danoReal: danoContra, causouDano });
+      PASSIVAS.disparar('ao_sofrer_dano', alvo, { atacante: contraAtacante, danoReal: danoContra, causouDano });
+    }
+  }
+
+  // Aplica ou renova hearts_adv no personagem Copas.
+  function _renovarHeartsAdv(copasChar) {
+    const existing = copasChar.efeitos.find(e => e.tipo === 'hearts_adv');
+    if (existing) {
+      existing.duracao = 2;
+    } else {
+      copasChar.efeitos.push({ tipo: 'hearts_adv', duracao: 2, duracaoOriginal: 2 });
+    }
+    PASSIVAS.recalcularStats(copasChar);
+    _log('naipe', `${copasChar.nome} (♥ vs ♣) ATQ/DEF ×2 por 2 turnos`);
   }
 
   // Helper: parse poder simples ou múltiplo ('1/1' → [1,1]; 3 → [3]).
