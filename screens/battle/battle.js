@@ -1904,21 +1904,32 @@ const BATTLE = (() => {
 
   // Rótulo humano de um efeito ativo (usa nome do registry quando possível)
   function _efeitoLabel(e) {
+    const map = {
+      dot:               '🔥 Dano por turno',
+      buff_atq:          '↑ +ATQ',          debuff_atq:        '↓ −ATQ',
+      buff_def:          '▲ +DEF',          debuff_def:        '▽ −DEF',
+      frozen:            '❄ Congelado',     stun:              '⊗ Atordoado',
+      amaciado:          '⬇ Amaciado',      encantado:         '✦ Encantado',
+      hearts_adv:        '❤ Vantagem Copas',
+      clubs_furtivo:     '🌿 Furtivo (Paus)',
+      imagem_espelhada:  '◈ Imagem Espelhada',
+      derretar_armadura: '⚗ Armadura Derretida',
+      congelado:         '❄ Congelado',
+      radiacao:          '☢ Radiação',
+      estatica:          '⚡ Estática',
+      queimadura:        '🔥 Queimadura',
+      resfriamento:      '❄ Resfriamento',
+      enfraquecido:      '↓ Enfraquecido',
+      exposto:           '▽ Exposto',
+      odio_bonus:        '⊕ Ódio',
+      rei_atq_bonus:     '♛ Bônus de Rei',
+    };
+    if (map[e.tipo]) return map[e.tipo];
     if (e._origem && typeof EFEITOS !== 'undefined') {
       const ef = EFEITOS.get(e._origem);
       if (ef && ef.nome) return ef.nome;
     }
-    const map = {
-      dot:            'Dano por turno',
-      buff_atq:       '+ATQ',  debuff_atq: '−ATQ',
-      buff_def:       '+DEF',  debuff_def: '−DEF',
-      frozen:         'Congelado',
-      stun:           'Atordoado',
-      amaciado:       'Amaciado',
-      odio_bonus:     'Ódio',
-      rei_atq_bonus:  'Bônus de Rei',
-    };
-    return map[e.tipo] || e.tipo;
+    return e.tipo;
   }
 
   function _classeEfeito(e) {
@@ -1973,16 +1984,58 @@ const BATTLE = (() => {
         </div>`;
     }).join('');
 
-    // Efeitos ativos
-    const efeitosAtivos = (c.efeitos || []).filter(e => (e.duracao ?? 0) > 0);
-    const efeitosHtml = efeitosAtivos.length === 0
-      ? '<div class="bsp-empty">Sem efeitos ativos.</div>'
-      : efeitosAtivos.map(e => `
-          <div class="bsp-efeito ${_classeEfeito(e)}">
-            <span class="bsp-efeito-nome">${_efeitoLabel(e)}</span>
-            <span class="bsp-efeito-dur">${e.duracao}t</span>
+    // Efeitos ativos — cards com descrição + flags de estado
+    const _efeitoCard = (cls, nome, desc, duracao) => {
+      const durHtml = duracao != null
+        ? `<span class="bsp-efeito-dur">${duracao}t</span>`
+        : '';
+      return `
+        <div class="bsp-efeito ${cls}">
+          <div class="bsp-efeito-header">
+            <span class="bsp-efeito-nome">${nome}</span>${durHtml}
           </div>
-        `).join('');
+          ${desc ? `<div class="bsp-efeito-desc">${desc}</div>` : ''}
+        </div>`;
+    };
+    const efRows = [];
+
+    for (const e of (c.efeitos || [])) {
+      if ((e.duracao ?? 0) <= 0) continue;
+      const cls  = _classeEfeito(e);
+      const nome = _efeitoLabel(e)
+        + (e.valor !== undefined ? ` <span class="bsp-efeito-val">(${e.valor > 0 ? '+' : ''}${e.valor})</span>` : '');
+      const desc = (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo])
+        ? EFEITOS_DATA[e.tipo].descricao
+        : '';
+      efRows.push(_efeitoCard(cls, nome, desc, e.duracao));
+    }
+
+    if (c._acaoDuplicadaPending) {
+      efRows.push(_efeitoCard('buff', '⚡ Ação Rápida disponível',
+        'Pode usar uma segunda ação rápida neste turno.', null));
+    }
+    if (c.acaoExtra) {
+      efRows.push(_efeitoCard('gasto', '⚡ Ação extra (usada)',
+        'A ação extra foi utilizada neste turno.', null));
+    }
+    if (c._rodadaExtraPending) {
+      efRows.push(_efeitoCard('buff', '♦ Rodada Extra disponível',
+        'Terá uma rodada extra após a rodada atual.', null));
+    }
+    if ((c._acumulo ?? 0) > 0) {
+      efRows.push(_efeitoCard('buff',
+        `⚗ Acúmulo de Poder: ${c._acumulo} carga(s)`,
+        'Cargas acumuladas ao passar rodada. Usadas na próxima habilidade de dano.', null));
+    }
+    if ((c._energiaCargas ?? 0) > 0) {
+      efRows.push(_efeitoCard('buff',
+        `⚡ Energia: ${c._energiaCargas} carga(s)`,
+        'Cargas de energia acumuladas ao passar rodada. Potencializam a próxima habilidade.', null));
+    }
+
+    const efeitosHtml = efRows.length === 0
+      ? '<div class="bsp-empty">Sem efeitos ativos.</div>'
+      : efRows.join('');
 
     const popup = document.createElement('div');
     popup.id = 'battle-status-popup';
