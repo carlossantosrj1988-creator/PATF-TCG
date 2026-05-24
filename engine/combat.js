@@ -545,22 +545,24 @@ const COMBAT = (() => {
     const poder      = typeof hab.poder === 'number' ? hab.poder : 0;
     const danoContra = Math.max(0, contraAtacante.atq + poder - alvo.def);
 
-    if (danoContra > 0) {
+    const causouDano = danoContra > 0;
+
+    if (causouDano) {
       alvo.hp = Math.max(0, alvo.hp - danoContra);
       PASSIVAS.recalcularStats(alvo);
       _log('dano', `${contraAtacante.nome} (contra-ataque: ${hab.nome}) → ${alvo.nome}: ${danoContra} dano`);
     }
 
-    // Aplica efeitos da habilidade (sangramento, queimadura, etc.) — sempre, mesmo sem dano
-    if (Array.isArray(hab.tags) && hab.tags.length > 0 && typeof EFEITOS !== 'undefined') {
+    // Efeitos puro: aplica sem precisar de dano.
+    // Habilidade de dano: só aplica efeitos se causou pelo menos 1 de dano.
+    const aplicaEfeitos = hab.efeitoPuro || causouDano;
+    if (aplicaEfeitos && Array.isArray(hab.tags) && hab.tags.length > 0 && typeof EFEITOS !== 'undefined') {
       for (const tag of hab.tags) EFEITOS.aplicar(tag, alvo, contraAtacante);
     }
 
-    // Dispara passivas de dano
-    const resultado = { danoReal: danoContra, causouDano: danoContra > 0 };
-    if (danoContra > 0) {
-      PASSIVAS.disparar('ao_causar_dano', contraAtacante, { alvo, ...resultado });
-      PASSIVAS.disparar('ao_sofrer_dano', alvo, { atacante: contraAtacante, ...resultado });
+    if (causouDano) {
+      PASSIVAS.disparar('ao_causar_dano', contraAtacante, { alvo, danoReal: danoContra, causouDano });
+      PASSIVAS.disparar('ao_sofrer_dano', alvo, { atacante: contraAtacante, danoReal: danoContra, causouDano });
     }
   }
 
