@@ -492,6 +492,16 @@ const COMBAT = (() => {
           && atacante.naipe && alvoReal.naipe) {
         _aplicarVantagemNaipe(atacante, alvoReal);
       }
+
+      // Ataque em conjunto: aliados do atacante com essa capacidade entram junto
+      if (alvoReal.hp > 0) {
+        for (const aliado of BATTLE_STATE.combatentes) {
+          if (aliado.lado !== atacante.lado || aliado === atacante || !_estaVivo(aliado)) continue;
+          const ev = { alvo: alvoReal, atacantePrincipal: atacante, ataqueConjunto: false };
+          PASSIVAS.disparar('ao_aliado_atacar', aliado, ev);
+          if (ev.ataqueConjunto) _executarContraAtaque(aliado, alvoReal);
+        }
+      }
     }
 
     return { ok: true };
