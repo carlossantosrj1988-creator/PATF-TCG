@@ -112,7 +112,7 @@ const PASSIVAS = (() => {
   // Ao nocautear um inimigo, compra 1 carta extra e ganha rodada extra.
   registrar('esp_p2', 'ao_nocautear_inimigo', (c) => {
     COMBAT.comprarCarta(c, 1);
-    if (!c.efeitos.some(e => e.tipo === 'rodada_extra')) {
+    if (!c.acaoExtra && !c.efeitos.some(e => e.tipo === 'rodada_extra')) {
       c.efeitos.push({ tipo: 'rodada_extra', duracao: null });
     }
   });

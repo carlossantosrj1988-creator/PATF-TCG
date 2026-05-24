@@ -147,9 +147,12 @@ const BATTLE = (() => {
       partes.push(`<span class="bchar-ef-icon ${cls}" title="${label}${durTxt}">${sim}</span>`);
     }
 
-    // Ação extra já usada neste turno (flag de estado, não efeito)
-    if (c.acaoExtra) {
-      partes.push(`<span class="bchar-ef-icon gasto" title="Ação extra já usada neste turno">⚡✓</span>`);
+    // Ícones vermelhos — bloqueio de extras já gastos neste turno
+    if (c._acaoRapidaGasta) {
+      partes.push(`<span class="bchar-ef-icon debuff" title="Ação rápida usada — sem mais extras este turno">⚡✗</span>`);
+    }
+    if (c._rodadaExtraGasta) {
+      partes.push(`<span class="bchar-ef-icon debuff" title="Rodada extra ativa — sem mais extras este turno">♦✗</span>`);
     }
 
     return partes.join('');
@@ -2013,10 +2016,14 @@ const BATTLE = (() => {
       efRows.push(_efeitoCard(cls, nome, desc, e.duracao));
     }
 
-    // Estado de turno (flags que não são efeitos)
-    if (c.acaoExtra) {
-      efRows.push(_efeitoCard('gasto', '⚡ Ação extra (usada)',
-        'A ação extra foi utilizada neste turno.', null));
+    // Bloqueios de extras (flags de estado — não são efeitos)
+    if (c._acaoRapidaGasta) {
+      efRows.push(_efeitoCard('debuff', '⚡✗ Ação Rápida (gasta)',
+        'Ação rápida usada neste turno. Sem novas ações ou rodadas extras.', null));
+    }
+    if (c._rodadaExtraGasta) {
+      efRows.push(_efeitoCard('debuff', '♦✗ Rodada Extra (ativa/gasta)',
+        'Rodada extra em curso ou já usada neste turno. Sem novos extras.', null));
     }
     if ((c._acumulo ?? 0) > 0) {
       efRows.push(_efeitoCard('buff',
@@ -2155,7 +2162,9 @@ const BATTLE = (() => {
     for (const cb of estado.combatentes) {
       const idx = cb.efeitos.findIndex(e => e.tipo === 'rodada_extra');
       if (idx >= 0 && cb.hp > 0) {
-        cb.efeitos.splice(idx, 1);   // consome o efeito
+        cb.efeitos.splice(idx, 1);        // consome o efeito
+        cb.acaoExtra         = true;      // bloqueia novos extras neste turno
+        cb._rodadaExtraGasta = true;      // ícone vermelho de rodada extra
         const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(cb);
         if (!jaTemExtra) estado.ordem.splice(estado.indiceAtual + 1, 0, cb);
         _floatTexto(cb.id, '♦ +RODADA!', 'vantagem-naipe');

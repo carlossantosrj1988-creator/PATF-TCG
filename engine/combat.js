@@ -107,8 +107,10 @@ const COMBAT = (() => {
       mao:             [],
       descarte:        [],
       cartaIniciativa: null,
-      acaoExtra:       false,
-      perdeuRodada:    false,
+      acaoExtra:          false,
+      _acaoRapidaGasta:   false,
+      _rodadaExtraGasta:  false,
+      perdeuRodada:       false,
     };
     PASSIVAS.recalcularStats(c);
     return c;
@@ -188,8 +190,10 @@ const COMBAT = (() => {
         if (c.lado === 'inimigo') _comprarCarta(c, 1);
         else jogadoresVivos++;
       }
-      c.acaoExtra    = false;
-      c.perdeuRodada = false;
+      c.acaoExtra         = false;
+      c._acaoRapidaGasta  = false;
+      c._rodadaExtraGasta = false;
+      c.perdeuRodada      = false;
     }
     // Compra apenas 1 carta por turno para a mão compartilhada do time jogador.
     // Cartas extras vêm de: passar a rodada, Ás, ou outros efeitos específicos.
@@ -554,6 +558,7 @@ const COMBAT = (() => {
 
     // ♦→♠: Ouros atacante ganha rodada extra
     if (atacante.naipe === '♦' && alvo.naipe === '♠'
+        && !atacante.acaoExtra
         && !atacante.efeitos.some(e => e.tipo === 'rodada_extra')) {
       atacante.efeitos.push({ tipo: 'rodada_extra', duracao: null });
       _log('naipe', `${atacante.nome} (♦→♠) ganhou rodada extra`);
@@ -561,6 +566,7 @@ const COMBAT = (() => {
 
     // ♠→♦: Ouros defensor ganha rodada extra
     if (atacante.naipe === '♠' && alvo.naipe === '♦' && alvo.hp > 0
+        && !alvo.acaoExtra
         && !alvo.efeitos.some(e => e.tipo === 'rodada_extra')) {
       alvo.efeitos.push({ tipo: 'rodada_extra', duracao: null });
       _log('naipe', `${alvo.nome} (♦ reage a ♠) ganhou rodada extra`);
@@ -655,6 +661,7 @@ const COMBAT = (() => {
     if (combatente.acaoExtra) return false;  // já usou neste turno
     if (temAcaoRapida || temRodadaExtra) {
       combatente.acaoExtra = true;
+      if (temAcaoRapida) combatente._acaoRapidaGasta = true;
       _log('acao_extra', `${combatente.nome} ganhou ação extra`);
       return true;
     }
