@@ -120,6 +120,37 @@ const BATTLE = (() => {
     setTimeout(() => target.classList.remove('vantagem-flash'), 820);
   }
 
+  // ── Ícones canvas de extra (acao_rapida / rodada_extra) ──────────────────────
+  // Gera um ícone circular colorido com símbolo centralizado via canvas.
+  // Cache por chave para não redesenhar a cada render.
+  const _iconeExtraCache = {};
+  function _iconeExtraUrl(cor, simbolo) {
+    const key = cor + simbolo;
+    if (_iconeExtraCache[key]) return _iconeExtraCache[key];
+    const SIZE = 22;
+    const cv   = document.createElement('canvas');
+    cv.width   = SIZE;
+    cv.height  = SIZE;
+    const ctx  = cv.getContext('2d');
+    // Círculo de fundo
+    ctx.beginPath();
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 1, 0, Math.PI * 2);
+    ctx.fillStyle = cor === 'verde' ? '#22aa55' : '#cc3333';
+    ctx.fill();
+    // Símbolo centralizado
+    ctx.font         = '13px serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(simbolo, SIZE / 2, SIZE / 2 + 1);
+    _iconeExtraCache[key] = cv.toDataURL();
+    return _iconeExtraCache[key];
+  }
+
+  function _iconeExtraHtml(cor, simbolo, titulo) {
+    const url = _iconeExtraUrl(cor, simbolo);
+    return `<img src="${url}" class="bchar-ef-canvas" title="${titulo}" width="18" height="18">`;
+  }
+
   // Gera HTML de ícones de efeitos ativos (buff/debuff) para o slot do campo.
   function _efeitosIconsHtml(c) {
     const _SIM = {
@@ -131,14 +162,15 @@ const BATTLE = (() => {
       hearts_adv: '❤', clubs_furtivo: '🌿',
       imagem_espelhada: '◈', derretar_armadura: '⚗',
       congelado: '❄', radiacao: '☢', estatica: '⚡',
-      // Instantâneas (duracao: null)
-      rodada_extra: '♦+', acao_rapida: '⚡+', critico: '💥',
+      critico: '💥',
     };
 
     const partes = [];
 
     // Efeitos ativos — inclui duracao: null (instantâneos) e duracao > 0 (duração)
+    // acao_rapida e rodada_extra são renderizados via canvas abaixo — skip aqui
     for (const e of (c.efeitos ?? [])) {
+      if (e.tipo === 'acao_rapida' || e.tipo === 'rodada_extra') continue;
       if (e.duracao !== null && (e.duracao ?? 1) <= 0) continue;
       const cls   = _classeEfeito(e);
       const label = _efeitoLabel(e);
@@ -147,12 +179,18 @@ const BATTLE = (() => {
       partes.push(`<span class="bchar-ef-icon ${cls}" title="${label}${durTxt}">${sim}</span>`);
     }
 
-    // Ícones vermelhos — bloqueio de extras já gastos neste turno
-    if (c._acaoRapidaGasta) {
-      partes.push(`<span class="bchar-ef-icon debuff" title="Ação rápida usada — sem mais extras este turno">⚡✗</span>`);
+    // Ícones canvas de estado extra — verde (pendente) ou vermelho (bloqueado)
+    const temAcaoRapida   = (c.efeitos ?? []).some(e => e.tipo === 'acao_rapida');
+    const temRodadaExtra  = (c.efeitos ?? []).some(e => e.tipo === 'rodada_extra');
+    if (temAcaoRapida) {
+      partes.push(_iconeExtraHtml('verde', '⚡', 'Ação Rápida disponível'));
+    } else if (c._acaoRapidaGasta) {
+      partes.push(_iconeExtraHtml('vermelho', '⚡', 'Ação Rápida usada — sem mais extras este turno'));
     }
-    if (c._rodadaExtraGasta) {
-      partes.push(`<span class="bchar-ef-icon debuff" title="Rodada extra ativa — sem mais extras este turno">♦✗</span>`);
+    if (temRodadaExtra) {
+      partes.push(_iconeExtraHtml('verde', '✨', 'Rodada Extra disponível'));
+    } else if (c._rodadaExtraGasta) {
+      partes.push(_iconeExtraHtml('vermelho', '✨', 'Rodada Extra ativa/gasta — sem mais extras este turno'));
     }
 
     return partes.join('');
