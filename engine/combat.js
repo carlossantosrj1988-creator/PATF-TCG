@@ -495,10 +495,22 @@ const COMBAT = (() => {
         }
       }
 
-      // Efeitos pós-dano de vantagem de naipe
+      // Efeitos pós-dano de vantagem de naipe (requer naipe nos dois lados)
       if (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
           && atacante.naipe && alvoReal.naipe) {
         _aplicarVantagemNaipe(atacante, alvoReal);
+      }
+
+      // Clubs_furtivo: ♣ com furtivo ativo contra-ataca qualquer atacante não-♦,
+      // independente de o atacante ter naipe ou não.
+      // (♦→♣ já é enfileirado dentro de _aplicarVantagemNaipe)
+      if (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
+          && alvoReal.naipe === '♣' && alvoReal.hp > 0
+          && atacante.naipe !== '♦') {
+        const furtivo = alvoReal.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
+        if (furtivo) {
+          BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: alvoReal, alvo: atacante, tipo: 'contra' });
+        }
       }
 
       // Ataque em conjunto: aliados do atacante com essa capacidade entram junto.
@@ -549,10 +561,7 @@ const COMBAT = (() => {
     }
 
     // ♣ com Furtivo ativo: enfileira contra-ataque contra qualquer atacante não-♦
-    if (alvo.naipe === '♣' && atacante.naipe !== '♦' && alvo.hp > 0) {
-      const furtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
-      if (furtivo) BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: alvo, alvo: atacante, tipo: 'contra' });
-    }
+    // Removido daqui — tratado diretamente em resolverAcao sem exigir naipe no atacante
   }
 
   // Executa contra-ataque com a 1ª habilidade de dano do contra-atacante.
