@@ -524,33 +524,43 @@ const COMBAT = (() => {
         alvo.efeitos.push({ tipo: 'clubs_furtivo', duracao: 2, duracaoOriginal: 2 });
       }
       _log('naipe', `${alvo.nome} (♣) ficou Furtivo por 2 turnos`);
-      const habContra = (alvo.habilidades ?? []).find(h => h && !h.efeitoPuro);
-      if (habContra) {
-        const poder = typeof habContra.poder === 'number' ? habContra.poder : 0;
-        const danoContra = Math.max(0, alvo.atq + poder - atacante.def);
-        if (danoContra > 0) {
-          atacante.hp = Math.max(0, atacante.hp - danoContra);
-          PASSIVAS.recalcularStats(atacante);
-          _log('dano', `${alvo.nome} (♣ contra-ataque) → ${atacante.nome}: ${danoContra} dano`);
-        }
-      }
+      _executarContraAtaque(alvo, atacante);
     }
 
     // ♣ com Furtivo ativo: contra-ataca qualquer atacante não-♦
     if (alvo.naipe === '♣' && atacante.naipe !== '♦' && alvo.hp > 0) {
       const furtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
-      if (furtivo) {
-        const habContra = (alvo.habilidades ?? []).find(h => h && !h.efeitoPuro);
-        if (habContra) {
-          const poder = typeof habContra.poder === 'number' ? habContra.poder : 0;
-          const danoContra = Math.max(0, alvo.atq + poder - atacante.def);
-          if (danoContra > 0) {
-            atacante.hp = Math.max(0, atacante.hp - danoContra);
-            PASSIVAS.recalcularStats(atacante);
-            _log('dano', `${alvo.nome} (♣ Furtivo contra-ataque) → ${atacante.nome}: ${danoContra} dano`);
-          }
-        }
-      }
+      if (furtivo) _executarContraAtaque(alvo, atacante);
+    }
+  }
+
+  // Executa contra-ataque com a 1ª habilidade de dano do contra-atacante.
+  // Fórmula: ATQ atual + poder vs DEF atual do alvo. Sem carta, sem tela de defesa.
+  // Aplica tags da habilidade e dispara passivas — o valor do contra-ataque está nos efeitos.
+  function _executarContraAtaque(contraAtacante, alvo) {
+    if (!contraAtacante || !alvo || alvo.hp <= 0) return;
+    const hab = (contraAtacante.habilidades ?? []).find(h => h && !h.efeitoPuro);
+    if (!hab) return;
+
+    const poder      = typeof hab.poder === 'number' ? hab.poder : 0;
+    const danoContra = Math.max(0, contraAtacante.atq + poder - alvo.def);
+
+    if (danoContra > 0) {
+      alvo.hp = Math.max(0, alvo.hp - danoContra);
+      PASSIVAS.recalcularStats(alvo);
+      _log('dano', `${contraAtacante.nome} (contra-ataque: ${hab.nome}) → ${alvo.nome}: ${danoContra} dano`);
+    }
+
+    // Aplica efeitos da habilidade (sangramento, queimadura, etc.) — sempre, mesmo sem dano
+    if (Array.isArray(hab.tags) && hab.tags.length > 0 && typeof EFEITOS !== 'undefined') {
+      for (const tag of hab.tags) EFEITOS.aplicar(tag, alvo, contraAtacante);
+    }
+
+    // Dispara passivas de dano
+    const resultado = { danoReal: danoContra, causouDano: danoContra > 0 };
+    if (danoContra > 0) {
+      PASSIVAS.disparar('ao_causar_dano', contraAtacante, { alvo, ...resultado });
+      PASSIVAS.disparar('ao_sofrer_dano', alvo, { atacante: contraAtacante, ...resultado });
     }
   }
 
