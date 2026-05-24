@@ -606,6 +606,7 @@
 .bchar-ef-icon.buff   { color: #55cc88; background: rgba(85,204,136,0.18); border: 1px solid rgba(85,204,136,0.35); }
 .bchar-ef-icon.debuff { color: #dd5555; background: rgba(204,85,85,0.18);  border: 1px solid rgba(204,85,85,0.35); }
 .bchar-ef-icon.neutro { color: #c9a84c; background: rgba(201,168,76,0.18); border: 1px solid rgba(201,168,76,0.35); }
+.bchar-ef-icon.gasto  { color: #666; background: rgba(80,80,80,0.18); border: 1px solid rgba(120,120,120,0.3); opacity: 0.5; }
 
 /* ── Flash de vantagem de naipe ─────────────────────────────────────────────── */
 
@@ -1168,27 +1169,43 @@
 /* ── Efeitos ativos ── */
 .bsp-efeitos-lista {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 5px;
 }
 .bsp-efeito {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 8px;
+  border-radius: 5px;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
 }
 .bsp-efeito.buff   { background: rgba(85,204,136,0.12); color: #55cc88; border: 1px solid rgba(85,204,136,0.30); }
 .bsp-efeito.debuff { background: rgba(204,85,85,0.12);  color: #cc5555; border: 1px solid rgba(204,85,85,0.30); }
 .bsp-efeito.neutro { background: rgba(255,255,255,0.06); color: #aab;   border: 1px solid #ffffff14; }
+.bsp-efeito.gasto  { background: rgba(80,80,80,0.14); color: #667; border: 1px solid rgba(120,120,120,0.2); opacity: 0.65; }
+.bsp-efeito-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+.bsp-efeito-nome { flex: 1; }
+.bsp-efeito-val  { font-weight: 400; opacity: 0.8; font-size: 9px; }
 .bsp-efeito-dur {
   font-size: 9px;
   opacity: 0.7;
   padding-left: 4px;
   border-left: 1px solid currentColor;
+  white-space: nowrap;
+}
+.bsp-efeito-desc {
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.75;
+  line-height: 1.35;
 }
 
 /* Slot ativo (turno) — borda dourada pulsando */
