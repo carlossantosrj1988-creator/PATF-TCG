@@ -441,6 +441,22 @@ const COMBAT = (() => {
       // Dano (com defesa, se houver carta; ignoraArmadura quando sinalizado pelo handler)
       const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta, evPoder.ignoraArmadura ?? false, danoMult);
 
+      // Crítico pós-defesa (ex: Crítico Alto) — multiplica o dano final já calculado
+      // Roda antes dos gatilhos pra que passivas vejam o dano real correto.
+      if (resultado.causouDano && !hab.efeitoPuro) {
+        const evFinal = { multiplicador: 1 };
+        EFEITOS_HABILIDADES.disparar(hab, 'modificar_dano_final', atacante, evFinal);
+        if (evFinal.multiplicador > 1) {
+          const danoExtra = Math.floor(resultado.danoReal * (evFinal.multiplicador - 1));
+          if (danoExtra > 0) {
+            alvoReal.hp = Math.max(0, alvoReal.hp - danoExtra);
+            PASSIVAS.recalcularStats(alvoReal);
+            resultado.danoReal += danoExtra;
+            _log('dano', `${atacante.nome} (crítico pós-defesa ×${evFinal.multiplicador}) +${danoExtra} em ${alvoReal.nome}`);
+          }
+        }
+      }
+
       // Acumula odio_bonus se o alvo estava em estado de Ódio ao sofrer dano
       if (resultado.causouDano) {
         const odioAlvo = alvoReal.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
@@ -495,16 +511,16 @@ const COMBAT = (() => {
         }
       }
 
-      // Efeitos pós-dano de vantagem de naipe (requer naipe nos dois lados)
-      if (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
+      // Vantagens de naipe — disparam se causou dano OU habilidade pura foi efetiva
+      const ativaVantagem = resultado.causouDano || hab.efeitoPuro;
+
+      if (ativaVantagem && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
           && atacante.naipe && alvoReal.naipe) {
         _aplicarVantagemNaipe(atacante, alvoReal);
       }
 
-      // Clubs_furtivo: ♣ com furtivo ativo contra-ataca qualquer atacante não-♦,
-      // independente de o atacante ter naipe ou não.
-      // (♦→♣ já é enfileirado dentro de _aplicarVantagemNaipe)
-      if (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
+      // Clubs_furtivo: ♣ com furtivo ativo contra-ataca qualquer atacante não-♦
+      if (ativaVantagem && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
           && alvoReal.naipe === '♣' && alvoReal.hp > 0
           && atacante.naipe !== '♦') {
         const furtivo = alvoReal.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
