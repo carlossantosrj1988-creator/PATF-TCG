@@ -161,10 +161,12 @@ const BATTLE = (() => {
   function _showSkillBanner(hab, atacante) {
     return new Promise(resolve => {
       const screen = document.getElementById('screen-battle');
-      if (!screen) { resolve(); return; }
+      if (!screen) { console.warn('[banner] screen-battle não encontrado'); resolve(); return; }
 
       const overlay = document.getElementById('battle-skill-banner');
-      if (!overlay) { resolve(); return; }
+      if (!overlay) { console.warn('[banner] battle-skill-banner não encontrado'); resolve(); return; }
+
+      console.log('[banner] exibindo:', hab.nome);
 
       const nameEl  = overlay.querySelector('#bsb-name');
       const subEl   = overlay.querySelector('#bsb-sub');
