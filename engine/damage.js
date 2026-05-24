@@ -15,11 +15,11 @@ const DAMAGE = (() => {
   //  ♦ vence ♣,  perde para ♠
   //  ♠ vence ♦,  perde para ♥
 
-  const FORTE_CONTRA    = { '♥': '♠', '♣': '♥', '♦': '♣', '♠': '♦' };
-  const FRACO_CONTRA    = { '♥': '♣', '♣': '♦', '♦': '♠', '♠': '♥' };
-
-  const MULT_VANTAGEM    = 1.5;
-  const MULT_DESVANTAGEM = 0.75;
+  // Ciclo real: ♥ vence ♣, ♣ vence ♦, ♦ vence ♠, ♠ vence ♥
+  // Os efeitos de vantagem são implementados em combat.js (_aplicarVantagemNaipe).
+  // temVantagem/temDesvantagem são usados apenas para feedback visual na UI.
+  const FORTE_CONTRA    = { '♥': '♣', '♣': '♦', '♦': '♠', '♠': '♥' };
+  const FRACO_CONTRA    = { '♥': '♠', '♣': '♥', '♦': '♣', '♠': '♦' };
 
   // ── Naipe ─────────────────────────────────────────────────────────────────
 
@@ -64,11 +64,10 @@ const DAMAGE = (() => {
   function calcularDano(atacante, alvo, poder, carta, ehEfeitoPuro = false) {
     if (ehEfeitoPuro) return 0;
 
-    const valCarta  = valorComEspecialidade(carta, atacante.naipe);
-    const danoBase  = atacante.atq + poder + valCarta;
-    const mult      = multiplicadorNaipe(atacante.naipe, alvo.naipe);
+    const valCarta = valorComEspecialidade(carta, atacante.naipe);
+    const danoBase = atacante.atq + poder + valCarta;
 
-    return Math.max(0, Math.floor(danoBase * mult));
+    return Math.max(0, danoBase);
   }
 
   // ── Cálculo de defesa ─────────────────────────────────────────────────────

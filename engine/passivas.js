@@ -55,6 +55,13 @@ const PASSIVAS = (() => {
       if (e.tipo === 'debuff_def') combatente.def -= e.valor;
     }
 
+    // hearts_adv (vantagem de naipe ♥ vs ♣): dobra ATQ e DEF base
+    const heartsAdv = (combatente.efeitos ?? []).find(e => e.tipo === 'hearts_adv' && (e.duracao ?? 1) > 0);
+    if (heartsAdv) {
+      combatente.atq = combatente.atqBase * 2;
+      if (combatente.defBase >= 0) combatente.def = combatente.defBase * 2;
+    }
+
     disparar('recalc_stats', combatente);
   }
 

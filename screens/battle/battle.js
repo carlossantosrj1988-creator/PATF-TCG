@@ -2036,6 +2036,18 @@ const BATTLE = (() => {
   function _finalizarTurno(c) {
     const turnoAntes = COMBAT.estado.turno;
     COMBAT.etapa5_fimRodada(c);
+
+    // Rodada extra pendente (naipe ♦, passiva Novo Level, etc.)
+    const estado = COMBAT.estado;
+    for (const cb of estado.combatentes) {
+      if (cb._rodadaExtraPending && cb.hp > 0) {
+        cb._rodadaExtraPending = false;
+        const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(cb);
+        if (!jaTemExtra) estado.ordem.splice(estado.indiceAtual + 1, 0, cb);
+        _floatTexto(cb.id, '♦ +RODADA!', 'vantagem-naipe');
+      }
+    }
+
     COMBAT.avancarCombatente();
     if (COMBAT.estado.turno > turnoAntes) {
       _logUI(`── TURNO ${COMBAT.estado.turno} ──`, 'turno');
