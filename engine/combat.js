@@ -64,6 +64,9 @@ const COMBAT = (() => {
       maoJogador:            [],
       descarteJogador:       [],
       baralhoJogadorEsgotado: false,  // baralho do time acabou — condição de derrota
+      // Fila de contra-ataques/ataques em conjunto pendentes — processados pela UI
+      // após o dano principal, antes do fim da rodada.
+      contraAtaquesPendentes: [],
     };
   }
 
@@ -498,13 +501,16 @@ const COMBAT = (() => {
         _aplicarVantagemNaipe(atacante, alvoReal);
       }
 
-      // Ataque em conjunto: aliados do atacante com essa capacidade entram junto
-      if (alvoReal.hp > 0) {
+      // Ataque em conjunto: aliados do atacante com essa capacidade entram junto.
+      // Ação Rápida não dispara — é um ataque secundário, não principal.
+      if (alvoReal.hp > 0 && acaoEfetiva !== 'R') {
         for (const aliado of BATTLE_STATE.combatentes) {
           if (aliado.lado !== atacante.lado || aliado === atacante || !_estaVivo(aliado)) continue;
           const ev = { alvo: alvoReal, atacantePrincipal: atacante, ataqueConjunto: false };
           PASSIVAS.disparar('ao_aliado_atacar', aliado, ev);
-          if (ev.ataqueConjunto) _executarContraAtaque(aliado, alvoReal);
+          if (ev.ataqueConjunto) {
+            BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: aliado, alvo: alvoReal, tipo: 'conjunto' });
+          }
         }
       }
     }
@@ -530,7 +536,7 @@ const COMBAT = (() => {
       _log('naipe', `${alvo.nome} (♦ reage a ♠) ganhou rodada extra`);
     }
 
-    // ♦→♣: Paus ganha Furtivo 2t + contra-ataca com 1ª habilidade de dano
+    // ♦→♣: Paus ganha Furtivo 2t + enfileira contra-ataque
     if (atacante.naipe === '♦' && alvo.naipe === '♣' && alvo.hp > 0) {
       const existFurtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo');
       if (existFurtivo) {
@@ -539,13 +545,13 @@ const COMBAT = (() => {
         alvo.efeitos.push({ tipo: 'clubs_furtivo', duracao: 2, duracaoOriginal: 2 });
       }
       _log('naipe', `${alvo.nome} (♣) ficou Furtivo por 2 turnos`);
-      _executarContraAtaque(alvo, atacante);
+      BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: alvo, alvo: atacante, tipo: 'contra' });
     }
 
-    // ♣ com Furtivo ativo: contra-ataca qualquer atacante não-♦
+    // ♣ com Furtivo ativo: enfileira contra-ataque contra qualquer atacante não-♦
     if (alvo.naipe === '♣' && atacante.naipe !== '♦' && alvo.hp > 0) {
       const furtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
-      if (furtivo) _executarContraAtaque(alvo, atacante);
+      if (furtivo) BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: alvo, alvo: atacante, tipo: 'contra' });
     }
   }
 
@@ -780,6 +786,9 @@ const COMBAT = (() => {
 
     // Helpers de mão (uso de cartas especiais)
     comprarCarta,
+
+    // Contra-ataque / ataque em conjunto — chamado pela UI ao processar a fila
+    executarContraAtaque: _executarContraAtaque,
   };
 
 })();

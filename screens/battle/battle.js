@@ -1807,7 +1807,7 @@ const BATTLE = (() => {
           if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
         }
 
-        setTimeout(() => _finalizarTurno(atacante), 600);
+        setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
       }, _ANIM_DUR);
     });
   }
@@ -2102,6 +2102,53 @@ const BATTLE = (() => {
     // existirem como efeitos registrados.)
   }
 
+  // Processa a fila de contra-ataques/ataques em conjunto com feedback visual,
+  // depois chama callback (normalmente _finalizarTurno). Cada entrada tem:
+  //   { contraAtacante, alvo, tipo: 'contra' | 'conjunto' }
+  function _processarContraAtaques(callback) {
+    const fila = COMBAT.estado.contraAtaquesPendentes.splice(0);
+    if (fila.length === 0) { callback(); return; }
+
+    let i = 0;
+    function _proximo() {
+      if (i >= fila.length) { callback(); return; }
+
+      const { contraAtacante, alvo, tipo } = fila[i++];
+
+      // Pula se o atacante foi nocauteado antes de chegar sua vez na fila
+      if (!contraAtacante || contraAtacante.hp <= 0) { _proximo(); return; }
+      const hab = (contraAtacante.habilidades ?? []).find(h => h && !h.efeitoPuro);
+      if (!hab) { _proximo(); return; }
+
+      const rotulo  = tipo === 'contra' ? '↩ CONTRA-ATAQUE!' : '⚔ ATAQUE CONJUNTO!';
+      const logTag  = tipo === 'contra' ? '↩' : '⚔';
+      _floatTexto(contraAtacante.id, rotulo, 'vantagem-naipe');
+      _animarSlot(contraAtacante.id, 'atacando');
+      _logUI(`${logTag} ${contraAtacante.nome} (${hab.nome}) → ${alvo.nome}`, 'atk');
+
+      setTimeout(() => {
+        if (alvo.hp <= 0) { _renderizar(); setTimeout(_proximo, 300); return; }
+
+        const hpAntes = _capturaHP();
+        COMBAT.executarContraAtaque(contraAtacante, alvo);
+
+        for (const cc of COMBAT.estado.combatentes) {
+          const diff = (hpAntes[cc.id] ?? cc.hp) - cc.hp;
+          if (diff > 0) {
+            _animarSlot(cc.id, 'recebendo-dano');
+            _floatDanoContado(cc.id, diff, 'dano');
+            _logUI(`💥 ${cc.nome} recebeu ${diff} de dano`, 'dmg');
+          }
+        }
+
+        _renderizar();
+        setTimeout(_proximo, 450);
+      }, _ANIM_DUR);
+    }
+
+    _proximo();
+  }
+
   // Finaliza o turno: roda etapa5 (fim de rodada), avança combatente e renderiza.
   function _finalizarTurno(c) {
     const turnoAntes = COMBAT.estado.turno;
@@ -2241,7 +2288,7 @@ const BATTLE = (() => {
             const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
             if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
           }
-          setTimeout(() => _finalizarTurno(c), 600);
+          setTimeout(() => _processarContraAtaques(() => _finalizarTurno(c)), 600);
         }
       }, _ANIM_DUR);
     });
@@ -2296,7 +2343,7 @@ const BATTLE = (() => {
       }
       if (totalDanoDef > 0) _screenShake(totalDanoDef);
 
-      setTimeout(() => _finalizarTurno(atacante), 600);
+      setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
       return;
     }
 
