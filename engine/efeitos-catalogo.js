@@ -107,4 +107,24 @@ const EFEITOS_DATA = {
     descricao: 'Ações normais tornam-se Furtivas. Contra-ataca qualquer atacante enquanto ativo. 2 turnos.',
   },
 
+  // ── Condições instantâneas (duracao: null — consumidas por código, não por tempo) ──
+
+  rodada_extra: {
+    nome:      'Rodada Extra',
+    categoria: 'buff_instantaneo',
+    descricao: 'Ganha uma rodada extra na fila de iniciativa. Consumida ao iniciar.',
+  },
+
+  acao_rapida: {
+    nome:      'Ação Rápida',
+    categoria: 'buff_instantaneo',
+    descricao: 'Pode usar uma ação extra rápida neste turno. Consumida ao usar.',
+  },
+
+  critico: {
+    nome:      'Crítico',
+    categoria: 'buff_instantaneo',
+    descricao: 'Próxima habilidade de dano causa dano crítico. Consumido ao atacar.',
+  },
+
 };

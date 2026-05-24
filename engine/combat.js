@@ -537,14 +537,16 @@ const COMBAT = (() => {
     if (atacante.naipe === '♣' && alvo.naipe === '♥') _renovarHeartsAdv(alvo);
 
     // ♦→♠: Ouros atacante ganha rodada extra
-    if (atacante.naipe === '♦' && alvo.naipe === '♠' && !atacante._rodadaExtraPending) {
-      atacante._rodadaExtraPending = true;
+    if (atacante.naipe === '♦' && alvo.naipe === '♠'
+        && !atacante.efeitos.some(e => e.tipo === 'rodada_extra')) {
+      atacante.efeitos.push({ tipo: 'rodada_extra', duracao: null });
       _log('naipe', `${atacante.nome} (♦→♠) ganhou rodada extra`);
     }
 
     // ♠→♦: Ouros defensor ganha rodada extra
-    if (atacante.naipe === '♠' && alvo.naipe === '♦' && alvo.hp > 0 && !alvo._rodadaExtraPending) {
-      alvo._rodadaExtraPending = true;
+    if (atacante.naipe === '♠' && alvo.naipe === '♦' && alvo.hp > 0
+        && !alvo.efeitos.some(e => e.tipo === 'rodada_extra')) {
+      alvo.efeitos.push({ tipo: 'rodada_extra', duracao: null });
       _log('naipe', `${alvo.nome} (♦ reage a ♠) ganhou rodada extra`);
     }
 

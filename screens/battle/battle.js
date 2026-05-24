@@ -131,27 +131,25 @@ const BATTLE = (() => {
       hearts_adv: '❤', clubs_furtivo: '🌿',
       imagem_espelhada: '◈', derretar_armadura: '⚗',
       congelado: '❄', radiacao: '☢', estatica: '⚡',
+      // Instantâneas (duracao: null)
+      rodada_extra: '♦+', acao_rapida: '⚡+', critico: '💥',
     };
 
     const partes = [];
 
-    // Efeitos ativos
+    // Efeitos ativos — inclui duracao: null (instantâneos) e duracao > 0 (duração)
     for (const e of (c.efeitos ?? [])) {
-      if ((e.duracao ?? 1) <= 0) continue;
+      if (e.duracao !== null && (e.duracao ?? 1) <= 0) continue;
       const cls   = _classeEfeito(e);
       const label = _efeitoLabel(e);
       const sim   = _SIM[e.tipo] ?? '●';
-      partes.push(`<span class="bchar-ef-icon ${cls}" title="${label} (${e.duracao}t)">${sim}</span>`);
+      const durTxt = e.duracao !== null ? ` (${e.duracao}t)` : '';
+      partes.push(`<span class="bchar-ef-icon ${cls}" title="${label}${durTxt}">${sim}</span>`);
     }
 
-    // Ação Rápida / Rodada Extra — ícone pendente ou gasto
-    if (c._acaoDuplicadaPending) {
-      partes.push(`<span class="bchar-ef-icon buff" title="Ação Rápida disponível">⚡+</span>`);
-    } else if (c.acaoExtra) {
+    // Ação extra já usada neste turno (flag de estado, não efeito)
+    if (c.acaoExtra) {
       partes.push(`<span class="bchar-ef-icon gasto" title="Ação extra já usada neste turno">⚡✓</span>`);
-    }
-    if (c._rodadaExtraPending) {
-      partes.push(`<span class="bchar-ef-icon buff" title="Rodada Extra disponível">♦+</span>`);
     }
 
     return partes.join('');
@@ -1923,11 +1921,14 @@ const BATTLE = (() => {
       exposto:           '▽ Exposto',
       odio_bonus:        '⊕ Ódio',
       rei_atq_bonus:     '♛ Bônus de Rei',
+      // Instantâneas
+      rodada_extra:      '♦ Rodada Extra',
+      acao_rapida:       '⚡ Ação Rápida',
+      critico:           '💥 Crítico',
     };
     if (map[e.tipo]) return map[e.tipo];
-    if (e._origem && typeof EFEITOS !== 'undefined') {
-      const ef = EFEITOS.get(e._origem);
-      if (ef && ef.nome) return ef.nome;
+    if (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo]?.nome) {
+      return EFEITOS_DATA[e.tipo].nome;
     }
     return e.tipo;
   }
@@ -1936,6 +1937,8 @@ const BATTLE = (() => {
     if (e.tipo.startsWith('buff'))   return 'buff';
     if (e.tipo.startsWith('debuff')) return 'debuff';
     if (e.tipo === 'dot' || e.tipo === 'frozen' || e.tipo === 'stun') return 'debuff';
+    // Instantâneas são buffs
+    if (e.tipo === 'rodada_extra' || e.tipo === 'acao_rapida' || e.tipo === 'critico') return 'buff';
     return 'neutro';
   }
 
@@ -2000,27 +2003,20 @@ const BATTLE = (() => {
     const efRows = [];
 
     for (const e of (c.efeitos || [])) {
-      if ((e.duracao ?? 0) <= 0) continue;
+      // duracao: null = instantânea (ativa até consumo); duracao > 0 = duração normal
+      if (e.duracao !== null && (e.duracao ?? 0) <= 0) continue;
       const cls  = _classeEfeito(e);
       const nome = _efeitoLabel(e)
         + (e.valor !== undefined ? ` <span class="bsp-efeito-val">(${e.valor > 0 ? '+' : ''}${e.valor})</span>` : '');
       const desc = (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo])
-        ? EFEITOS_DATA[e.tipo].descricao
-        : '';
+        ? EFEITOS_DATA[e.tipo].descricao : '';
       efRows.push(_efeitoCard(cls, nome, desc, e.duracao));
     }
 
-    if (c._acaoDuplicadaPending) {
-      efRows.push(_efeitoCard('buff', '⚡ Ação Rápida disponível',
-        'Pode usar uma segunda ação rápida neste turno.', null));
-    }
+    // Estado de turno (flags que não são efeitos)
     if (c.acaoExtra) {
       efRows.push(_efeitoCard('gasto', '⚡ Ação extra (usada)',
         'A ação extra foi utilizada neste turno.', null));
-    }
-    if (c._rodadaExtraPending) {
-      efRows.push(_efeitoCard('buff', '♦ Rodada Extra disponível',
-        'Terá uma rodada extra após a rodada atual.', null));
     }
     if ((c._acumulo ?? 0) > 0) {
       efRows.push(_efeitoCard('buff',
@@ -2154,11 +2150,12 @@ const BATTLE = (() => {
     const turnoAntes = COMBAT.estado.turno;
     COMBAT.etapa5_fimRodada(c);
 
-    // Rodada extra pendente (naipe ♦, passiva Novo Level, etc.)
+    // Rodada extra pendente — efeito instantâneo rodada_extra (duracao: null)
     const estado = COMBAT.estado;
     for (const cb of estado.combatentes) {
-      if (cb._rodadaExtraPending && cb.hp > 0) {
-        cb._rodadaExtraPending = false;
+      const idx = cb.efeitos.findIndex(e => e.tipo === 'rodada_extra');
+      if (idx >= 0 && cb.hp > 0) {
+        cb.efeitos.splice(idx, 1);   // consome o efeito
         const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(cb);
         if (!jaTemExtra) estado.ordem.splice(estado.indiceAtual + 1, 0, cb);
         _floatTexto(cb.id, '♦ +RODADA!', 'vantagem-naipe');
