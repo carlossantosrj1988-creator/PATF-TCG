@@ -321,8 +321,8 @@
 
 /* ── Modo sprite — personagens com imagem pixel art ── */
 .battle-char-grad.sprite-mode {
-  width: 96px;
-  height: 120px;
+  width: auto;
+  height: auto;
   background: transparent !important;
   border: none;
   overflow: visible;

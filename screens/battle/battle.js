@@ -1249,8 +1249,7 @@ const BATTLE = (() => {
     // Posição JRPG
     const pos   = (JRPG_POS[c.lado] ?? JRPG_POS.inimigo)[idx]
                ?? (JRPG_POS[c.lado] ?? JRPG_POS.inimigo).at(-1);
-    const CHAR_SCALE_OVERRIDE = { 'vigor': 1.30 };
-    const scale = pos.scale * (CHAR_SCALE_OVERRIDE[c.poolId] ?? 1.0);
+    const scale = pos.scale;
 
     const slot = document.createElement('div');
     slot.className = 'battle-char-slot'
