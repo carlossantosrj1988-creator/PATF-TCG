@@ -1928,7 +1928,7 @@ const BATTLE = (() => {
                 const danoTotal = (hpAntes[alvo.id] ?? 0) - alvo.hp;
                 if (danoTotal > 0) _logUI(`💥 ${alvo.nome} recebeu ${danoTotal} de dano (${hits.length} hits)`, 'dmg');
               }
-              setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
+              setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
               return;
             }
             const hit = hits[i++];
@@ -1971,7 +1971,7 @@ const BATTLE = (() => {
             const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
             if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
           }
-          setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
+          setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
         }
       }, _ANIM_DUR);
     });
@@ -2315,6 +2315,43 @@ const BATTLE = (() => {
   }
 
   // Finaliza o turno: roda etapa5 (fim de rodada), avança combatente e renderiza.
+  // ── Etapa 4 — Verifica ação extra antes de finalizar o turno ────────────────
+  // Se o combatente tem acao_rapida ou rodada_extra (e não está bloqueado),
+  // consome o efeito, re-roda Etapa 1 e devolve o controle ao jogador/IA.
+  // Caso contrário, finaliza o turno normalmente.
+  function _verificarEtapa4(c) {
+    if (!c.acaoExtra) {
+      const idxRapida = c.efeitos.findIndex(e => e.tipo === 'acao_rapida');
+      const idxExtra  = c.efeitos.findIndex(e => e.tipo === 'rodada_extra');
+      const idx       = idxRapida >= 0 ? idxRapida : idxExtra;
+
+      if (idx >= 0) {
+        const tipo = c.efeitos[idx].tipo;
+        c.efeitos.splice(idx, 1);
+        c.acaoExtra = true;
+        if (tipo === 'acao_rapida') {
+          c._acaoRapidaGasta = true;
+          _floatTexto(c.id, '⚡ AÇÃO RÁPIDA!', 'vantagem-naipe');
+        } else {
+          c._rodadaExtraGasta = true;
+          _floatTexto(c.id, '✨ RODADA EXTRA!', 'vantagem-naipe');
+        }
+        // Re-roda Etapa 1 (passivas tick + recalc + stun check)
+        COMBAT.rodarEtapa1(c);
+        _habSel        = null;
+        _cartaSel      = null;
+        _cartaSelIdx   = -1;
+        _estadoPainel  = 'etapa1';
+        _aguardando    = false;
+        _renderizar();
+        // Se for inimigo, agenda o turno extra da IA
+        if (c.lado === 'inimigo') setTimeout(_turnoInimigo, 900);
+        return;
+      }
+    }
+    _finalizarTurno(c);
+  }
+
   function _finalizarTurno(c) {
     const turnoAntes = COMBAT.estado.turno;
     COMBAT.etapa5_fimRodada(c);
@@ -2379,7 +2416,7 @@ const BATTLE = (() => {
     // iniciarRodada já foi chamado em _iniciarTurno quando o turno começou.
     COMBAT.passarRodada(c);
     _floatTexto(c.id, '✦ CARTA +1', 'carta-comprada');
-    _finalizarTurno(c);
+    _verificarEtapa4(c);
   }
 
   function _criarBtnDebug() {
@@ -2413,7 +2450,7 @@ const BATTLE = (() => {
     const decisao = IA.decidir(c);
     if (!decisao || !decisao.hab) {
       COMBAT.passarRodada(c);
-      _finalizarTurno(c);
+      _verificarEtapa4(c);
       return;
     }
 
@@ -2456,7 +2493,7 @@ const BATTLE = (() => {
             const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
             if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
           }
-          setTimeout(() => _processarContraAtaques(() => _finalizarTurno(c)), 600);
+          setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(c)), 600);
         }
       }, _ANIM_DUR);
     });
@@ -2511,7 +2548,7 @@ const BATTLE = (() => {
       }
       if (totalDanoDef > 0) _screenShake(totalDanoDef);
 
-      setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
+      setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
       return;
     }
 
