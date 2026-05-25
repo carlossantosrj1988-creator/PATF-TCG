@@ -202,14 +202,14 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
     // Topbar
     screen.appendChild(criarTopbar());
 
-    // Personagens (esquerda)
-    screen.appendChild(criarPainelChars());
-
     // Botões (direita)
     screen.appendChild(criarPainelActions());
 
     // Mapa central
     screen.appendChild(criarMapa());
+
+    // Personagens em battle positions (appended after map)
+    criarCharSlots();
   }
 
   // ── Topbar ────────────────────────────────────────────────────────────────
@@ -270,12 +270,10 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
     painel.id = 'tutorial-actions';
     painel.innerHTML = `
       <button class="tutorial-action-btn" id="btn-tutorial-status">⚔ STATUS</button>
-      <button class="tutorial-action-btn" id="btn-tutorial-equipamentos">🎒 EQUIPAMENTOS</button>
       <button class="tutorial-action-btn" id="btn-tutorial-desistir">🏳 DESISTIR</button>
     `;
 
     painel.querySelector('#btn-tutorial-status').addEventListener('click', abrirStatus);
-    painel.querySelector('#btn-tutorial-equipamentos').addEventListener('click', () => {});
     painel.querySelector('#btn-tutorial-desistir').addEventListener('click', confirmarDesistir);
 
     return painel;
@@ -287,50 +285,91 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
     const mapa = document.createElement('div');
     mapa.id = 'tutorial-mapa';
 
-    // Renderiza de cima para baixo: etapa 5 → etapa 1
-    const ordem = [4, 3, 2, 1, 0];
+    const TIPO = {
+      0: { icon: '⚔', extra: '' },
+      1: { icon: '⚔', extra: '' },
+      2: { icon: '☠', extra: 'miniboss-node' },
+      3: { icon: '⚔', extra: '' },
+      4: { icon: '♛', extra: 'boss-node' },
+    };
+
+    const ordem = [4, 3, 2, 1, 0]; // top → bottom
 
     ordem.forEach((idx, i) => {
-      const etapa = ETAPAS[idx];
+      const etapa    = ETAPAS[idx];
       const concluida = etapasConcluidas.includes(idx);
       const ativa     = idx === etapaAtual && !aguardandoStatus;
-      const bloqueada = !concluida && !ativa;
-      const lado      = idx % 2 === 0 ? 'direita' : 'esquerda';
+      const tipo      = TIPO[idx];
 
-      // Conector acima (exceto no primeiro)
       if (i > 0) {
         const conector = document.createElement('div');
-        conector.className = 'mapa-conector' + (concluida ? ' ativa' : '');
+        const prevIdx  = ordem[i - 1];
+        conector.className = 'mapa-conector'
+          + (etapasConcluidas.includes(prevIdx) ? ' ativa' : '')
+          + (TIPO[prevIdx].extra === 'boss-node' ? ' boss-line' : '');
         mapa.appendChild(conector);
       }
 
-      // Nó
-      const noWrapper = document.createElement('div');
-      noWrapper.className = 'mapa-etapa-linha';
+      const estadoCls = concluida ? 'concluida' : ativa ? 'ativa' : 'bloqueada';
+      const icone     = concluida ? '✓' : tipo.icon;
 
-      const no = document.createElement('div');
-      no.className = 'mapa-no';
-      no.dataset.lado = lado;
+      const noEl = document.createElement('div');
+      noEl.className = `mapa-no-circulo ${estadoCls} ${tipo.extra}`;
+      noEl.dataset.idx = idx;
+      noEl.innerHTML = `${icone}<span class="mapa-no-label">${etapa.label}</span>`;
 
-      const estadoClasse = concluida ? 'concluida' : ativa ? 'ativa' : 'bloqueada';
-      const icone        = concluida ? '✓' : ativa ? '▶' : idx + 1;
+      if (ativa) noEl.addEventListener('click', () => entrarEtapa(idx));
 
-      no.innerHTML = `
-        <div class="mapa-no-circulo ${estadoClasse}" data-idx="${idx}">
-          ${icone}
-          <span class="mapa-no-label">${etapa.label}</span>
-        </div>
-      `;
-
-      if (ativa) {
-        no.querySelector('.mapa-no-circulo').addEventListener('click', () => entrarEtapa(idx));
-      }
-
-      noWrapper.appendChild(no);
-      mapa.appendChild(noWrapper);
+      mapa.appendChild(noEl);
     });
 
     return mapa;
+  }
+
+  // ── Personagens em battle positions ──────────────────────────────────────
+
+  function criarCharSlots() {
+    const screen = document.getElementById('screen-tutorial');
+    const positions = [
+      { left: '10%', top: '68%', scale: 1.0 },
+      { left: '20%', top: '68%', scale: 1.0 },
+      { left: '30%', top: '68%', scale: 1.0 },
+    ];
+
+    PLAYER_STATE.personagens.forEach((p, i) => {
+      const pos     = positions[i];
+      if (!pos) return;
+
+      const hpMax   = p.pvs;
+      const hpAtual = TUTORIAL_MAP.state.hp[p.poolId]?.cur ?? p.hpAtual ?? hpMax;
+      const pct     = Math.max(0, Math.min(100, (hpAtual / hpMax) * 100));
+      const hpColor = pct > 50 ? '#55cc88' : pct > 25 ? '#ccaa33' : '#cc4444';
+
+      // Vigor gets scale 1.25
+      const isVigor = p.poolId === 'vigor';
+      const scale   = isVigor ? 1.25 : pos.scale;
+
+      const sprSrc = (typeof CHAR_SPRITE !== 'undefined')
+        ? (CHAR_SPRITE.MAP[p.poolId] ?? '')
+        : '';
+
+      const slot = document.createElement('div');
+      slot.className = 'tutorial-char-slot';
+      slot.style.left = pos.left;
+      slot.style.top  = pos.top;
+      slot.innerHTML = `
+        <div class="tut-char-sprite-wrap" style="transform:scale(${scale});transform-origin:bottom center;">
+          <img class="tut-char-sprite" src="${sprSrc}">
+        </div>
+        <div class="tut-char-nome">${p.nome}</div>
+        <div class="tut-char-hp-row">
+          <div class="tut-char-hp-bar"><div class="tut-char-hp-fill" style="width:${pct}%;background:${hpColor}"></div></div>
+          <span class="tut-char-hp-txt">${hpAtual}/${hpMax}</span>
+        </div>
+      `;
+
+      screen.appendChild(slot);
+    });
   }
 
   // ── Entrar em uma etapa ───────────────────────────────────────────────────
