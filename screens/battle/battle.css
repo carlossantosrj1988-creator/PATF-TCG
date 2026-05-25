@@ -190,7 +190,7 @@
   height: 488px;
   overflow: hidden;
 
-  /* Cenário: céu noturno → chão escuro */
+  /* Cenário: céu noturno → chão escuro (fallback sem imagem) */
   background: linear-gradient(180deg,
     #04060e 0%,
     #070c1a 28%,
@@ -199,6 +199,23 @@
     #0d111f 82%,
     #080b14 100%
   );
+}
+
+/* Cenário com imagem — adicionado via JS (BATTLE.init opts.background) */
+#battle-field.has-bg {
+  background-image: var(--battle-bg-url);
+  background-size: cover;
+  background-position: center bottom;
+  animation: battle-bg-breathe 10s ease-in-out infinite alternate;
+}
+
+#battle-field.has-bg::before {
+  display: none; /* suprime estrelas quando há imagem de cenário */
+}
+
+@keyframes battle-bg-breathe {
+  0%   { background-size: 100%; }
+  100% { background-size: 104%; }
 }
 
 /* Estrelas pulsando */
@@ -310,6 +327,21 @@
   border: none;
   overflow: visible;
   border-radius: 0;
+  position: relative;
+}
+
+/* Sombra elíptica no chão sob o sprite */
+.battle-char-grad.sprite-mode::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 20px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.50) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .battle-char-sprite {
@@ -319,6 +351,12 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7));
+  animation: sprite-idle 2.6s ease-in-out infinite;
+}
+
+@keyframes sprite-idle {
+  0%, 100% { transform: translateY(0px);   }
+  50%       { transform: translateY(-4px);  }
 }
 
 /* Nome abaixo do sprite (diferente do nome dentro do card) */
@@ -355,10 +393,11 @@
   50%       { filter: drop-shadow(0 0 16px rgba(220,60,60,1.0)) drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
 }
 
-/* Morto: dessaturado */
+/* Morto: dessaturado, sem animação */
 .battle-char-slot.morto .battle-char-sprite {
   filter: grayscale(1) brightness(0.35) drop-shadow(0 4px 6px rgba(0,0,0,0.5));
   opacity: 0.55;
+  animation: none;
 }
 
 /* Nome — overlay no card, fundo escuro vindo de baixo */

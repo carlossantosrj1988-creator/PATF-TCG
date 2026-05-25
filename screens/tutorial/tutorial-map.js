@@ -57,9 +57,10 @@ const TUTORIAL_MAP = (() => {
   function _iniciarBatalha(inimigos, tutorialFlag, onVitoriaFn) {
     BATTLE.init({
       inimigos,
-      tutorial: tutorialFlag,
-      onVitoria: onVitoriaFn,
-      onDerrota: _onDerrota,
+      tutorial:   tutorialFlag,
+      onVitoria:  onVitoriaFn,
+      onDerrota:  _onDerrota,
+      background: 'assets/backgrounds/tutorial_plains.png',
     });
     const bs = document.getElementById('screen-battle');
     if (bs) {
