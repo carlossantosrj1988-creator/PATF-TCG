@@ -339,7 +339,7 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
     const iniciar = () => TUTORIAL_MAP.entrarEtapa(
       idx,
       ETAPAS[idx].pontos,
-      () => concluirEtapa(idx),
+      (pts) => concluirEtapa(idx, pts),
       () => renderTela(),
     );
 
@@ -374,20 +374,16 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
 
   // ── Concluir etapa ────────────────────────────────────────────────────────
 
-  function concluirEtapa(idx) {
+  function concluirEtapa(idx, pontosGanhos) {
     etapasConcluidas.push(idx);
 
-    const etapa = ETAPAS[idx];
-
-    // Adiciona pontos
-    PLAYER_STATE.pontos += etapa.pontos;
+    PLAYER_STATE.pontos += pontosGanhos;
     salvarEstado();
 
-    // Redesenha o mapa
     renderTela();
 
-    // Mostra popup de recompensa
-    mostrarRecompensa(etapa.popupRecompensa);
+    const popupData = { ...ETAPAS[idx].popupRecompensa, pontos: pontosGanhos };
+    mostrarRecompensa(popupData);
   }
 
   // ── Popup de entrada ──────────────────────────────────────────────────────
@@ -514,6 +510,13 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
   // ── Finalizar tutorial ────────────────────────────────────────────────────
 
   function finalizarTutorial() {
+    // Reseta HP de todos os personagens — entram no Survivor com HP cheio
+    for (const p of PLAYER_STATE.personagens) {
+      const entry = TUTORIAL_MAP.state.hp[p.poolId];
+      p.hpAtual = entry ? entry.max : p.pvs;
+    }
+    salvarEstado();
+
     const screen = document.getElementById('screen-tutorial');
     screen.style.display = 'none';
     // Por ora volta para start — quando tela principal existir, trocar aqui

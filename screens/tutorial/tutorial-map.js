@@ -82,11 +82,18 @@ const TUTORIAL_MAP = (() => {
         tutorial: etapaIdx === 0,
         onVitoria: () => {
           _salvarHP();
-          _afterBattle(etapaIdx, onConcluida);
+          // 1 ponto por personagem vivo; boss (etapa 5, idx 4) dá +2 adicionais
+          const vivos = PLAYER_STATE.personagens.filter(
+            p => (TUTORIAL_STATE.hp[p.poolId]?.cur ?? 0) > 0
+          ).length;
+          const pontosGanhos = vivos + (etapaIdx === 4 ? 2 : 0);
+          _afterBattle(etapaIdx, () => onConcluida(pontosGanhos));
         },
         onDerrota: () => {
-          _resetarHP();   // time volta com HP cheio — etapa fica jogável de novo
-          onDerrota();
+          // Tutorial hardcore: time inteiro caiu = perde tudo (personagens + pontos)
+          limparEstado();
+          GAMEOVER.init();
+          window.irParaTela('screen-gameover');
         },
       });
       // BATTLE.init() é síncrono — screen-battle já existe; aplica fade-in
