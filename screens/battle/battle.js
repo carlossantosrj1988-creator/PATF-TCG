@@ -54,6 +54,7 @@ const BATTLE = (() => {
   let _isTutorial        = false; // batalha do tutorial — exibe popups explicativos
   let _tutorialIniVisto  = false; // tutorial de iniciativa já foi mostrado
   let _tutorialBatVisto  = false; // tutorial de batalha já foi mostrado
+  let _cenarioBackground = null;  // URL da imagem de fundo do campo (null = gradiente padrão)
 
   // ── Log de batalha — persiste entre renders ───────────────────────────────
   const _LOG_MAX    = 40;
@@ -518,6 +519,7 @@ const BATTLE = (() => {
     _isTutorial        = opts.tutorial  ?? false;
     _tutorialIniVisto  = false;
     _tutorialBatVisto  = false;
+    _cenarioBackground = opts.background ?? null;
     _logEntries.length = 0; // limpa log da batalha anterior
 
     const inimigos = opts.inimigos ?? [];
@@ -1176,20 +1178,25 @@ const BATTLE = (() => {
   // Mais ao fundo (top menor) = escala menor (efeito de profundidade).
   const JRPG_POS = {
     jogador: [
-      { left: '24%', top: '25%', scale: 0.82 },
-      { left: '16%', top: '55%', scale: 0.92 },
-      { left: '28%', top: '82%', scale: 1.00 },
+      { left: '10%', top: '68%', scale: 1.00 },
+      { left: '20%', top: '68%', scale: 1.00 },
+      { left: '30%', top: '68%', scale: 1.00 },
     ],
     inimigo: [
-      { left: '76%', top: '25%', scale: 0.82 },
-      { left: '84%', top: '55%', scale: 0.92 },
-      { left: '72%', top: '82%', scale: 1.00 },
+      { left: '70%', top: '68%', scale: 1.00 },
+      { left: '80%', top: '68%', scale: 1.00 },
+      { left: '90%', top: '68%', scale: 1.00 },
     ],
   };
 
   function _criarCampo() {
     const campo = document.createElement('div');
     campo.id = 'battle-field';
+
+    if (_cenarioBackground) {
+      campo.classList.add('has-bg');
+      campo.style.setProperty('--battle-bg-url', `url('${_cenarioBackground}')`);
+    }
 
     // Glow central animado
     const glow = document.createElement('div');
