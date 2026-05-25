@@ -203,7 +203,7 @@
 
 /* Cenário com imagem — adicionado via JS (BATTLE.init opts.background) */
 #battle-field.has-bg {
-  animation: battle-bg-breathe 10s ease-in-out infinite alternate;
+  /* animação removida — background estático sem zoom */
 }
 
 #battle-field.has-bg::before {

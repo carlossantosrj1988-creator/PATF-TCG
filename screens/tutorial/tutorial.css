@@ -15,8 +15,11 @@
 #tutorial-bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 50% 60%, #0d2a1a 0%, #0a0e1a 70%);
+  background-image:
+    radial-gradient(ellipse at 50% 60%, #0d2a1a88 0%, #0a0e1acc 70%),
+    url('../../assets/backgrounds/tutorial_plains.png');
+  background-size: cover, cover;
+  background-position: center center, center bottom;
   z-index: 0;
 }
 
