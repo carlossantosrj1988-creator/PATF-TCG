@@ -187,6 +187,36 @@ const EFEITOS = (() => {
     });
   });
 
+  // ── Veneno ────────────────────────────────────────────────────────────────
+  // DoT empilhável (máx 3 stacks). Cada stack = 3 dano/turno por 2 turnos.
+  registrar('veneno', (alvo) => {
+    const stacks = alvo.efeitos.filter(e => e._origem === 'veneno' && (e.duracao ?? 0) > 0).length;
+    if (stacks >= 3) return;
+    alvo.efeitos.push({
+      tipo: 'dot', valor: 3, gatilho: 'inicio_rodada',
+      duracao: 2, duracaoOriginal: 2, _origem: 'veneno',
+    });
+  });
+
+  // ── Atordoamento ──────────────────────────────────────────────────────────
+  // Controle: 50% de chance de perder o turno por 1 turno. Reutiliza tipo 'stun'.
+  registrar('atordoamento', (alvo) => {
+    _renovarOuCriar(alvo, 'atordoamento', () => {
+      alvo.efeitos.push({
+        tipo: 'stun', duracao: 1, duracaoOriginal: 1, _origem: 'atordoamento',
+      });
+    });
+  });
+
+  // ── Ignora Armadura ───────────────────────────────────────────────────────
+  // Buff instantâneo: próxima ação passa pela DEF do alvo sem redução.
+  // Consumido em combat.js resolverAcao antes de calcular dano.
+  registrar('ignora_armadura', (alvo) => {
+    if (!alvo.efeitos.some(e => e.tipo === 'ignora_armadura')) {
+      alvo.efeitos.push({ tipo: 'ignora_armadura', duracao: null, _origem: 'ignora_armadura' });
+    }
+  });
+
   // ── Imagem Espelhada ──────────────────────────────────────────────────────
   // Buff permanente até ser consumido: 50% de esquiva por ataque de alvo único
   // (não funciona contra Furtivo). Ao esquivar, a entrada é removida.

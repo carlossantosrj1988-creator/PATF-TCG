@@ -13,35 +13,18 @@ const TUTORIAL_MAP = (() => {
     { tipo: 'boss',        rotulo: 'ETAPA 5 / 5', iniIdx: 4 },
   ];
 
-  // Inimigos do tutorial — placeholders simples pra testar o fluxo.
-  // Os monstros reais do jogo (enemy-ai/monstros.js) ficam pro Survivor.
-  // Por enquanto: Goblin nas 5 etapas, ataque simples, valores leves.
-  const TUTORIAL_GOBLIN = {
-    id: 'goblin_tut',
-    tipo: 'mob',
-    nome: 'Goblin',
-    sub: 'Tutorial',
-    naipe: '♣',
-    atq: 4, def: 2, inc: 2, pvs: 40,
-    habilidades: [
-      {
-        nome: 'Ataque', poder: 3, tipo: 'Corpo a Corpo', alvo: 'unico',
-        turno: 'sim', recarga: 0, acao: 'N', efeitoPuro: false,
-        tags: [], descricao: 'Ataque simples.',
-        _id: 'tutorial:goblin_ataque',
-      },
-    ],
-    passivas: [],
-  };
-
-  // Por etapa (5 etapas) — todas usam Goblin enquanto a gente só testa
-  const TUTORIAL_INIMIGOS = [
-    TUTORIAL_GOBLIN,
-    TUTORIAL_GOBLIN,
-    TUTORIAL_GOBLIN,
-    TUTORIAL_GOBLIN,
-    TUTORIAL_GOBLIN,
-  ];
+  // Retorna o array de inimigos da etapa. Avaliado em runtime para não
+  // depender da ordem de carregamento de monstros.js.
+  function _getInimigos(etapaIdx) {
+    switch (etapaIdx) {
+      case 0: return [MONSTROS.get('goblin_fanatico')];
+      case 1: return [MONSTROS.get('lobo_matilha_a'), MONSTROS.get('lobo_matilha_b')];
+      case 2: return [MONSTROS.get('casulo_butter')];
+      case 3: return [MONSTROS.get('goblin_fanatico'), MONSTROS.get('lobo_matilha_a'), MONSTROS.get('lobo_matilha_b')];
+      case 4: return [MONSTROS.get('prisoner_demon')];
+      default: return [];
+    }
+  }
 
   const _COR_NAIPE  = { '♥': '#e06060', '♣': '#5ac880', '♦': '#e8c050', '♠': '#7aade8' };
   const _NAIPE_SIM  = { ouro: '♦', copas: '♥', espadas: '♠', paus: '♣' };
@@ -65,42 +48,62 @@ const TUTORIAL_MAP = (() => {
 
   // ── Entrar em etapa ───────────────────────────────────────────────────────
 
-  function entrarEtapa(etapaIdx, pontos, onConcluida, onDerrota) {
+  function _onDerrota() {
+    limparEstado();
+    GAMEOVER.init();
+    window.irParaTela('screen-gameover');
+  }
+
+  function _iniciarBatalha(inimigos, tutorialFlag, onVitoriaFn) {
+    BATTLE.init({
+      inimigos,
+      tutorial: tutorialFlag,
+      onVitoria: onVitoriaFn,
+      onDerrota: _onDerrota,
+    });
+    const bs = document.getElementById('screen-battle');
+    if (bs) {
+      bs.classList.add('battle-entering');
+      setTimeout(() => bs.classList.remove('battle-entering'), 500);
+    }
+  }
+
+  function entrarEtapa(etapaIdx, pontos, onConcluida) {
     // Injeta HP salvo em cada personagem antes de passar para a batalha
     for (const p of PLAYER_STATE.personagens) {
       const salvo = TUTORIAL_STATE.hp[p.poolId];
       p.hpAtual = salvo ? salvo.cur : p.pvs;
     }
 
-    const inimigo = TUTORIAL_INIMIGOS[etapaIdx] ?? TUTORIAL_INIMIGOS[0];
+    const inimigos = _getInimigos(etapaIdx);
 
-    _mostrarTransicao(etapaIdx, () => {
-      BATTLE.init({
-        etapaIdx,
-        pontos,
-        inimigos: inimigo ? [inimigo] : [],
-        tutorial: etapaIdx === 0,
-        onVitoria: () => {
+    _mostrarTransicao(etapaIdx, inimigos, () => {
+      if (etapaIdx === 2) {
+        // Mini boss em duas fases: Casulo do Butter → Butter Venenoso
+        _iniciarBatalha(inimigos, false, () => {
           _salvarHP();
-          // 1 ponto por personagem vivo; boss (etapa 5, idx 4) dá +2 adicionais
+          // Re-injeta HP salvo para a fase 2
+          for (const p of PLAYER_STATE.personagens) {
+            const salvo = TUTORIAL_STATE.hp[p.poolId];
+            p.hpAtual = salvo ? salvo.cur : p.pvs;
+          }
+          _iniciarBatalha([MONSTROS.get('butter_venenoso')], false, () => {
+            _salvarHP();
+            const vivos = PLAYER_STATE.personagens.filter(
+              p => (TUTORIAL_STATE.hp[p.poolId]?.cur ?? 0) > 0
+            ).length;
+            _afterBattle(etapaIdx, () => onConcluida(vivos));
+          });
+        });
+      } else {
+        _iniciarBatalha(inimigos, etapaIdx === 0, () => {
+          _salvarHP();
           const vivos = PLAYER_STATE.personagens.filter(
             p => (TUTORIAL_STATE.hp[p.poolId]?.cur ?? 0) > 0
           ).length;
           const pontosGanhos = vivos + (etapaIdx === 4 ? 2 : 0);
           _afterBattle(etapaIdx, () => onConcluida(pontosGanhos));
-        },
-        onDerrota: () => {
-          // Tutorial hardcore: time inteiro caiu = perde tudo (personagens + pontos)
-          limparEstado();
-          GAMEOVER.init();
-          window.irParaTela('screen-gameover');
-        },
-      });
-      // BATTLE.init() é síncrono — screen-battle já existe; aplica fade-in
-      const bs = document.getElementById('screen-battle');
-      if (bs) {
-        bs.classList.add('battle-entering');
-        setTimeout(() => bs.classList.remove('battle-entering'), 500);
+        });
       }
     });
   }
@@ -141,11 +144,11 @@ const TUTORIAL_MAP = (() => {
 
   // ── Tela de transição: jogadores VS inimigo (fade-in → display → fade-out) ─
 
-  function _mostrarTransicao(etapaIdx, onFim) {
+  function _mostrarTransicao(etapaIdx, inimigos, onFim) {
     const cfg          = _CONFIG[etapaIdx];
-    const inimigo      = TUTORIAL_INIMIGOS[cfg.iniIdx] ?? TUTORIAL_INIMIGOS[0];
-    const inimigoNaipe = inimigo?.naipe ?? null;
-    const inimigoNome  = inimigo?.nome  ?? '???';
+    const primeiro     = inimigos[0] ?? null;
+    const inimigoNaipe = primeiro?.naipe ?? null;
+    const inimigoNome  = primeiro?.nome  ?? '???';
     const corIni       = _COR_NAIPE[inimigoNaipe] ?? '#aaa';
 
     const tipoLabel =
@@ -167,15 +170,24 @@ const TUTORIAL_MAP = (() => {
         <div id="tmap-trans-arena">
           <div id="tmap-trans-time-jogador"></div>
           <div id="tmap-trans-vs">VS</div>
-          <div id="tmap-trans-time-inimigo">
-            <div class="tmap-trans-char-card inimigo">
-              <span class="tmap-card-naipe" style="color:${corIni}">${inimigoNaipe ?? '?'}</span>
-              <span class="tmap-card-nome">${inimigoNome}</span>
-            </div>
-          </div>
+          <div id="tmap-trans-time-inimigo"></div>
         </div>
       </div>
     `;
+
+    // Preenche cards dos inimigos
+    const iniDiv = el.querySelector('#tmap-trans-time-inimigo');
+    for (const ini of inimigos) {
+      if (!ini) continue;
+      const cor = _COR_NAIPE[ini.naipe] ?? '#aaa';
+      const card = document.createElement('div');
+      card.className = 'tmap-trans-char-card inimigo';
+      card.innerHTML = `
+        <span class="tmap-card-naipe" style="color:${cor}">${ini.naipe ?? '?'}</span>
+        <span class="tmap-card-nome">${ini.nome ?? '???'}</span>
+      `;
+      iniDiv.appendChild(card);
+    }
 
     // Preenche cards dos personagens do jogador
     const timeDiv = el.querySelector('#tmap-trans-time-jogador');

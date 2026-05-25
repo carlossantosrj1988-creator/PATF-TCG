@@ -93,6 +93,24 @@ const EFEITOS_DATA = {
     descricao: '50% de esquiva ao ser atacado (não funciona contra Furtivo). Consumida ao esquivar.',
   },
 
+  veneno: {
+    nome:      'Veneno',
+    categoria: 'debuff_dot',
+    descricao: '3 de dano por turno por 2 turnos. Acumula até 3 stacks (máx 9 de dano/turno).',
+  },
+
+  atordoamento: {
+    nome:      'Atordoamento',
+    categoria: 'debuff_ctrl',
+    descricao: '50% de chance de perder o turno por 1 turno.',
+  },
+
+  ignora_armadura: {
+    nome:      'Ignora Armadura',
+    categoria: 'buff_instantaneo',
+    descricao: 'Próxima ação passa pela DEF do alvo sem redução. O jogador ainda pode usar carta de defesa.',
+  },
+
   // ── Vantagens de naipe ────────────────────────────────────────────────────
 
   hearts_adv: {

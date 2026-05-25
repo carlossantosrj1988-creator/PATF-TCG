@@ -203,6 +203,17 @@ const PASSIVAS = (() => {
     }
   });
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // IMPLEMENTAÇÕES — Inimigos do Tutorial
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // esporos_casulo — Passiva do Casulo do Butter
+  // Ao sofrer dano, aplica 1 stack de veneno no atacante.
+  registrar('esporos_casulo', 'ao_sofrer_dano', (c, ev) => {
+    if (!ev.atacante || ev.danoReal <= 0) return;
+    EFEITOS.aplicar('veneno', ev.atacante, c);
+  });
+
   return { disparar, recalcularStats };
 
 })();

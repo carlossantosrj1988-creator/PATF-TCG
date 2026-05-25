@@ -29,6 +29,14 @@ const MONSTROS = (() => {
   // _id é injetado em MONSTROS.get com prefixo 'enemy:'.
 
   const SKILLS = {
+    // ── Tutorial ──
+    goblin_granada:  { nome:'Granada Goblin',    poder:3,    tipo:'',             alvo:'unico',    turno:'sim', recarga:0, acao:'N', efeitoPuro:false, tags:[], descricao:'' },
+    lobo_mordida:    { nome:'Mordida',            poder:1,    tipo:'',             alvo:'unico',    turno:'sim', recarga:0, acao:'N', efeitoPuro:false, tags:['ignora_armadura'], descricao:'Ignora a DEF do alvo.' },
+    butter_sono:     { nome:'Esporos de Sono',    poder:null, tipo:'',             alvo:'inimigos', turno:'sim', recarga:0, acao:'N', efeitoPuro:true,  tags:['atordoamento'], descricao:'Aplica atordoamento em todos os inimigos.' },
+    butter_veneno:   { nome:'Esporos Venenosos',  poder:null, tipo:'',             alvo:'inimigos', turno:'sim', recarga:0, acao:'N', efeitoPuro:true,  tags:['veneno'], descricao:'Aplica 1 stack de veneno em todos os inimigos.' },
+    demon_pancada:   { nome:'Pancada',            poder:4,    tipo:'Corpo a Corpo',alvo:'unico',    turno:'sim', recarga:0, acao:'N', efeitoPuro:false, tags:[], descricao:'Pancada poderosa.' },
+    demon_salto:     { nome:'Salto do Demônio',   poder:1,    tipo:'Corpo a Corpo',alvo:'inimigos', turno:'sim', recarga:0, acao:'N', efeitoPuro:false, tags:[], descricao:'Cai sobre todos os inimigos.' },
+
     // ── Boss 1 (Rainha Sanguessuga) + cria_t1 ──
     b1_drn: { nome:'Drenar Sangue',          poder:4,    tipo:'Distância',    alvo:'unico',    turno:'sim', recarga:0, acao:'N', efeitoPuro:false, tags:[], descricao:'Causa sangramento no alvo.' },
     b1_enx: { nome:'Enxame Sangrento',       poder:3,    tipo:'Corpo a Corpo',alvo:'inimigos', turno:'nao', recarga:1, acao:'N', efeitoPuro:false, tags:[], descricao:'Causa sangramento em todos os inimigos.' },
@@ -64,6 +72,15 @@ const MONSTROS = (() => {
   // ══════════════════════════════════════════════════════════════════════════
 
   const DATA = {
+    // ── Tutorial ────────────────────────────────────────────────────────────
+
+    goblin_fanatico:  { tipo:'mob',     tier:0, nome:'Goblin Fanático',   sub:'Tutorial',              naipe:'♣',  atq:3, def:1, inc:3,  pvs:50,  skills:['goblin_granada'],              passivas:[],               weight:1, iniScript:'maior' },
+    lobo_matilha_a:   { tipo:'mob',     tier:0, nome:'Lobo de Matilha α', sub:'Tutorial',              naipe:null, atq:2, def:2, inc:2,  pvs:60,  skills:['lobo_mordida'],                passivas:[],               weight:1, iniScript:'aleatorio' },
+    lobo_matilha_b:   { tipo:'mob',     tier:0, nome:'Lobo de Matilha β', sub:'Tutorial',              naipe:null, atq:2, def:2, inc:2,  pvs:60,  skills:['lobo_mordida'],                passivas:[],               weight:1, iniScript:'aleatorio' },
+    casulo_butter:    { tipo:'miniboss',tier:0, phase:1, nome:'Casulo do Butter',  sub:'Mini Boss — Tutorial', naipe:null, atq:0, def:5, inc:0,  pvs:75,  skills:[],                              passivas:['esporos_casulo'] },
+    butter_venenoso:  { tipo:'miniboss',tier:0, phase:2, nome:'Butter Venenoso',   sub:'Mini Boss — Tutorial', naipe:null, atq:0, def:0, inc:5,  pvs:75,  skills:['butter_sono','butter_veneno'], passivas:[], iniScript:'garantir_primeiro' },
+    prisoner_demon:   { tipo:'boss',    tier:0, phase:1, nome:'Prisoner Demon',    sub:'Boss — Tutorial',      naipe:null, atq:5, def:5, inc:-1, pvs:200, skills:['demon_pancada','demon_salto'], passivas:[] },
+
     // ── Mobs Tier 1 — Floresta Sombria ──────────────────────────────────────
 
     cria_t1_a: { tipo:'mob', tier:1, nome:'Cria de Sanguessuga α', sub:'Monstro — Floresta Sombria', naipe:null, atq:6, def:5, inc:-2, pvs:50, skills:['b1_drn'], passivas:[], weight:1 },

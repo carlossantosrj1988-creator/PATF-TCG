@@ -112,6 +112,7 @@ const COMBAT = (() => {
       _acaoRapidaGasta:   false,
       _rodadaExtraGasta:  false,
       perdeuRodada:       false,
+      iniScript:          origem.iniScript ?? null,
     };
     PASSIVAS.recalcularStats(c);
     return c;
@@ -438,6 +439,13 @@ const COMBAT = (() => {
             alvoReal.descarte.push(defesaCarta);
           }
         }
+      }
+
+      // ignora_armadura: efeito instantâneo no atacante — passa pela DEF do alvo
+      const temIgnoraArm = atacante.efeitos.some(e => e.tipo === 'ignora_armadura');
+      if (temIgnoraArm) {
+        evPoder.ignoraArmadura = true;
+        atacante.efeitos = atacante.efeitos.filter(e => e.tipo !== 'ignora_armadura');
       }
 
       // ♠ Espadas → ♥ Copas: dano bruto dobrado (não se aplica em Furtivo)
