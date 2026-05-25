@@ -108,7 +108,7 @@ const EFEITOS_DATA = {
   atordoamento: {
     nome:      'Atordoamento',
     categoria: 'debuff_ctrl',
-    descricao: '50% de chance de perder o turno por 1 turno.',
+    descricao: '50% de chance de perder o próximo turno.',
   },
 
   ignora_armadura: {

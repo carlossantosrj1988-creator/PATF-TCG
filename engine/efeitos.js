@@ -209,11 +209,12 @@ const EFEITOS = (() => {
   });
 
   // ── Atordoamento ──────────────────────────────────────────────────────────
-  // Controle: 50% de chance de perder o turno por 1 turno. Reutiliza tipo 'stun'.
+  // Controle: 50% de chance de perder o turno por 1 turno.
+  // duracao:2 porque Etapa 0 decrementa antes do check — garante 1 roll real.
   registrar('atordoamento', (alvo) => {
     _renovarOuCriar(alvo, 'atordoamento', () => {
       alvo.efeitos.push({
-        tipo: 'stun', duracao: 1, duracaoOriginal: 1, _origem: 'atordoamento',
+        tipo: 'stun', duracao: 2, duracaoOriginal: 2, _origem: 'atordoamento',
       });
     });
   });
