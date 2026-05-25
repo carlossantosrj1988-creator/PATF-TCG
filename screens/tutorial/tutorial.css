@@ -73,11 +73,11 @@
 }
 .tut-char-sprite-wrap { display: flex; align-items: flex-end; justify-content: center; }
 .tut-char-sprite { width: 96px; height: auto; image-rendering: pixelated; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8)); }
-.tut-char-nome { font-size: 0.58rem; color: #ccc; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 1px 4px #000; }
-.tut-char-hp-row { display: flex; align-items: center; gap: 4px; }
-.tut-char-hp-bar { width: 56px; height: 3px; background: #111; border-radius: 2px; overflow: hidden; }
-.tut-char-hp-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
-.tut-char-hp-txt { font-size: 0.52rem; color: #666; letter-spacing: 1px; }
+.tut-char-nome { font-size: 0.68rem; color: #ddd; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 1px 4px #000; }
+.tut-char-hp-row { display: flex; align-items: center; gap: 5px; }
+.tut-char-hp-bar { width: 84px; height: 8px; background: #111; border-radius: 4px; overflow: hidden; border: 1px solid #ffffff18; }
+.tut-char-hp-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.tut-char-hp-txt { font-size: 0.65rem; color: #aaa; letter-spacing: 1px; text-shadow: 0 1px 3px #000; }
 
 /* ── Painel direito — botões ── */
 #tutorial-actions {
