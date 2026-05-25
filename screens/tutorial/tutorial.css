@@ -15,11 +15,9 @@
 #tutorial-bg {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(ellipse at 50% 60%, #0d2a1a88 0%, #0a0e1acc 70%),
-    url('../../assets/backgrounds/tutorial_plains.png');
-  background-size: cover, cover;
-  background-position: center center, center bottom;
+  background-image: url('../../assets/backgrounds/tutorial_plains.png');
+  background-size: 100% 100%;
+  background-position: center center;
   z-index: 0;
 }
 
@@ -62,79 +60,33 @@
 
 .topbar-coin { font-size: 1rem; }
 
-/* ── Painel esquerdo — personagens ── */
-#tutorial-chars {
+/* ── Personagens em battle positions ── */
+.tutorial-char-slot {
   position: absolute;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  z-index: 10;
-  width: 200px;
-}
-
-.tutorial-char-card {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.tutorial-char-top {
-  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  pointer-events: none;
 }
-
-.tutorial-char-avatar {
-  width: 32px;
-  height: 44px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.tutorial-char-nome {
-  font-size: 0.7rem;
-  color: #ccc;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-weight: bold;
-}
-
-.tutorial-char-hp-bar {
-  width: 100%;
-  height: 6px;
-  background: #1a1a1a;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.tutorial-char-hp-fill {
-  height: 100%;
-  background: #44dd88;
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-.tutorial-char-hp-texto {
-  font-size: 0.6rem;
-  color: #555;
-  letter-spacing: 1px;
-}
+.tut-char-sprite-wrap { display: flex; align-items: flex-end; justify-content: center; }
+.tut-char-sprite { width: 96px; height: auto; image-rendering: pixelated; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8)); }
+.tut-char-nome { font-size: 0.58rem; color: #ccc; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 1px 4px #000; }
+.tut-char-hp-row { display: flex; align-items: center; gap: 4px; }
+.tut-char-hp-bar { width: 56px; height: 3px; background: #111; border-radius: 2px; overflow: hidden; }
+.tut-char-hp-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+.tut-char-hp-txt { font-size: 0.52rem; color: #666; letter-spacing: 1px; }
 
 /* ── Painel direito — botões ── */
 #tutorial-actions {
   position: absolute;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
+  top: 60px;
+  right: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   z-index: 10;
 }
 
@@ -182,114 +134,86 @@
   border-color: #cc4444;
 }
 
-/* ── Mapa de etapas (centro) ── */
+/* ── Mapa de etapas (centro) — Slay the Spire style ── */
 #tutorial-mapa {
   position: absolute;
+  left: 50%;
   top: 52px;
-  left: 220px;
-  right: 180px;
-  bottom: 0;
+  bottom: 220px;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 5;
   gap: 0;
+  z-index: 5;
 }
 
-.mapa-etapa-linha {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  position: relative;
-  flex-direction: column;
-}
-
-/* Linha conectora vertical */
 .mapa-conector {
   width: 2px;
-  height: 40px;
-  background: #ffffff18;
+  height: 36px;
+  background: #ffffff14;
+  flex-shrink: 0;
 }
-
-.mapa-conector.ativa {
-  background: #44dd8866;
-}
-
-/* Nó da etapa */
-.mapa-no {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  cursor: default;
-  user-select: none;
-}
+.mapa-conector.ativa { background: linear-gradient(180deg, #44dd8855, #c9a84c55); }
+.mapa-conector.boss-line { background: linear-gradient(180deg, #c9a84c44, #cc444444); }
 
 .mapa-no-circulo {
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  border: 2px solid #ffffff20;
-  background: #0d0d1a;
+  border: 2px solid #ffffff18;
+  background: #06080f;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  color: #444;
-  transition: border-color 0.3s, background 0.3s, color 0.3s, transform 0.2s;
+  font-size: 1.3rem;
+  color: #333;
   position: relative;
+  flex-shrink: 0;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .mapa-no-label {
-  font-size: 0.65rem;
-  color: #555;
+  position: absolute;
+  left: calc(100% + 14px);
+  font-size: 0.58rem;
+  color: #444;
   letter-spacing: 3px;
   text-transform: uppercase;
-  position: absolute;
   white-space: nowrap;
+  text-shadow: 0 1px 3px #000;
 }
 
-/* Label à direita nos nós ímpares, esquerda nos pares */
-.mapa-no[data-lado="direita"] .mapa-no-label {
-  left: calc(100% + 16px);
-}
-
-.mapa-no[data-lado="esquerda"] .mapa-no-label {
-  right: calc(100% + 16px);
-  text-align: right;
-}
-
-/* Estados do nó */
-.mapa-no-circulo.concluida {
-  border-color: #44dd88;
-  background: #0a2a18;
-  color: #44dd88;
-}
+.mapa-no-circulo.concluida { border-color: #44dd88; background: #0a2a18; color: #44dd88; }
+.mapa-no-circulo.concluida .mapa-no-label { color: #44dd8899; }
 
 .mapa-no-circulo.ativa {
   border-color: #c9a84c;
   background: #1a1400;
   color: #c9a84c;
   cursor: pointer;
+  box-shadow: 0 0 16px #c9a84c33, 0 0 32px #c9a84c18;
   animation: pulsar 2s ease-in-out infinite;
 }
+.mapa-no-circulo.ativa .mapa-no-label { color: #c9a84c; }
+.mapa-no-circulo.ativa:hover { transform: scale(1.1); }
 
-.mapa-no-circulo.ativa:hover {
-  transform: scale(1.08);
-  background: #2a2000;
-}
+.mapa-no-circulo.bloqueada { border-color: #0f1018; background: #04050a; color: #1a1a28; cursor: not-allowed; }
 
-.mapa-no-circulo.bloqueada {
-  border-color: #ffffff10;
-  background: #0d0d1a;
-  color: #2a2a2a;
-  cursor: not-allowed;
-}
+.mapa-no-circulo.miniboss-node { width: 62px; height: 62px; border-color: #7733aa; background: #0e0818; color: #7733aa; }
+.mapa-no-circulo.miniboss-node.ativa { border-color: #aa44dd; box-shadow: 0 0 16px #aa44dd33; color: #aa44dd; }
+.mapa-no-circulo.miniboss-node .mapa-no-label { color: #7733aa88; }
+.mapa-no-circulo.miniboss-node.ativa .mapa-no-label { color: #aa44dd; }
+
+.mapa-no-circulo.boss-node { width: 70px; height: 70px; border-color: #882222; background: #110608; color: #882222; }
+.mapa-no-circulo.boss-node.ativa { border-color: #cc4444; box-shadow: 0 0 20px #cc444433; color: #cc4444; }
+.mapa-no-circulo.boss-node .mapa-no-label { left: auto; right: calc(100% + 14px); color: #88222299; }
+.mapa-no-circulo.boss-node.ativa .mapa-no-label { color: #cc4444; }
 
 @keyframes pulsar {
-  0%, 100% { box-shadow: 0 0 0 0 #c9a84c33; }
-  50%       { box-shadow: 0 0 0 8px #c9a84c00; }
+  0%, 100% { box-shadow: 0 0 16px #c9a84c33, 0 0 32px #c9a84c18; }
+  50%       { box-shadow: 0 0 24px #c9a84c55, 0 0 48px #c9a84c28; }
 }
 
 /* ── Popup de tutorial ── */
