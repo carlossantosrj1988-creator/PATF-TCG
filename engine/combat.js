@@ -67,6 +67,7 @@ const COMBAT = (() => {
       // Fila de contra-ataques/ataques em conjunto pendentes — processados pela UI
       // após o dano principal, antes do fim da rodada.
       contraAtaquesPendentes: [],
+      ultimosHits:            [],   // resultados por hit — lido por battle.js para animação
     };
   }
 
@@ -306,7 +307,7 @@ const COMBAT = (() => {
   //
   // defesasPorAlvo: { [alvo.id]: cartaIdx } — opcional. Quando presente,
   // consome a carta de defesa da mão do alvo e usa no cálculo de defesa.
-  function resolverAcao(atacante, hab, cartaIdx, alvos, defesasPorAlvo = null) {
+  function resolverAcao(atacante, hab, cartaIdx, alvos, defesasPorAlvo = null, cartasAdicionais = []) {
     if (!atacante || !hab || !Array.isArray(alvos) || alvos.length === 0) return null;
     let alvosEfetivos = alvos;
 
@@ -378,6 +379,7 @@ const COMBAT = (() => {
     }
 
     // 4. Resolve por alvo
+    BATTLE_STATE.ultimosHits = [];
     for (const alvo of alvosEfetivos) {
       if (!alvo || alvo.hp <= 0) continue;
 
@@ -505,13 +507,21 @@ const COMBAT = (() => {
         }
       }
 
-      // Passes adicionais: poder múltiplo (ex: '1/1' → segundo golpe sem efeitos extras)
+      // Registra resultado do primeiro hit
+      BATTLE_STATE.ultimosHits.push({ alvoId: alvoReal.id, danoReal: resultado.danoReal });
+
+      // Hits adicionais: defesa da carta defensiva vale pra todos; carta atacante e tags por hit
       for (let pi = 1; pi < poderes.length; pi++) {
         if (alvoReal.hp <= 0) break;
-        const r2 = etapa3_resolucaoDano(atacante, alvoReal, poderes[pi], carta, hab.efeitoPuro, null);
+        const cartaAdicional = cartasAdicionais[pi - 1] ?? null;
+        const r2 = etapa3_resolucaoDano(atacante, alvoReal, poderes[pi], cartaAdicional, hab.efeitoPuro, defesaCarta);
+        BATTLE_STATE.ultimosHits.push({ alvoId: alvoReal.id, danoReal: r2.danoReal });
         if (r2.causouDano) {
           PASSIVAS.disparar('ao_causar_dano', atacante, { alvo: alvoReal, ...r2 });
           PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...r2 });
+          if (Array.isArray(hab.tags) && hab.tags.length > 0 && typeof EFEITOS !== 'undefined' && EFEITOS.aplicar) {
+            for (const tag of hab.tags) EFEITOS.aplicar(tag, alvoReal, atacante);
+          }
         }
       }
 
