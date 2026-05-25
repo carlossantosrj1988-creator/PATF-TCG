@@ -188,7 +188,7 @@
   position: absolute;
   top: 52px; left: 0; right: 0;
   height: 488px;
-  overflow: hidden;
+  overflow: visible;
 
   /* Cenário: céu noturno → chão escuro (fallback sem imagem) */
   background: linear-gradient(180deg,
