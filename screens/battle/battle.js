@@ -1250,7 +1250,8 @@ const BATTLE = (() => {
     const pos   = (JRPG_POS[c.lado] ?? JRPG_POS.inimigo)[idx]
                ?? (JRPG_POS[c.lado] ?? JRPG_POS.inimigo).at(-1);
     const CHAR_SCALE = { vigor: 1.25 };
-    const scale = pos.scale * (CHAR_SCALE[c.poolId] ?? 1.0);
+    const charScale = CHAR_SCALE[c.poolId] ?? 1.0;
+    const scale = pos.scale;
 
     const slot = document.createElement('div');
     slot.className = 'battle-char-slot'
@@ -1269,7 +1270,7 @@ const BATTLE = (() => {
     if (spriteSrc) {
       // ── Modo sprite: imagem pixel art ──
       slot.innerHTML = `
-        <div class="battle-char-grad sprite-mode">
+        <div class="battle-char-grad sprite-mode" style="transform:scale(${charScale});transform-origin:bottom center;">
           <img class="battle-char-sprite" src="${spriteSrc}" draggable="false" alt="${c.nome}">
         </div>
         <div class="battle-char-nome-sprite" style="color:${corNaipe}bb">${c.nome}</div>
