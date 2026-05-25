@@ -1178,14 +1178,14 @@ const BATTLE = (() => {
   // Mais ao fundo (top menor) = escala menor (efeito de profundidade).
   const JRPG_POS = {
     jogador: [
-      { left: '10%', top: '68%', scale: 1.00 },
-      { left: '20%', top: '68%', scale: 1.00 },
-      { left: '30%', top: '68%', scale: 1.00 },
+      { left: '10%', top: '58%', scale: 1.00 },
+      { left: '20%', top: '58%', scale: 1.00 },
+      { left: '30%', top: '58%', scale: 1.00 },
     ],
     inimigo: [
-      { left: '70%', top: '68%', scale: 1.00 },
-      { left: '80%', top: '68%', scale: 1.00 },
-      { left: '90%', top: '68%', scale: 1.00 },
+      { left: '70%', top: '58%', scale: 1.00 },
+      { left: '80%', top: '58%', scale: 1.00 },
+      { left: '90%', top: '58%', scale: 1.00 },
     ],
   };
 
@@ -1196,8 +1196,8 @@ const BATTLE = (() => {
     if (_cenarioBackground) {
       campo.classList.add('has-bg');
       campo.style.backgroundImage    = `url('${_cenarioBackground}')`;
-      campo.style.backgroundSize     = 'cover';
-      campo.style.backgroundPosition = 'center bottom';
+      campo.style.backgroundSize     = '100% 100%';
+      campo.style.backgroundPosition = 'center center';
     }
 
     // Glow central animado
