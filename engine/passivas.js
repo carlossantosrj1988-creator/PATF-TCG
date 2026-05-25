@@ -112,7 +112,9 @@ const PASSIVAS = (() => {
   // Ao nocautear um inimigo, compra 1 carta extra e ganha rodada extra.
   registrar('esp_p2', 'ao_nocautear_inimigo', (c) => {
     COMBAT.comprarCarta(c, 1);
-    c._rodadaExtraPending = true;
+    if (!c.acaoExtra && !c.efeitos.some(e => e.tipo === 'rodada_extra')) {
+      c.efeitos.push({ tipo: 'rodada_extra', duracao: null });
+    }
   });
 
   // esp_p3 — Gladiador
@@ -150,8 +152,9 @@ const PASSIVAS = (() => {
   // A cada turno (tick_passivas): 50% de chance de ganhar ação extra Rápida.
   registrar('our_p2', 'tick_passivas', (c) => {
     if (c.acaoExtra) return;   // já usou ação extra neste turno
+    if (c.efeitos.some(e => e.tipo === 'acao_rapida')) return;  // já tem pendente
     if (Math.random() < 0.5) {
-      c._acaoDuplicadaPending = true;
+      c.efeitos.push({ tipo: 'acao_rapida', duracao: null });
     }
   });
 

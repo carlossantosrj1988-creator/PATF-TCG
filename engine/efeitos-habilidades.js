@@ -70,9 +70,9 @@ const EFEITOS_HABILIDADES = (() => {
   // ══════════════════════════════════════════════════════════════════════════
 
   // Golpe de Abate (esp_h1_2)
-  // Crítico Alto: 50% de chance de dobrar o poder base.
-  registrar('esp_h1_2', 'modificar_poder', (c, ev) => {
-    if (Math.random() < 0.5) ev.bonusPoder += ev.poderBase;
+  // Crítico Alto: 50% de chance de dobrar o dano APÓS a defesa (×2 no dano final líquido).
+  registrar('esp_h1_2', 'modificar_dano_final', (c, ev) => {
+    if (Math.random() < 0.5) ev.multiplicador = 2;
   });
 
   // Corte Metamorphosis (esp_h1_5)

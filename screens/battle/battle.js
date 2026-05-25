@@ -36,6 +36,9 @@ const BATTLE = (() => {
   let _onDerrota         = null;
   let _pontos            = 0;   // pontos da etapa — exibido na tela de fim
   let _aguardando        = false;  // evita double-fire no turno do inimigo
+  let _cartasAdicionais  = [];     // cartas escolhidas para hits adicionais (null = pular)
+  let _hitAdicionalIdx   = 0;      // quantos hits adicionais já foram configurados
+  let _alvosParaExecutar = null;   // alvos guardados enquanto coleta cartas adicionais
   // Estado do painel — máquina de estados do fluxo de uso de habilidade:
   // 'etapa1' → 'sel_habilidade' → 'sel_carta' → 'sel_alvo' (ou auto-resolve)
   let _estadoPainel      = 'etapa1';
@@ -120,6 +123,37 @@ const BATTLE = (() => {
     setTimeout(() => target.classList.remove('vantagem-flash'), 820);
   }
 
+  // ── Ícones canvas de extra (acao_rapida / rodada_extra) ──────────────────────
+  // Gera um ícone circular colorido com símbolo centralizado via canvas.
+  // Cache por chave para não redesenhar a cada render.
+  const _iconeExtraCache = {};
+  function _iconeExtraUrl(cor, simbolo) {
+    const key = cor + simbolo;
+    if (_iconeExtraCache[key]) return _iconeExtraCache[key];
+    const SIZE = 22;
+    const cv   = document.createElement('canvas');
+    cv.width   = SIZE;
+    cv.height  = SIZE;
+    const ctx  = cv.getContext('2d');
+    // Círculo de fundo
+    ctx.beginPath();
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 1, 0, Math.PI * 2);
+    ctx.fillStyle = cor === 'verde' ? '#22aa55' : '#cc3333';
+    ctx.fill();
+    // Símbolo centralizado
+    ctx.font         = '13px serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(simbolo, SIZE / 2, SIZE / 2 + 1);
+    _iconeExtraCache[key] = cv.toDataURL();
+    return _iconeExtraCache[key];
+  }
+
+  function _iconeExtraHtml(cor, simbolo, titulo) {
+    const url = _iconeExtraUrl(cor, simbolo);
+    return `<img src="${url}" class="bchar-ef-canvas" title="${titulo}" width="18" height="18">`;
+  }
+
   // Gera HTML de ícones de efeitos ativos (buff/debuff) para o slot do campo.
   function _efeitosIconsHtml(c) {
     const _SIM = {
@@ -131,27 +165,35 @@ const BATTLE = (() => {
       hearts_adv: '❤', clubs_furtivo: '🌿',
       imagem_espelhada: '◈', derretar_armadura: '⚗',
       congelado: '❄', radiacao: '☢', estatica: '⚡',
+      critico: '💥',
     };
 
     const partes = [];
 
-    // Efeitos ativos
+    // Efeitos ativos — inclui duracao: null (instantâneos) e duracao > 0 (duração)
+    // acao_rapida e rodada_extra são renderizados via canvas abaixo — skip aqui
     for (const e of (c.efeitos ?? [])) {
-      if ((e.duracao ?? 1) <= 0) continue;
+      if (e.tipo === 'acao_rapida' || e.tipo === 'rodada_extra') continue;
+      if (e.duracao !== null && (e.duracao ?? 1) <= 0) continue;
       const cls   = _classeEfeito(e);
       const label = _efeitoLabel(e);
       const sim   = _SIM[e.tipo] ?? '●';
-      partes.push(`<span class="bchar-ef-icon ${cls}" title="${label} (${e.duracao}t)">${sim}</span>`);
+      const durTxt = e.duracao !== null ? ` (${e.duracao}t)` : '';
+      partes.push(`<span class="bchar-ef-icon ${cls}" title="${label}${durTxt}">${sim}</span>`);
     }
 
-    // Ação Rápida / Rodada Extra — ícone pendente ou gasto
-    if (c._acaoDuplicadaPending) {
-      partes.push(`<span class="bchar-ef-icon buff" title="Ação Rápida disponível">⚡+</span>`);
-    } else if (c.acaoExtra) {
-      partes.push(`<span class="bchar-ef-icon gasto" title="Ação extra já usada neste turno">⚡✓</span>`);
+    // Ícones canvas de estado extra — verde (pendente) ou vermelho (bloqueado)
+    const temAcaoRapida   = (c.efeitos ?? []).some(e => e.tipo === 'acao_rapida');
+    const temRodadaExtra  = (c.efeitos ?? []).some(e => e.tipo === 'rodada_extra');
+    if (temAcaoRapida) {
+      partes.push(_iconeExtraHtml('verde', '⚡', 'Ação Rápida disponível'));
+    } else if (c._acaoRapidaGasta) {
+      partes.push(_iconeExtraHtml('vermelho', '⚡', 'Ação Rápida usada — sem mais extras este turno'));
     }
-    if (c._rodadaExtraPending) {
-      partes.push(`<span class="bchar-ef-icon buff" title="Rodada Extra disponível">♦+</span>`);
+    if (temRodadaExtra) {
+      partes.push(_iconeExtraHtml('verde', '✨', 'Rodada Extra disponível'));
+    } else if (c._rodadaExtraGasta) {
+      partes.push(_iconeExtraHtml('vermelho', '✨', 'Rodada Extra ativa/gasta — sem mais extras este turno'));
     }
 
     return partes.join('');
@@ -1222,8 +1264,9 @@ const BATTLE = (() => {
     if (_estadoPainel === 'sel_alvo' && _habSel) {
       const atacante = COMBAT.combatenteAtual();
       if (_alvoValido(c, _habSel, atacante)) {
+
         slot.classList.add('selecionavel');
-        slot.addEventListener('click', () => _executarAcao([c]));
+        slot.addEventListener('click', () => _confirmarAlvo([c]));
       }
     }
     // Clicável como aliado quando carta especial Q (Dama) está aguardando alvo
@@ -1322,7 +1365,59 @@ const BATTLE = (() => {
       return painel;
     }
 
+    // ── Sel carta adicional: escolha de carta para hits extras (opcional) ──
+    if (_estadoPainel === 'sel_carta_adicional') {
+      painel.appendChild(_criarPainelCartaAdicionalEsq());
+      painel.appendChild(_criarPainelCartaAdicionalDir(atual));
+      return painel;
+    }
+
     return painel;
+  }
+
+  // ── Painel esquerdo para seleção de carta de hit adicional ──
+  function _criarPainelCartaAdicionalEsq() {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-habs';
+    div.classList.add('detalhe');
+    const hitNum    = _hitAdicionalIdx + 2;
+    const totalHits = _totalHits(_habSel);
+    div.innerHTML = `
+      <div class="battle-defesa-titulo" style="color:#c9a84c;">⚔ ATAQUE ${hitNum} DE ${totalHits}</div>
+      <div class="battle-defesa-info">
+        Opcional — escolha uma carta para potencializar ou pule.
+      </div>
+    `;
+    const btnPular = document.createElement('button');
+    btnPular.className   = 'battle-btn-hab';
+    btnPular.textContent = '↪ PULAR';
+    btnPular.style.marginTop = '8px';
+    btnPular.addEventListener('click', () => _escolherCartaAdicional(null, -1));
+    div.appendChild(btnPular);
+    return div;
+  }
+
+  // ── Painel direito para seleção de carta de hit adicional ──
+  function _criarPainelCartaAdicionalDir(atual) {
+    const div = document.createElement('div');
+    div.id = 'battle-panel-cartas';
+    const mao = COMBAT.estado.maoJogador;
+    let temCarta = false;
+    mao.forEach((carta, i) => {
+      if (DECK.ehEspecial(carta)) return;
+      temCarta = true;
+      const corCarta = _COR_INI[carta.naipe] ?? '#c9a84c';
+      const el = document.createElement('button');
+      el.className = 'battle-carta';
+      el.dataset.naipe = carta.naipe ?? '';
+      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
+      el.addEventListener('click', () => _escolherCartaAdicional(carta, i));
+      div.appendChild(el);
+    });
+    if (!temCarta) {
+      div.innerHTML = `<div class="battle-mao-vazia">SEM CARTAS — APENAS PULE</div>`;
+    }
+    return div;
   }
 
   // ── Painel esquerdo de etapa1: HABILIDADES + PASSAR ──
@@ -1419,7 +1514,7 @@ const BATTLE = (() => {
           _cartaSelIdx = i;
           const alvosAuto = _calcularAlvosAuto(_habSel, combatente);
           if (alvosAuto) {
-            _executarAcao(alvosAuto);
+            _confirmarAlvo(alvosAuto);
           } else {
             _estadoPainel = 'sel_alvo';
             _renderizar();
@@ -1462,7 +1557,7 @@ const BATTLE = (() => {
           _cartaSelIdx = i;
           const alvosAuto = _calcularAlvosAuto(_habSel, combatente);
           if (alvosAuto) {
-            _executarAcao(alvosAuto);
+            _confirmarAlvo(alvosAuto);
           } else {
             _estadoPainel = 'sel_alvo';
             _renderizar();
@@ -1730,6 +1825,45 @@ const BATTLE = (() => {
     return div;
   }
 
+  // ── Helpers de multi-hit ─────────────────────────────────────────────────
+  function _ehMultiHit(hab) {
+    return typeof hab?.poder === 'string' && hab.poder.includes('/');
+  }
+  function _totalHits(hab) {
+    if (!_ehMultiHit(hab)) return 1;
+    return hab.poder.split('/').length;
+  }
+
+  // Após selecionar alvo: se multi-hit, coleta cartas adicionais; senão executa direto.
+  function _confirmarAlvo(alvos) {
+    if (_ehMultiHit(_habSel) && _totalHits(_habSel) > 1) {
+      _alvosParaExecutar = alvos;
+      _cartasAdicionais  = [];
+      _hitAdicionalIdx   = 0;
+      _estadoPainel      = 'sel_carta_adicional';
+      _renderizar();
+    } else {
+      _executarAcao(alvos);
+    }
+  }
+
+  // Jogador escolheu (ou pulou) a carta do hit adicional atual.
+  function _escolherCartaAdicional(carta, idx) {
+    if (carta !== null && idx >= 0) {
+      COMBAT.estado.maoJogador.splice(idx, 1);
+      COMBAT.estado.descarteJogador.push(carta);
+      _cartasAdicionais.push(carta);
+    } else {
+      _cartasAdicionais.push(null);
+    }
+    _hitAdicionalIdx++;
+    if (_hitAdicionalIdx < _totalHits(_habSel) - 1) {
+      _renderizar();   // mais hits a configurar
+    } else {
+      _executarAcao(_alvosParaExecutar, [..._cartasAdicionais]);
+    }
+  }
+
   // ── Cálculo de alvos / executor ───────────────────────────────────────────
 
   // Retorna array de alvos quando a habilidade tem alvo automático,
@@ -1758,56 +1892,87 @@ const BATTLE = (() => {
     return false;
   }
 
-  function _executarAcao(alvos) {
+  function _executarAcao(alvos, cartasAdicionais = []) {
     const atacante = COMBAT.combatenteAtual();
     if (!atacante || !_habSel) return;
+
+    // Limpa estado de multi-hit
+    _alvosParaExecutar = null;
 
     const hab = _habSel;
     _logUI(`⚔ ${atacante.nome} usa ${hab.nome}`, 'atk');
 
-    // Detecta sinergia e vantagem antes do banner (carta ainda na mão)
     const temSinerg = !hab.efeitoPuro && !!_cartaSel && _cartaSel.naipe === atacante.naipe;
     const temVantag = !hab.efeitoPuro && alvos.some(a => DAMAGE.temVantagem(atacante.naipe, a.naipe));
 
-    // Banner pausa ~1150ms; lunge e dano resolvem depois
     _showSkillBanner(hab, atacante).then(() => {
       _animarSlot(atacante.id, 'atacando');
 
       setTimeout(() => {
         const hpAntes = _capturaHP();
-        COMBAT.resolverAcao(atacante, hab, _cartaSelIdx, alvos);
+        COMBAT.resolverAcao(atacante, hab, _cartaSelIdx, alvos, null, cartasAdicionais);
 
-        let totalDano = 0;
-        for (const c of COMBAT.estado.combatentes) {
-          const antes = hpAntes[c.id] ?? c.hp;
-          const diff  = antes - c.hp;
-          const cura  = c.hp - antes;
-          if (diff > 0) {
-            _animarSlot(c.id, 'recebendo-dano');
-            const ehAlvo = alvos.some(a => a.id === c.id);
-            let tipo = 'dano';
-            if (ehAlvo && temVantag) tipo = 'dano-vantagem';
-            else if (ehAlvo && temSinerg) tipo = 'dano-sinerg';
-            _floatDanoContado(c.id, diff, tipo);
-            if (ehAlvo) totalDano += diff;
-          } else if (cura > 0) {
-            _floatTexto(c.id, `+${cura}`, 'cura');
+        const hits = COMBAT.estado.ultimosHits;
+
+        if (hits.length > 1) {
+          // ── Multi-hit: animação sequencial por hit ──
+          _renderizar();
+          let i = 0;
+          function _proximoHit() {
+            if (i >= hits.length) {
+              if (temVantag) {
+                _flashVantagem(atacante.id);
+                setTimeout(() => _floatTexto(atacante.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+              }
+              for (const alvo of alvos) {
+                const danoTotal = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+                if (danoTotal > 0) _logUI(`💥 ${alvo.nome} recebeu ${danoTotal} de dano (${hits.length} hits)`, 'dmg');
+              }
+              setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
+              return;
+            }
+            const hit = hits[i++];
+            if (hit.danoReal > 0) {
+              _animarSlot(hit.alvoId, 'recebendo-dano');
+              const tipo = temVantag ? 'dano-vantagem' : temSinerg ? 'dano-sinerg' : 'dano';
+              _floatDanoContado(hit.alvoId, hit.danoReal, tipo);
+              _floatTexto(hit.alvoId, `${i}º ATQ`, 'sistema');
+              _screenShake(hit.danoReal);
+            }
+            setTimeout(_proximoHit, 500);
           }
+          _proximoHit();
+
+        } else {
+          // ── Single hit: comportamento atual ──
+          let totalDano = 0;
+          for (const c of COMBAT.estado.combatentes) {
+            const antes = hpAntes[c.id] ?? c.hp;
+            const diff  = antes - c.hp;
+            const cura  = c.hp - antes;
+            if (diff > 0) {
+              _animarSlot(c.id, 'recebendo-dano');
+              const ehAlvo = alvos.some(a => a.id === c.id);
+              let tipo = 'dano';
+              if (ehAlvo && temVantag) tipo = 'dano-vantagem';
+              else if (ehAlvo && temSinerg) tipo = 'dano-sinerg';
+              _floatDanoContado(c.id, diff, tipo);
+              if (ehAlvo) totalDano += diff;
+            } else if (cura > 0) {
+              _floatTexto(c.id, `+${cura}`, 'cura');
+            }
+          }
+          if (totalDano > 0) _screenShake(totalDano);
+          if (temVantag) {
+            _flashVantagem(atacante.id);
+            setTimeout(() => _floatTexto(atacante.id, '▲ NAIPE', 'vantagem-naipe'), 120);
+          }
+          for (const alvo of alvos) {
+            const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
+            if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+          }
+          setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
         }
-
-        if (totalDano > 0) _screenShake(totalDano);
-
-        if (temVantag) {
-          _flashVantagem(atacante.id);
-          setTimeout(() => _floatTexto(atacante.id, '▲ NAIPE', 'vantagem-naipe'), 120);
-        }
-
-        for (const alvo of alvos) {
-          const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
-          if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
-        }
-
-        setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
       }, _ANIM_DUR);
     });
   }
@@ -1848,12 +2013,10 @@ const BATTLE = (() => {
       COMBAT.comprarCarta(c, 1);
       _floatTexto(c.id, '✦ CARTA +1', 'carta-comprada');
     } else if (carta.valor === '★') {
-      // Coringa: injeta rodada extra na fila logo após a posição atual.
-      // Limite: máximo 1 extra por combatente na fila — ignora se já há uma.
-      const estado = COMBAT.estado;
-      const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(c);
-      if (!jaTemExtra) {
-        estado.ordem.splice(estado.indiceAtual + 1, 0, c);
+      // Coringa: concede rodada extra via efeito (bloqueado se acaoExtra já ativo).
+      if (!c.acaoExtra && !c.efeitos.some(e => e.tipo === 'rodada_extra')) {
+        c.efeitos.push({ tipo: 'rodada_extra', duracao: null });
+        _floatTexto(c.id, '✨ RODADA EXTRA!', 'vantagem-naipe');
       }
     }
 
@@ -1923,11 +2086,14 @@ const BATTLE = (() => {
       exposto:           '▽ Exposto',
       odio_bonus:        '⊕ Ódio',
       rei_atq_bonus:     '♛ Bônus de Rei',
+      // Instantâneas
+      rodada_extra:      '♦ Rodada Extra',
+      acao_rapida:       '⚡ Ação Rápida',
+      critico:           '💥 Crítico',
     };
     if (map[e.tipo]) return map[e.tipo];
-    if (e._origem && typeof EFEITOS !== 'undefined') {
-      const ef = EFEITOS.get(e._origem);
-      if (ef && ef.nome) return ef.nome;
+    if (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo]?.nome) {
+      return EFEITOS_DATA[e.tipo].nome;
     }
     return e.tipo;
   }
@@ -1936,6 +2102,8 @@ const BATTLE = (() => {
     if (e.tipo.startsWith('buff'))   return 'buff';
     if (e.tipo.startsWith('debuff')) return 'debuff';
     if (e.tipo === 'dot' || e.tipo === 'frozen' || e.tipo === 'stun') return 'debuff';
+    // Instantâneas são buffs
+    if (e.tipo === 'rodada_extra' || e.tipo === 'acao_rapida' || e.tipo === 'critico') return 'buff';
     return 'neutro';
   }
 
@@ -2000,27 +2168,24 @@ const BATTLE = (() => {
     const efRows = [];
 
     for (const e of (c.efeitos || [])) {
-      if ((e.duracao ?? 0) <= 0) continue;
+      // duracao: null = instantânea (ativa até consumo); duracao > 0 = duração normal
+      if (e.duracao !== null && (e.duracao ?? 0) <= 0) continue;
       const cls  = _classeEfeito(e);
       const nome = _efeitoLabel(e)
         + (e.valor !== undefined ? ` <span class="bsp-efeito-val">(${e.valor > 0 ? '+' : ''}${e.valor})</span>` : '');
       const desc = (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo])
-        ? EFEITOS_DATA[e.tipo].descricao
-        : '';
+        ? EFEITOS_DATA[e.tipo].descricao : '';
       efRows.push(_efeitoCard(cls, nome, desc, e.duracao));
     }
 
-    if (c._acaoDuplicadaPending) {
-      efRows.push(_efeitoCard('buff', '⚡ Ação Rápida disponível',
-        'Pode usar uma segunda ação rápida neste turno.', null));
+    // Bloqueios de extras (flags de estado — não são efeitos)
+    if (c._acaoRapidaGasta) {
+      efRows.push(_efeitoCard('debuff', '⚡✗ Ação Rápida (gasta)',
+        'Ação rápida usada neste turno. Sem novas ações ou rodadas extras.', null));
     }
-    if (c.acaoExtra) {
-      efRows.push(_efeitoCard('gasto', '⚡ Ação extra (usada)',
-        'A ação extra foi utilizada neste turno.', null));
-    }
-    if (c._rodadaExtraPending) {
-      efRows.push(_efeitoCard('buff', '♦ Rodada Extra disponível',
-        'Terá uma rodada extra após a rodada atual.', null));
+    if (c._rodadaExtraGasta) {
+      efRows.push(_efeitoCard('debuff', '♦✗ Rodada Extra (ativa/gasta)',
+        'Rodada extra em curso ou já usada neste turno. Sem novos extras.', null));
     }
     if ((c._acumulo ?? 0) > 0) {
       efRows.push(_efeitoCard('buff',
@@ -2150,15 +2315,55 @@ const BATTLE = (() => {
   }
 
   // Finaliza o turno: roda etapa5 (fim de rodada), avança combatente e renderiza.
+  // ── Etapa 4 — Verifica ação extra antes de finalizar o turno ────────────────
+  // Se o combatente tem acao_rapida ou rodada_extra (e não está bloqueado),
+  // consome o efeito, re-roda Etapa 1 e devolve o controle ao jogador/IA.
+  // Caso contrário, finaliza o turno normalmente.
+  function _verificarEtapa4(c) {
+    if (!c.acaoExtra) {
+      const idxRapida = c.efeitos.findIndex(e => e.tipo === 'acao_rapida');
+      const idxExtra  = c.efeitos.findIndex(e => e.tipo === 'rodada_extra');
+      const idx       = idxRapida >= 0 ? idxRapida : idxExtra;
+
+      if (idx >= 0) {
+        const tipo = c.efeitos[idx].tipo;
+        c.efeitos.splice(idx, 1);
+        c.acaoExtra = true;
+        if (tipo === 'acao_rapida') {
+          c._acaoRapidaGasta = true;
+          _floatTexto(c.id, '⚡ AÇÃO RÁPIDA!', 'vantagem-naipe');
+        } else {
+          c._rodadaExtraGasta = true;
+          _floatTexto(c.id, '✨ RODADA EXTRA!', 'vantagem-naipe');
+        }
+        // Re-roda Etapa 1 (passivas tick + recalc + stun check)
+        COMBAT.rodarEtapa1(c);
+        _habSel        = null;
+        _cartaSel      = null;
+        _cartaSelIdx   = -1;
+        _estadoPainel  = 'etapa1';
+        _aguardando    = false;
+        _renderizar();
+        // Se for inimigo, agenda o turno extra da IA
+        if (c.lado === 'inimigo') setTimeout(_turnoInimigo, 900);
+        return;
+      }
+    }
+    _finalizarTurno(c);
+  }
+
   function _finalizarTurno(c) {
     const turnoAntes = COMBAT.estado.turno;
     COMBAT.etapa5_fimRodada(c);
 
-    // Rodada extra pendente (naipe ♦, passiva Novo Level, etc.)
+    // Rodada extra pendente — efeito instantâneo rodada_extra (duracao: null)
     const estado = COMBAT.estado;
     for (const cb of estado.combatentes) {
-      if (cb._rodadaExtraPending && cb.hp > 0) {
-        cb._rodadaExtraPending = false;
+      const idx = cb.efeitos.findIndex(e => e.tipo === 'rodada_extra');
+      if (idx >= 0 && cb.hp > 0) {
+        cb.efeitos.splice(idx, 1);        // consome o efeito
+        cb.acaoExtra         = true;      // bloqueia novos extras neste turno
+        cb._rodadaExtraGasta = true;      // ícone vermelho de rodada extra
         const jaTemExtra = estado.ordem.slice(estado.indiceAtual + 1).includes(cb);
         if (!jaTemExtra) estado.ordem.splice(estado.indiceAtual + 1, 0, cb);
         _floatTexto(cb.id, '♦ +RODADA!', 'vantagem-naipe');
@@ -2211,7 +2416,7 @@ const BATTLE = (() => {
     // iniciarRodada já foi chamado em _iniciarTurno quando o turno começou.
     COMBAT.passarRodada(c);
     _floatTexto(c.id, '✦ CARTA +1', 'carta-comprada');
-    _finalizarTurno(c);
+    _verificarEtapa4(c);
   }
 
   function _criarBtnDebug() {
@@ -2245,7 +2450,7 @@ const BATTLE = (() => {
     const decisao = IA.decidir(c);
     if (!decisao || !decisao.hab) {
       COMBAT.passarRodada(c);
-      _finalizarTurno(c);
+      _verificarEtapa4(c);
       return;
     }
 
@@ -2288,7 +2493,7 @@ const BATTLE = (() => {
             const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
             if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
           }
-          setTimeout(() => _processarContraAtaques(() => _finalizarTurno(c)), 600);
+          setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(c)), 600);
         }
       }, _ANIM_DUR);
     });
@@ -2343,7 +2548,7 @@ const BATTLE = (() => {
       }
       if (totalDanoDef > 0) _screenShake(totalDanoDef);
 
-      setTimeout(() => _processarContraAtaques(() => _finalizarTurno(atacante)), 600);
+      setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
       return;
     }
 

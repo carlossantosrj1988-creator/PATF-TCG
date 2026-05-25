@@ -67,6 +67,7 @@ const COMBAT = (() => {
       // Fila de contra-ataques/ataques em conjunto pendentes — processados pela UI
       // após o dano principal, antes do fim da rodada.
       contraAtaquesPendentes: [],
+      ultimosHits:            [],   // resultados por hit — lido por battle.js para animação
     };
   }
 
@@ -107,8 +108,10 @@ const COMBAT = (() => {
       mao:             [],
       descarte:        [],
       cartaIniciativa: null,
-      acaoExtra:       false,
-      perdeuRodada:    false,
+      acaoExtra:          false,
+      _acaoRapidaGasta:   false,
+      _rodadaExtraGasta:  false,
+      perdeuRodada:       false,
     };
     PASSIVAS.recalcularStats(c);
     return c;
@@ -188,8 +191,10 @@ const COMBAT = (() => {
         if (c.lado === 'inimigo') _comprarCarta(c, 1);
         else jogadoresVivos++;
       }
-      c.acaoExtra    = false;
-      c.perdeuRodada = false;
+      c.acaoExtra         = false;
+      c._acaoRapidaGasta  = false;
+      c._rodadaExtraGasta = false;
+      c.perdeuRodada      = false;
     }
     // Compra apenas 1 carta por turno para a mão compartilhada do time jogador.
     // Cartas extras vêm de: passar a rodada, Ás, ou outros efeitos específicos.
@@ -213,8 +218,8 @@ const COMBAT = (() => {
   function iniciarRodada(combatente) {
     if (!combatente || combatente._turnoIniciado) return;
     combatente._turnoIniciado = true;
-    _deduzirEfeitos(combatente);
     _aplicarDoT(combatente);
+    _deduzirEfeitos(combatente);
   }
 
   // Etapa 1 — Verificações Pré-Ação. Re-roda em rodada extra / ação rápida.
@@ -302,7 +307,7 @@ const COMBAT = (() => {
   //
   // defesasPorAlvo: { [alvo.id]: cartaIdx } — opcional. Quando presente,
   // consome a carta de defesa da mão do alvo e usa no cálculo de defesa.
-  function resolverAcao(atacante, hab, cartaIdx, alvos, defesasPorAlvo = null) {
+  function resolverAcao(atacante, hab, cartaIdx, alvos, defesasPorAlvo = null, cartasAdicionais = []) {
     if (!atacante || !hab || !Array.isArray(alvos) || alvos.length === 0) return null;
     let alvosEfetivos = alvos;
 
@@ -374,6 +379,7 @@ const COMBAT = (() => {
     }
 
     // 4. Resolve por alvo
+    BATTLE_STATE.ultimosHits = [];
     for (const alvo of alvosEfetivos) {
       if (!alvo || alvo.hp <= 0) continue;
 
@@ -441,6 +447,22 @@ const COMBAT = (() => {
       // Dano (com defesa, se houver carta; ignoraArmadura quando sinalizado pelo handler)
       const resultado = etapa3_resolucaoDano(atacante, alvoReal, poderFinal, carta, hab.efeitoPuro, defesaCarta, evPoder.ignoraArmadura ?? false, danoMult);
 
+      // Crítico pós-defesa (ex: Crítico Alto) — multiplica o dano final já calculado
+      // Roda antes dos gatilhos pra que passivas vejam o dano real correto.
+      if (resultado.causouDano && !hab.efeitoPuro) {
+        const evFinal = { multiplicador: 1 };
+        EFEITOS_HABILIDADES.disparar(hab, 'modificar_dano_final', atacante, evFinal);
+        if (evFinal.multiplicador > 1) {
+          const danoExtra = Math.floor(resultado.danoReal * (evFinal.multiplicador - 1));
+          if (danoExtra > 0) {
+            alvoReal.hp = Math.max(0, alvoReal.hp - danoExtra);
+            PASSIVAS.recalcularStats(alvoReal);
+            resultado.danoReal += danoExtra;
+            _log('dano', `${atacante.nome} (crítico pós-defesa ×${evFinal.multiplicador}) +${danoExtra} em ${alvoReal.nome}`);
+          }
+        }
+      }
+
       // Acumula odio_bonus se o alvo estava em estado de Ódio ao sofrer dano
       if (resultado.causouDano) {
         const odioAlvo = alvoReal.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
@@ -485,20 +507,40 @@ const COMBAT = (() => {
         }
       }
 
-      // Passes adicionais: poder múltiplo (ex: '1/1' → segundo golpe sem efeitos extras)
+      // Registra resultado do primeiro hit
+      BATTLE_STATE.ultimosHits.push({ alvoId: alvoReal.id, danoReal: resultado.danoReal });
+
+      // Hits adicionais: defesa da carta defensiva vale pra todos; carta atacante e tags por hit
       for (let pi = 1; pi < poderes.length; pi++) {
         if (alvoReal.hp <= 0) break;
-        const r2 = etapa3_resolucaoDano(atacante, alvoReal, poderes[pi], carta, hab.efeitoPuro, null);
+        const cartaAdicional = cartasAdicionais[pi - 1] ?? null;
+        const r2 = etapa3_resolucaoDano(atacante, alvoReal, poderes[pi], cartaAdicional, hab.efeitoPuro, defesaCarta);
+        BATTLE_STATE.ultimosHits.push({ alvoId: alvoReal.id, danoReal: r2.danoReal });
         if (r2.causouDano) {
           PASSIVAS.disparar('ao_causar_dano', atacante, { alvo: alvoReal, ...r2 });
           PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...r2 });
+          if (Array.isArray(hab.tags) && hab.tags.length > 0 && typeof EFEITOS !== 'undefined' && EFEITOS.aplicar) {
+            for (const tag of hab.tags) EFEITOS.aplicar(tag, alvoReal, atacante);
+          }
         }
       }
 
-      // Efeitos pós-dano de vantagem de naipe
-      if (!hab.efeitoPuro && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
+      // Vantagens de naipe — disparam se causou dano OU habilidade pura foi efetiva
+      const ativaVantagem = resultado.causouDano || hab.efeitoPuro;
+
+      if (ativaVantagem && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
           && atacante.naipe && alvoReal.naipe) {
         _aplicarVantagemNaipe(atacante, alvoReal);
+      }
+
+      // Clubs_furtivo: ♣ com furtivo ativo contra-ataca qualquer atacante não-♦
+      if (ativaVantagem && acaoEfetiva !== 'F' && acaoEfetiva !== 'R'
+          && alvoReal.naipe === '♣' && alvoReal.hp > 0
+          && atacante.naipe !== '♦') {
+        const furtivo = alvoReal.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
+        if (furtivo) {
+          BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: alvoReal, alvo: atacante, tipo: 'contra' });
+        }
       }
 
       // Ataque em conjunto: aliados do atacante com essa capacidade entram junto.
@@ -525,14 +567,18 @@ const COMBAT = (() => {
     if (atacante.naipe === '♣' && alvo.naipe === '♥') _renovarHeartsAdv(alvo);
 
     // ♦→♠: Ouros atacante ganha rodada extra
-    if (atacante.naipe === '♦' && alvo.naipe === '♠' && !atacante._rodadaExtraPending) {
-      atacante._rodadaExtraPending = true;
+    if (atacante.naipe === '♦' && alvo.naipe === '♠'
+        && !atacante.acaoExtra
+        && !atacante.efeitos.some(e => e.tipo === 'rodada_extra')) {
+      atacante.efeitos.push({ tipo: 'rodada_extra', duracao: null });
       _log('naipe', `${atacante.nome} (♦→♠) ganhou rodada extra`);
     }
 
     // ♠→♦: Ouros defensor ganha rodada extra
-    if (atacante.naipe === '♠' && alvo.naipe === '♦' && alvo.hp > 0 && !alvo._rodadaExtraPending) {
-      alvo._rodadaExtraPending = true;
+    if (atacante.naipe === '♠' && alvo.naipe === '♦' && alvo.hp > 0
+        && !alvo.acaoExtra
+        && !alvo.efeitos.some(e => e.tipo === 'rodada_extra')) {
+      alvo.efeitos.push({ tipo: 'rodada_extra', duracao: null });
       _log('naipe', `${alvo.nome} (♦ reage a ♠) ganhou rodada extra`);
     }
 
@@ -549,10 +595,7 @@ const COMBAT = (() => {
     }
 
     // ♣ com Furtivo ativo: enfileira contra-ataque contra qualquer atacante não-♦
-    if (alvo.naipe === '♣' && atacante.naipe !== '♦' && alvo.hp > 0) {
-      const furtivo = alvo.efeitos.find(e => e.tipo === 'clubs_furtivo' && e.duracao > 0);
-      if (furtivo) BATTLE_STATE.contraAtaquesPendentes.push({ contraAtacante: alvo, alvo: atacante, tipo: 'contra' });
-    }
+    // Removido daqui — tratado diretamente em resolverAcao sem exigir naipe no atacante
   }
 
   // Executa contra-ataque com a 1ª habilidade de dano do contra-atacante.
@@ -628,6 +671,7 @@ const COMBAT = (() => {
     if (combatente.acaoExtra) return false;  // já usou neste turno
     if (temAcaoRapida || temRodadaExtra) {
       combatente.acaoExtra = true;
+      if (temAcaoRapida) combatente._acaoRapidaGasta = true;
       _log('acao_extra', `${combatente.nome} ganhou ação extra`);
       return true;
     }
