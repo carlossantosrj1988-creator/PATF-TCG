@@ -188,13 +188,23 @@ const EFEITOS = (() => {
   });
 
   // ── Veneno ────────────────────────────────────────────────────────────────
-  // DoT empilhável (máx 3 stacks). Cada stack = 3 dano/turno por 2 turnos.
+  // DoT permanente empilhável sem limite. Cada stack = 1 dano/turno, sem expirar.
+  // Removível apenas por limpeza de debuff.
   registrar('veneno', (alvo) => {
-    const stacks = alvo.efeitos.filter(e => e._origem === 'veneno' && (e.duracao ?? 0) > 0).length;
+    alvo.efeitos.push({
+      tipo: 'dot', valor: 1, gatilho: 'inicio_rodada',
+      duracao: null, _origem: 'veneno',
+    });
+  });
+
+  // ── Sangramento ───────────────────────────────────────────────────────────
+  // DoT empilhável (máx 3 stacks). Cada stack = 3 dano/turno por 2 turnos.
+  registrar('sangramento', (alvo) => {
+    const stacks = alvo.efeitos.filter(e => e._origem === 'sangramento' && (e.duracao ?? 0) > 0).length;
     if (stacks >= 3) return;
     alvo.efeitos.push({
       tipo: 'dot', valor: 3, gatilho: 'inicio_rodada',
-      duracao: 2, duracaoOriginal: 2, _origem: 'veneno',
+      duracao: 2, duracaoOriginal: 2, _origem: 'sangramento',
     });
   });
 

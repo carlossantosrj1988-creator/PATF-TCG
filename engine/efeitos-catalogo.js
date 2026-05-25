@@ -96,6 +96,12 @@ const EFEITOS_DATA = {
   veneno: {
     nome:      'Veneno',
     categoria: 'debuff_dot',
+    descricao: '1 de dano por stack a cada turno. Permanente, sem limite de stacks. Removível por limpeza.',
+  },
+
+  sangramento: {
+    nome:      'Sangramento',
+    categoria: 'debuff_dot',
     descricao: '3 de dano por turno por 2 turnos. Acumula até 3 stacks (máx 9 de dano/turno).',
   },
 
