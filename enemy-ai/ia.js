@@ -155,6 +155,99 @@ const IA = (() => {
     return { hab, cartaIdx, alvos };
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // SCRIPTS DO TUTORIAL
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Carta numérica pela ordem (asc = mais baixa, desc = mais alta).
+  function _cartaNumerica(mao, ordem) {
+    const lista = (mao || [])
+      .map((carta, i) => ({ i, v: DECK.valorDano(carta), carta }))
+      .filter(x => x.carta.tipo === 'numerica')
+      .sort((a, b) => ordem === 'desc' ? b.v - a.v : a.v - b.v);
+    return lista.length > 0 ? lista[0].i : null;
+  }
+
+  // goblin_fanatico — alvo aleatório, carta numérica mais baixa; passa se não tiver
+  registrar('goblin_fanatico', (c, estado, h) => {
+    const alvo = h.inimigoAleatorio(c);
+    if (!alvo) return null;
+    const hab = h.habilidadeDisponivel(c);
+    if (!hab) return null;
+    const cartaIdx = _cartaNumerica(c.mao, 'asc');
+    if (cartaIdx === null) return null;
+    return { hab, cartaIdx, alvos: [alvo] };
+  });
+
+  // Coordenação dos lobos: segundo lobo repete o alvo do primeiro
+  let _loboUltimoAlvo = null;
+
+  // lobo_matilha — carta numérica aleatória; lobos se coordenam no alvo
+  registrar('lobo_matilha', (c, estado, h) => {
+    const hab = h.habilidadeDisponivel(c);
+    if (!hab) return null;
+    const normais = (c.mao || [])
+      .map((carta, i) => ({ i, carta }))
+      .filter(x => x.carta.tipo === 'numerica');
+    if (normais.length === 0) return null;
+    let alvo;
+    if (_loboUltimoAlvo && _loboUltimoAlvo.hp > 0) {
+      alvo = _loboUltimoAlvo;
+      _loboUltimoAlvo = null;
+    } else {
+      alvo = h.inimigoAleatorio(c);
+      _loboUltimoAlvo = alvo;
+    }
+    if (!alvo) return null;
+    const cartaIdx = normais[Math.floor(Math.random() * normais.length)].i;
+    return { hab, cartaIdx, alvos: [alvo] };
+  });
+
+  // casulo_butter — sem habilidade; passiva esporos_casulo reage ao dano
+  registrar('casulo_butter', () => null);
+
+  // butter_venenoso — ciclo: sono (0) → veneno (1) → passa (2)
+  registrar('butter_venenoso', (c, estado, h) => {
+    const ciclo = (c._butterCiclo ?? 0) % 3;
+    c._butterCiclo = (c._butterCiclo ?? 0) + 1;
+    if (ciclo === 2) return null;
+    const habId = ciclo === 0 ? 'enemy:butter_sono' : 'enemy:butter_veneno';
+    const hab = (c.habilidades || []).find(x => x && x._id === habId);
+    if (!hab) return null;
+    const cartaIdx = h.cartaAleatoria(c);
+    if (cartaIdx === null) return null;
+    const alvos = estado.combatentes.filter(x => x.lado !== c.lado && x.hp > 0);
+    return alvos.length > 0 ? { hab, cartaIdx, alvos } : null;
+  });
+
+  // prisoner_demon — ciclo: pancada (0) → pancada (1) → salto (2)
+  // Pancada: 50% de usar Rei; salto: carta mais alta disponível
+  registrar('prisoner_demon', (c, estado, h) => {
+    const ciclo = (c._demonCiclo ?? 0) % 3;
+    c._demonCiclo = (c._demonCiclo ?? 0) + 1;
+    const habPancada = (c.habilidades || []).find(x => x && x._id === 'enemy:demon_pancada');
+    const habSalto   = (c.habilidades || []).find(x => x && x._id === 'enemy:demon_salto');
+    if (ciclo < 2) {
+      const alvo = h.inimigoAleatorio(c);
+      if (!alvo || !habPancada) return null;
+      const reiIdx = (c.mao || []).findIndex(carta => carta.valor === 'K');
+      let cartaIdx;
+      if (reiIdx >= 0 && Math.random() < 0.5) {
+        cartaIdx = reiIdx;
+      } else {
+        cartaIdx = _cartaNumerica(c.mao, 'asc') ?? h.cartaValorMedio(c);
+      }
+      if (cartaIdx === null) return null;
+      return { hab: habPancada, cartaIdx, alvos: [alvo] };
+    } else {
+      const alvos = estado.combatentes.filter(x => x.lado !== c.lado && x.hp > 0);
+      if (!alvos.length || !habSalto) return null;
+      const cartaIdx = _cartaNumerica(c.mao, 'desc') ?? h.cartaMaisAlta(c);
+      if (cartaIdx === null) return null;
+      return { hab: habSalto, cartaIdx, alvos };
+    }
+  });
+
   return { registrar, decidir, helpers };
 
 })();

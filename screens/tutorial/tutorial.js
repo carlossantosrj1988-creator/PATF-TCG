@@ -340,7 +340,6 @@ Bosses não dropam equipamentos. Eles dropam <strong>relíquias</strong> — ite
       idx,
       ETAPAS[idx].pontos,
       (pts) => concluirEtapa(idx, pts),
-      () => renderTela(),
     );
 
     if (ETAPAS[idx].popupEntrada) {

@@ -832,18 +832,55 @@ const BATTLE = (() => {
       alocadas.set(charId, pick.carta);
     }
 
-    // Boss pega carta de maior valor; demais (mob/miniboss) pegam a menor.
+    // Aloca carta de iniciativa para cada inimigo.
+    // iniScript controla o critério: 'maior' (boss/goblin), 'aleatorio' (lobo),
+    // 'garantir_primeiro' (butter_venenoso), ou padrão = menor (mob/miniboss).
     for (const c of estado.combatentes.filter(x => x.lado === 'inimigo')) {
       if (!c.mao.length) continue;
-      const ehBoss = c.tipo === 'boss';
-      let melhorIdx = 0;
-      c.mao.forEach((carta, i) => {
-        const v = DECK.valorIniciativa(carta);
-        const vB = DECK.valorIniciativa(c.mao[melhorIdx]);
-        if (ehBoss ? v > vB : v < vB) melhorIdx = i;
-      });
-      const cartaIni = c.mao[melhorIdx];
-      c.mao = c.mao.filter((_, i) => i !== melhorIdx);
+      const script   = c.iniScript;
+      const ehBoss   = c.tipo === 'boss';
+      let escolhido  = 0;
+      let cartaIni;
+
+      if (script === 'aleatorio') {
+        escolhido = Math.floor(Math.random() * c.mao.length);
+        cartaIni  = c.mao[escolhido];
+      } else if (script === 'garantir_primeiro') {
+        // Calcula a maior iniciativa jogador já alocada
+        let maxJogador = 0;
+        for (const [charId, carta] of alocadas) {
+          const comb = estado.combatentes.find(x => x.id === charId);
+          if (comb && comb.lado === 'jogador') {
+            const ini = DECK.valorIniciativa(carta) + (comb.inc ?? 0);
+            if (ini > maxJogador) maxJogador = ini;
+          }
+        }
+        // Escolhe a menor carta que ainda supera maxJogador; fallback = maior da mão
+        escolhido = -1;
+        let melhorSupera = Infinity;
+        c.mao.forEach((carta, i) => {
+          const ini = DECK.valorIniciativa(carta) + (c.inc ?? 0);
+          if (ini > maxJogador && ini < melhorSupera) { escolhido = i; melhorSupera = ini; }
+        });
+        if (escolhido === -1) {
+          c.mao.forEach((carta, i) => {
+            if (DECK.valorIniciativa(carta) > DECK.valorIniciativa(c.mao[escolhido === -1 ? 0 : escolhido])) escolhido = i;
+          });
+          if (escolhido === -1) escolhido = 0;
+        }
+        cartaIni = c.mao[escolhido];
+      } else {
+        // Boss ou 'maior': maior carta; demais: menor carta
+        const querMaior = ehBoss || script === 'maior';
+        c.mao.forEach((carta, i) => {
+          const v  = DECK.valorIniciativa(carta);
+          const vB = DECK.valorIniciativa(c.mao[escolhido]);
+          if (querMaior ? v > vB : v < vB) escolhido = i;
+        });
+        cartaIni = c.mao[escolhido];
+      }
+
+      c.mao = c.mao.filter((_, i) => i !== escolhido);
       alocadas.set(c.id, cartaIni);
     }
 
