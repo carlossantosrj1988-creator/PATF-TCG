@@ -1195,7 +1195,9 @@ const BATTLE = (() => {
 
     if (_cenarioBackground) {
       campo.classList.add('has-bg');
-      campo.style.setProperty('--battle-bg-url', `url('${_cenarioBackground}')`);
+      campo.style.backgroundImage    = `url('${_cenarioBackground}')`;
+      campo.style.backgroundSize     = 'cover';
+      campo.style.backgroundPosition = 'center bottom';
     }
 
     // Glow central animado

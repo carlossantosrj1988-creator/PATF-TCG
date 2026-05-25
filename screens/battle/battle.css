@@ -203,9 +203,6 @@
 
 /* Cenário com imagem — adicionado via JS (BATTLE.init opts.background) */
 #battle-field.has-bg {
-  background-image: var(--battle-bg-url);
-  background-size: cover;
-  background-position: center bottom;
   animation: battle-bg-breathe 10s ease-in-out infinite alternate;
 }
 
@@ -214,8 +211,8 @@
 }
 
 @keyframes battle-bg-breathe {
-  0%   { background-size: 100%; }
-  100% { background-size: 104%; }
+  0%   { background-size: cover; }
+  100% { background-size: 108%; }
 }
 
 /* Estrelas pulsando */
