@@ -217,8 +217,8 @@ const COMBAT = (() => {
   function iniciarRodada(combatente) {
     if (!combatente || combatente._turnoIniciado) return;
     combatente._turnoIniciado = true;
-    _deduzirEfeitos(combatente);
     _aplicarDoT(combatente);
+    _deduzirEfeitos(combatente);
   }
 
   // Etapa 1 — Verificações Pré-Ação. Re-roda em rodada extra / ação rápida.
