@@ -2,10 +2,10 @@
 
 const CHAR_SPRITE = (() => {
   const MAP = {
-    vigor:     'assets/sprites/vigor.png',
-    ofensivo:  'assets/sprites/ofensivo.png',
-    defensivo: 'assets/sprites/defensivo.png',
-    agil:      'assets/sprites/agil.png',
+    vigor:     'assets/sprites/vigor_idle.gif',
+    ofensivo:  'assets/sprites/ofensivo_idle.gif',
+    defensivo: 'assets/sprites/defensivo_idle.gif',
+    agil:      'assets/sprites/agil_idle.gif',
   };
 
   // Returns <img> or placeholder HTML.
