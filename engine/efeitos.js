@@ -188,22 +188,33 @@ const EFEITOS = (() => {
   });
 
   // ── Veneno ────────────────────────────────────────────────────────────────
-  // DoT empilhável (máx 3 stacks). Cada stack = 3 dano/turno por 2 turnos.
+  // DoT permanente empilhável sem limite. Cada stack = 1 dano/turno, sem expirar.
+  // Removível apenas por limpeza de debuff.
   registrar('veneno', (alvo) => {
-    const stacks = alvo.efeitos.filter(e => e._origem === 'veneno' && (e.duracao ?? 0) > 0).length;
+    alvo.efeitos.push({
+      tipo: 'dot', valor: 1, gatilho: 'inicio_rodada',
+      duracao: null, _origem: 'veneno',
+    });
+  });
+
+  // ── Sangramento ───────────────────────────────────────────────────────────
+  // DoT empilhável (máx 3 stacks). Cada stack = 3 dano/turno por 2 turnos.
+  registrar('sangramento', (alvo) => {
+    const stacks = alvo.efeitos.filter(e => e._origem === 'sangramento' && (e.duracao ?? 0) > 0).length;
     if (stacks >= 3) return;
     alvo.efeitos.push({
       tipo: 'dot', valor: 3, gatilho: 'inicio_rodada',
-      duracao: 2, duracaoOriginal: 2, _origem: 'veneno',
+      duracao: 2, duracaoOriginal: 2, _origem: 'sangramento',
     });
   });
 
   // ── Atordoamento ──────────────────────────────────────────────────────────
-  // Controle: 50% de chance de perder o turno por 1 turno. Reutiliza tipo 'stun'.
+  // Controle: 50% de chance de perder o turno por 1 turno.
+  // duracao:2 porque Etapa 0 decrementa antes do check — garante 1 roll real.
   registrar('atordoamento', (alvo) => {
     _renovarOuCriar(alvo, 'atordoamento', () => {
       alvo.efeitos.push({
-        tipo: 'stun', duracao: 1, duracaoOriginal: 1, _origem: 'atordoamento',
+        tipo: 'stun', duracao: 2, duracaoOriginal: 2, _origem: 'atordoamento',
       });
     });
   });

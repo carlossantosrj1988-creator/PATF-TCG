@@ -234,8 +234,18 @@ const COMBAT = (() => {
     const stunned = combatente.efeitos.find(e =>
       (e.tipo === 'frozen' || e.tipo === 'stun') && e.duracao > 0
     );
-    if (stunned && Math.random() < 0.5) {
-      return { podeAgir: false, motivo: stunned.tipo };
+    if (stunned) {
+      if (Math.random() < 0.5) {
+        // Sucesso: stun ativa, efeito consumido
+        combatente.efeitos = combatente.efeitos.filter(e => e !== stunned);
+        return { podeAgir: false, motivo: stunned.tipo };
+      } else {
+        // Falha: decrementa duração; se expirou, remove
+        stunned.duracao -= 1;
+        if (stunned.duracao <= 0) {
+          combatente.efeitos = combatente.efeitos.filter(e => e !== stunned);
+        }
+      }
     }
     return { podeAgir: true };
   }
@@ -715,6 +725,8 @@ const COMBAT = (() => {
 
   function _deduzirEfeitos(combatente) {
     for (const e of combatente.efeitos) {
+      // stun/frozen têm duração gerenciada em rodarEtapa1, não aqui
+      if (e.tipo === 'stun' || e.tipo === 'frozen') continue;
       if (e.duracao !== null && e.duracao > 0) e.duracao -= 1;
     }
     // Limpa efeitos expirados (duracao === null = permanente até consumo manual)
