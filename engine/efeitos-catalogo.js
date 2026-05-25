@@ -114,7 +114,7 @@ const EFEITOS_DATA = {
   ignora_armadura: {
     nome:      'Ignora Armadura',
     categoria: 'buff_instantaneo',
-    descricao: 'Próxima ação passa pela DEF do alvo sem redução. O jogador ainda pode usar carta de defesa.',
+    descricao: 'Próxima ação reduz a DEF do alvo em 50% (aditivo com outros debuffs). O jogador ainda pode usar carta de defesa.',
   },
 
   // ── Vantagens de naipe ────────────────────────────────────────────────────

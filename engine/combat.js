@@ -275,7 +275,8 @@ const COMBAT = (() => {
   function etapa3_resolucaoDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro, defesaCarta, ignoraArmadura = false, danoMult = 1) {
     const danoBruto = DAMAGE.calcularDano(atacante, alvo, poder, cartaAtaque, ehEfeitoPuro);
     const dano      = danoMult !== 1 ? Math.floor(danoBruto * danoMult) : danoBruto;
-    const defesa    = ignoraArmadura ? 0 : DAMAGE.calcularDefesa(alvo, defesaCarta);
+    const defesaBase = DAMAGE.calcularDefesa(alvo, defesaCarta);
+    const defesa     = ignoraArmadura ? Math.floor(defesaBase / 2) : defesaBase;
     const danoReal  = DAMAGE.resolverDano(dano, defesa);
 
     if (danoReal > 0) {
