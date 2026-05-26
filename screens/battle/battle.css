@@ -991,9 +991,10 @@
 
 /* Carta selecionada (1º clique) durante dupla confirmação na defesa */
 .battle-carta.selecionada {
-  border-color: #c9a84c;
-  box-shadow: 0 0 0 2px rgba(201,168,76,0.45), 0 8px 22px rgba(201,168,76,0.30);
-  transform: translateY(-6px);
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 8px 22px rgba(201,168,76,0.55), 0 0 0 1px rgba(201,168,76,0.6);
+  border-color: #c9a84c !important;
+  background: linear-gradient(160deg, #26304a 0%, #181f2e 60%, #10141e 100%);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1367,8 +1368,8 @@
   width: 72px;
   height: 104px;
   padding: 0;
-  background: #16162a;
-  border: 1px solid #ffffff18;
+  background: linear-gradient(160deg, #1e2840 0%, #101520 60%, #0c1018 100%);
+  border: 1px solid rgba(80,110,180,0.3);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -1378,18 +1379,29 @@
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
 }
 
-.battle-carta:hover              { transform: translateY(-8px); border-color: #c9a84c70; }
+.battle-carta::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.04);
+  pointer-events: none;
+}
 
-/* ── 4 cores e tints por naipe ── */
-.battle-carta[data-naipe="♥"] { background: #1e0f0f; border-color: #e0606028; }
-.battle-carta[data-naipe="♦"] { background: #1e1a08; border-color: #e8c05028; }
-.battle-carta[data-naipe="♠"] { background: #0a0e20; border-color: #7aade828; }
-.battle-carta[data-naipe="♣"] { background: #0a160e; border-color: #5ac88028; }
+.battle-carta:hover              { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
 
-.carta-valor     { font-size: 18px; font-weight: 700; line-height: 1; }
-.carta-naipe-icon { font-size: 13px; line-height: 1; }
+/* ── Borda colorida por naipe ── */
+.battle-carta[data-naipe="♥"] { border-color: rgba(224,96,96,0.35); }
+.battle-carta[data-naipe="♦"] { border-color: rgba(232,192,80,0.35); }
+.battle-carta[data-naipe="♠"] { border-color: rgba(122,173,232,0.35); }
+.battle-carta[data-naipe="♣"] { border-color: rgba(90,200,128,0.35); }
+
+.carta-valor      { font-family: 'Cinzel', serif; font-size: 18px; font-weight: 900; line-height: 1; filter: drop-shadow(0 0 6px currentColor); }
+.carta-naipe-icon { font-size: 14px; line-height: 1; filter: drop-shadow(0 0 4px currentColor); }
 
 /* ── Sinergia de naipe: glow colorido + flutuação ── */
 @keyframes sinergica-pulse {
@@ -2104,6 +2116,71 @@
 #battle-fim.derrota #battle-fim-btn:hover {
   background: rgba(212,96,96,0.20);
   transform: translateY(-2px);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   OVERLAY DE CARTA ESPECIAL — J / Q / K / A / ★
+══════════════════════════════════════════════════════════════════════════ */
+
+#battle-especial-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#battle-especial-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(0,0,0,0.85) 0%, transparent 100%);
+}
+
+#battle-especial-symbol {
+  position: relative;
+  z-index: 1;
+  font-size: 100px;
+  line-height: 1;
+  filter: drop-shadow(0 0 30px var(--esp-color)) drop-shadow(0 0 60px var(--esp-color));
+}
+
+#battle-especial-name {
+  position: relative;
+  z-index: 1;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(20px, 5vw, 38px);
+  font-weight: 900;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--esp-color);
+  text-shadow: 0 0 20px var(--esp-color), 0 0 50px var(--esp-color), 0 3px 10px rgba(0,0,0,1);
+}
+
+#battle-especial-desc {
+  position: relative;
+  z-index: 1;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(10px, 2.5vw, 13px);
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.75);
+  text-shadow: 0 0 10px var(--esp-color);
+}
+
+@keyframes esp-symbol-in {
+  0%   { opacity: 0; transform: scale(0.2) rotate(-20deg); }
+  35%  { opacity: 1; transform: scale(1.4) rotate(8deg); }
+  55%  { transform: scale(0.95) rotate(-3deg); }
+  75%  { transform: scale(1.05) rotate(1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes esp-text-in {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.8); }
+  50%  { opacity: 1; transform: translateY(-4px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 /* ── Tutorial da batalha ── */
