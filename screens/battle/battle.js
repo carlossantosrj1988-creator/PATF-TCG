@@ -1332,6 +1332,7 @@ const BATTLE = (() => {
     logLista.id = 'battle-log-lista';
     _renderizarLog(logLista);
     logPanel.appendChild(logLista);
+    logPanel.addEventListener('click', _mostrarLogPopup);
     campo.appendChild(logPanel);
 
     return campo;
@@ -1382,8 +1383,8 @@ const BATTLE = (() => {
       slot.innerHTML = `
         <div class="battle-char-grad sprite-mode" style="transform:scale(${charScale});transform-origin:bottom center;">
           <img class="battle-char-sprite" src="${spriteSrc}" draggable="false" alt="${c.nome}">
-          ${efHtml ? `<div class="battle-char-efeitos-row efeitos-overlay">${efHtml}</div>` : ''}
         </div>
+        ${efHtml ? `<div class="battle-char-efeitos-row efeitos-overlay">${efHtml}</div>` : ''}
         <div class="battle-char-nome-sprite" style="color:${corNaipe}bb">${c.nome}</div>
         <div class="battle-char-hp-row">
           <div class="battle-char-hp-bar">
@@ -2378,6 +2379,38 @@ const BATTLE = (() => {
 
   // Renderiza (ou re-renderiza) o popup de status pro combatente c.
   // Re-chamado em _renderizar se _statusPopupChar estiver setado (live update).
+  function _mostrarLogPopup() {
+    const existente = document.getElementById('battle-log-popup');
+    if (existente) { existente.remove(); return; }
+    const screen = document.getElementById('screen-battle');
+    if (!screen) return;
+
+    const popup = document.createElement('div');
+    popup.id = 'battle-log-popup';
+    const entriesHtml = _logEntries.map(e =>
+      `<div class="blog-linha ${e.tipo}">${e.msg.replace(/</g, '&lt;')}</div>`
+    ).join('');
+
+    popup.innerHTML = `
+      <div id="battle-log-overlay"></div>
+      <div id="battle-log-box">
+        <div id="battle-log-box-header">
+          <span>📜 LOG DE BATALHA</span>
+          <button class="bsp-fechar" aria-label="Fechar">×</button>
+        </div>
+        <div id="battle-log-box-lista">${entriesHtml || '<div class="blog-linha info">Sem registros.</div>'}</div>
+      </div>
+    `;
+
+    screen.appendChild(popup);
+    const box = popup.querySelector('#battle-log-box-lista');
+    if (box) box.scrollTop = box.scrollHeight;
+
+    const fechar = () => popup.remove();
+    popup.querySelector('.bsp-fechar').addEventListener('click', fechar);
+    popup.querySelector('#battle-log-overlay').addEventListener('click', fechar);
+  }
+
   function _mostrarStatusPersonagem(c) {
     _statusPopupChar = c;
     const existente = document.getElementById('battle-status-popup');

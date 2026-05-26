@@ -921,8 +921,23 @@
   bottom: 10px;
   left: 8px;
   width: 190px;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   z-index: 40;
+}
+
+#battle-log-panel:hover .blog-linha {
+  opacity: 0.85;
+}
+
+#battle-log-panel::after {
+  content: '📜';
+  position: absolute;
+  top: -14px;
+  right: 0;
+  font-size: 10px;
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 #battle-log-lista {
@@ -955,6 +970,64 @@
   letter-spacing: 1px;
   text-align: center;
   background: rgba(201,168,76,0.08);
+}
+
+/* ── Popup de log completo ─────────────────────────────────────────────────── */
+
+#battle-log-popup {
+  position: absolute;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ini-tela-in 0.18s ease;
+}
+
+#battle-log-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+#battle-log-box {
+  position: relative;
+  z-index: 1;
+  width: 440px;
+  max-width: 92%;
+  background: #0d0f1a;
+  border: 1px solid #ffffff20;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+#battle-log-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #c9a84c;
+  border-bottom: 1px solid #ffffff15;
+  font-family: 'Cinzel', serif;
+}
+
+#battle-log-box-lista {
+  padding: 10px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+#battle-log-box-lista .blog-linha {
+  font-size: 11px;
+  padding: 3px 8px;
 }
 
 /* Carta na mão em modo visual (não-clicável) — sel_habilidade */
@@ -1546,8 +1619,8 @@
   transition: color 0.12s, border-color 0.12s;
 }
 
-#battle-btn-debug-vencer { left: 12px; }
-#battle-btn-debug-perder { left: 78px; }
+#battle-btn-debug-vencer { right: 78px; }
+#battle-btn-debug-perder { right: 12px; }
 
 #battle-btn-debug-vencer:hover,
 #battle-btn-debug-perder:hover   { color: #cc4444aa; border-color: #cc444460; }
