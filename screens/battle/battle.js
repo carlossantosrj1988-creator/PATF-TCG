@@ -1075,6 +1075,11 @@ const BATTLE = (() => {
     banner.innerHTML = '<div id="bsb-bg"></div><div id="bsb-content"><div id="bsb-name"></div><div id="bsb-sub"></div></div>';
     screen.appendChild(banner);
 
+    const espOv = document.createElement('div');
+    espOv.id = 'battle-especial-overlay';
+    espOv.innerHTML = '<div id="battle-especial-bg"></div><div id="battle-especial-symbol"></div><div id="battle-especial-name"></div><div id="battle-especial-desc"></div>';
+    screen.appendChild(espOv);
+
     // Se o turno atual é do inimigo, agenda a ação automática
     if (atual && atual.lado === 'inimigo' && !_aguardando) {
       _aguardando = true;
@@ -2039,9 +2044,61 @@ const BATTLE = (() => {
 
   // Dispatcher: identifica a especial e roteia. Q vai pra alvo; resto resolve.
   // K/A/Q/★ são INSTANTÂNEAS — não consomem o turno. Pode usar quantas quiser.
+  const _ESP_DATA = {
+    J: { sym: '🗡', name: 'VALETE',  desc: 'ESQUIVA GARANTIDA NA DEFESA', color: '#60c0ff' },
+    Q: { sym: '🛡', name: 'DAMA',    desc: 'REMOVE TODOS OS DEBUFFS',     color: '#88ddaa' },
+    K: { sym: '👑', name: 'REI',     desc: 'PRÓXIMO ATAQUE AMPLIFICADO',  color: '#ffd700' },
+    A: { sym: '🃏', name: 'ÁS',      desc: 'CARTA EXTRA (AÇÃO RÁPIDA)',   color: '#60c0ff' },
+    '★': { sym: '⭐', name: 'CORINGA', desc: 'RODADA EXTRA!',              color: '#ff80ff' },
+  };
+
+  function _mostrarOverlayEspecial(carta) {
+    const d = _ESP_DATA[carta.valor];
+    if (!d) return;
+    const ov  = document.getElementById('battle-especial-overlay');
+    const sym = document.getElementById('battle-especial-symbol');
+    const nm  = document.getElementById('battle-especial-name');
+    const dc  = document.getElementById('battle-especial-desc');
+    if (!ov || !sym) return;
+
+    ov.style.setProperty('--esp-color', d.color);
+    sym.textContent = d.sym;
+    nm.textContent  = d.name;
+    dc.textContent  = d.desc;
+
+    sym.style.animation = 'none';
+    nm.style.animation  = 'none';
+    dc.style.animation  = 'none';
+    ov.style.opacity = '0';
+    ov.style.display = 'flex';
+    void ov.offsetWidth;
+
+    ov.style.transition = 'opacity 150ms ease';
+    ov.style.opacity = '1';
+    sym.style.animation = 'esp-symbol-in 0.5s cubic-bezier(0.2,1.4,0.4,1) forwards';
+    nm.style.animation  = 'esp-text-in 0.4s ease 0.15s both';
+    dc.style.animation  = 'esp-text-in 0.4s ease 0.25s both';
+
+    const fl = document.getElementById('battle-screen-flash');
+    if (fl) {
+      fl.style.background = d.color;
+      fl.style.transition = 'none';
+      fl.style.opacity = '0.15';
+      setTimeout(() => { fl.style.transition = 'opacity 0.4s ease'; fl.style.opacity = '0'; fl.style.background = '#fff'; }, 80);
+    }
+
+    setTimeout(() => {
+      ov.style.transition = 'opacity 0.35s ease';
+      ov.style.opacity = '0';
+      setTimeout(() => { ov.style.display = 'none'; }, 350);
+    }, 1300);
+  }
+
   function _usarEspecial(carta, idx) {
     const c = COMBAT.combatenteAtual();
     if (!c) return;
+
+    _mostrarOverlayEspecial(carta);
 
     if (carta.valor === 'Q') {
       // Q precisa de alvo aliado — vai pra sel_alvo_especial, consome depois
