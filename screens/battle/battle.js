@@ -1476,7 +1476,7 @@ const BATTLE = (() => {
     return div;
   }
 
-  // ── Painel esquerdo de etapa1: HABILIDADES + ESPECIAIS + PASSAR ──
+  // ── Painel esquerdo de etapa1: HABILIDADES + PASSAR ──
   function _criarPainelBotoesEtapa1() {
     const div = document.createElement('div');
     div.id = 'battle-panel-habs';
@@ -1490,18 +1490,6 @@ const BATTLE = (() => {
       _renderizar();
     });
 
-    // Verifica se há especiais usáveis na mão (Q/K/A/★ — J só na defesa)
-    const mao = COMBAT.estado.maoJogador ?? [];
-    const temEspecial = mao.some(c => DECK.ehEspecial(c) && c.valor !== 'J');
-    const btnEsp = document.createElement('button');
-    btnEsp.className = 'battle-btn-hab' + (temEspecial ? '' : ' vazio');
-    btnEsp.textContent = '✦  ESPECIAIS';
-    btnEsp.addEventListener('click', () => {
-      if (!temEspecial) return;
-      _estadoPainel = 'sel_especial';
-      _renderizar();
-    });
-
     const btnPassar = document.createElement('button');
     btnPassar.id        = 'battle-btn-passar';
     btnPassar.className = 'battle-btn-hab';
@@ -1511,7 +1499,6 @@ const BATTLE = (() => {
     btnPassar.addEventListener('click', () => _handlePassar(btnPassar));
 
     div.appendChild(btnHab);
-    div.appendChild(btnEsp);
     div.appendChild(btnPassar);
     return div;
   }
