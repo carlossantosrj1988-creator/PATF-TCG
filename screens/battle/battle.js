@@ -1241,7 +1241,7 @@ const BATTLE = (() => {
   function _criarCharSlot(c, idx, isAtivo) {
     const { bg } = GRAD_NAIPE[c.naipe] ?? GRAD_NEUTRO;
     const hpPct  = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
-    const hpCor  = hpPct > 60 ? '#55cc88' : hpPct > 30 ? '#e8c050' : '#cc5555';
+    const hpCor  = hpPct > 50 ? '#48A058' : hpPct > 20 ? '#F0B088' : '#B3181C';
     const morto  = c.hp <= 0;
 
     const corNaipe = {
@@ -2175,7 +2175,7 @@ const BATTLE = (() => {
     const incCls = c.inc > (c.incBase ?? c.inc) ? 'up' : c.inc < (c.incBase ?? c.inc) ? 'down' : '';
 
     const hpPct = Math.max(0, Math.min(100, (c.hp / c.pvs) * 100));
-    const hpCor = hpPct > 60 ? '#55cc88' : hpPct > 30 ? '#e8c050' : '#cc5555';
+    const hpCor = hpPct > 50 ? '#48A058' : hpPct > 20 ? '#F0B088' : '#B3181C';
 
     // Habilidades slotadas
     const habsHtml = (c.habilidades || []).map((h, i) => {
