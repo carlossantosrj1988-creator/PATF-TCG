@@ -56,6 +56,10 @@ const BATTLE = (() => {
   let _tutorialBatVisto  = false; // tutorial de batalha já foi mostrado
   let _cenarioBackground = null;  // URL da imagem de fundo do campo (null = gradiente padrão)
 
+  // Mortes — controla animação de dissolução FF6-style
+  const _mortosOcultos   = new Set(); // IDs com animação concluída (slot permanente oculto)
+  const _mortesPendentes = new Set(); // IDs com animação em andamento
+
   // ── Log de batalha — persiste entre renders ───────────────────────────────
   const _LOG_MAX    = 40;
   const _LOG_VIS    = 6;   // linhas visíveis de uma vez
@@ -597,6 +601,8 @@ const BATTLE = (() => {
     _tutorialBatVisto  = false;
     _cenarioBackground = opts.background ?? null;
     _logEntries.length = 0; // limpa log da batalha anterior
+    _mortosOcultos.clear();
+    _mortesPendentes.clear();
 
     const inimigos = opts.inimigos ?? [];
 
@@ -1110,6 +1116,13 @@ const BATTLE = (() => {
       _mostrarTutorialSequencial(_TUTORIAL_BAT, null);
     }
 
+    // Detecta mortes novas antes de limpar o DOM
+    for (const c of COMBAT.estado.combatentes) {
+      if (c.hp <= 0 && !_mortosOcultos.has(c.id) && !_mortesPendentes.has(c.id)) {
+        _mortesPendentes.add(c.id);
+      }
+    }
+
     // Pula combatentes que morreram no meio do turno — corpo não tem rodada.
     // Se pular pra um novo vivo, inicia o turno dele (iniciarRodada é idempotente).
     let atual = COMBAT.combatenteAtual();
@@ -1133,8 +1146,10 @@ const BATTLE = (() => {
     screen.style.display = 'block';
 
     screen.appendChild(_criarTopbar());
-    screen.appendChild(_criarCampo());
+    const campo = _criarCampo();
+    screen.appendChild(campo);
     screen.appendChild(_criarPainel());
+    _lancarAnimacoesMorte(campo);
     screen.appendChild(_criarBtnDebug());
 
     // VFX layer + flash + skill banner — recriados a cada render
@@ -1350,6 +1365,13 @@ const BATTLE = (() => {
     slot.style.zIndex    = idx + 1;
     slot.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
+    // Morto sem animação pendente: slot vazio e invisível (animação já terminou)
+    if (morto && _mortosOcultos.has(c.id)) {
+      slot.style.visibility   = 'hidden';
+      slot.style.pointerEvents = 'none';
+      return slot;
+    }
+
     const spriteSrc = (typeof CHAR_SPRITE !== 'undefined') ? (CHAR_SPRITE.MAP[c.poolId ?? ''] ?? null) : null;
     const efHtml    = _efeitosIconsHtml(c);
 
@@ -1431,6 +1453,53 @@ const BATTLE = (() => {
     }
 
     return slot;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ANIMAÇÃO DE MORTE — dissolução FF6-style
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _lancarAnimacoesMorte(campo) {
+    for (const id of _mortesPendentes) {
+      // Evita duplicar overlay se já está rodando
+      if (campo.querySelector(`.morte-anim-overlay[data-morte-id="${id}"]`)) continue;
+
+      const slot = campo.querySelector(`.battle-char-slot[data-id="${id}"]`);
+      if (!slot) continue;
+
+      // Esconde o slot original (o overlay fará o visual)
+      slot.style.visibility    = 'hidden';
+      slot.style.pointerEvents = 'none';
+
+      // Cria overlay com mesmo posicionamento e conteúdo
+      const ov = document.createElement('div');
+      ov.className = 'morte-anim-overlay';
+      ov.dataset.morteId = id;
+      ov.style.position      = 'absolute';
+      ov.style.left          = slot.style.left;
+      ov.style.top           = slot.style.top;
+      ov.style.zIndex        = '300';
+      ov.style.transform     = slot.style.transform;
+      ov.style.display       = 'flex';
+      ov.style.flexDirection = 'column';
+      ov.style.alignItems    = 'center';
+      ov.style.gap           = '0';
+      ov.style.pointerEvents = 'none';
+      ov.innerHTML = slot.innerHTML;
+
+      campo.appendChild(ov);
+
+      // Dispara animação após um frame (garante que o overlay foi pintado)
+      requestAnimationFrame(() => ov.classList.add('morte-dissolvendo'));
+
+      // Após animação: mover para ocultos e remover overlay
+      const DUR = 1850;
+      setTimeout(() => {
+        ov.remove();
+        _mortesPendentes.delete(id);
+        _mortosOcultos.add(id);
+      }, DUR);
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
