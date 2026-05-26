@@ -53,7 +53,7 @@ const COMBAT = (() => {
 
   function estadoVazio() {
     return {
-      turno:             0,
+      turno:             1,
       fase:              null,
       ordem:             [],
       indiceAtual:       -1,
