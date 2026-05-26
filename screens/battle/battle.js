@@ -158,34 +158,59 @@ const BATTLE = (() => {
   // Gera HTML de ícones de efeitos ativos (buff/debuff) para o slot do campo.
   function _efeitosIconsHtml(c) {
     const _SIM = {
-      dot: '🔥', frozen: '❄', stun: '⊗',
-      buff_atq: '↑', debuff_atq: '↓',
-      buff_def: '▲', debuff_def: '▽',
-      rei_atq_bonus: '♛', odio_bonus: '⊕',
-      amaciado: '⬇', encantado: '✦',
-      hearts_adv: '❤', clubs_furtivo: '🌿',
-      imagem_espelhada: '◈', derretar_armadura: '⚗',
-      congelado: '❄', radiacao: '☢', estatica: '⚡',
-      critico: '💥',
+      // DoTs — identificados via e._origem (queimadura/veneno/etc. ficam tipo:'dot')
+      queimadura:        '🔥',
+      resfriamento:      '❄',
+      veneno:            '☠',
+      radiacao:          '☢',
+      dot:               '🔥', // fallback DoT sem _origem
+      // Controle
+      frozen:            '❄',
+      congelado:         '🧊',
+      stun:              '⊗',
+      encantado:         '✦',
+      // Stats
+      buff_atq:          '↑',  debuff_atq:        '↓',
+      buff_def:          '▲',  debuff_def:        '▽',
+      exposto:           '⬇',  enfraquecido:      '⬇',
+      amaciado:          '⬇',
+      // Especiais
+      rei_atq_bonus:     '♛',  odio_bonus:        '⊕',
+      hearts_adv:        '❤',  clubs_furtivo:     '🌿',
+      imagem_espelhada:  '◈',  derretar_armadura: '⚗',
+      estatica:          '⚡', critico:           '💥',
     };
 
     const partes = [];
 
-    // Efeitos ativos — inclui duracao: null (instantâneos) e duracao > 0 (duração)
-    // acao_rapida e rodada_extra são renderizados via canvas abaixo — skip aqui
     for (const e of (c.efeitos ?? [])) {
       if (e.tipo === 'acao_rapida' || e.tipo === 'rodada_extra') continue;
       if (e.duracao !== null && (e.duracao ?? 1) <= 0) continue;
-      const cls   = _classeEfeito(e);
-      const label = _efeitoLabel(e);
-      const sim   = _SIM[e.tipo] ?? '●';
+
+      // DoTs têm _origem apontando para o efeito nomeado (veneno, queimadura…)
+      const chave  = e._origem ?? e.tipo;
+      const cls    = _classeEfeito(e);
+      const label  = _efeitoLabel(e);
+      const sim    = _SIM[chave] ?? _SIM[e.tipo] ?? '●';
       const durTxt = e.duracao !== null ? ` (${e.duracao}t)` : '';
-      partes.push(`<span class="bchar-ef-icon ${cls}" title="${label}${durTxt}">${sim}</span>`);
+      const desc   = (typeof EFEITOS_DATA !== 'undefined')
+        ? (EFEITOS_DATA[chave]?.descricao ?? EFEITOS_DATA[e.tipo]?.descricao ?? '')
+        : '';
+      const durVal = e.duracao !== null ? String(e.duracao) : '∞';
+
+      partes.push(
+        `<span class="bchar-ef-icon ${cls}"` +
+        ` data-ef-sim="${sim}"` +
+        ` data-ef-label="${label.replace(/"/g, '&quot;')}"` +
+        ` data-ef-desc="${desc.replace(/"/g, '&quot;')}"` +
+        ` data-ef-dur="${durVal}"` +
+        ` title="${label}${durTxt}">${sim}</span>`
+      );
     }
 
-    // Ícones canvas de estado extra — verde (pendente) ou vermelho (bloqueado)
-    const temAcaoRapida   = (c.efeitos ?? []).some(e => e.tipo === 'acao_rapida');
-    const temRodadaExtra  = (c.efeitos ?? []).some(e => e.tipo === 'rodada_extra');
+    // Canvas icons para acao_rapida / rodada_extra
+    const temAcaoRapida  = (c.efeitos ?? []).some(e => e.tipo === 'acao_rapida');
+    const temRodadaExtra = (c.efeitos ?? []).some(e => e.tipo === 'rodada_extra');
     if (temAcaoRapida) {
       partes.push(_iconeExtraHtml('verde', '⚡', 'Ação Rápida disponível'));
     } else if (c._acaoRapidaGasta) {
@@ -198,6 +223,57 @@ const BATTLE = (() => {
     }
 
     return partes.join('');
+  }
+
+  // Popup flutuante ao clicar num ícone de efeito.
+  function _mostrarIconePopup(iconEl) {
+    _fecharIconePopup();
+    const screen = document.getElementById('screen-battle');
+    if (!screen) return;
+
+    const label = iconEl.dataset.efLabel ?? '';
+    const desc  = iconEl.dataset.efDesc  ?? '';
+    const dur   = iconEl.dataset.efDur   ?? '';
+    const sim   = iconEl.dataset.efSim   ?? iconEl.textContent;
+
+    const durLabel = dur === '∞' ? 'Permanente' : dur === '1' ? '1 turno' : `${dur} turnos`;
+
+    const popup = document.createElement('div');
+    popup.id = 'bchar-icon-popup';
+    popup.innerHTML = `
+      <div class="bip-header">
+        <span class="bip-sim">${sim}</span>
+        <span class="bip-nome">${label.replace(/ \(.*\)$/, '')}</span>
+        <span class="bip-dur">${durLabel}</span>
+      </div>
+      ${desc ? `<div class="bip-desc">${desc}</div>` : ''}
+    `;
+
+    // Posiciona relativo a screen-battle, próximo ao ícone
+    const gc = document.getElementById('game-container');
+    const match = gc?.style?.transform?.match(/scale\(([^)]+)\)/);
+    const scale = match ? parseFloat(match[1]) : 1;
+    const sr    = screen.getBoundingClientRect();
+    const ir    = iconEl.getBoundingClientRect();
+    const cx    = (ir.left + ir.width / 2 - sr.left) / scale;
+    const cy    = (ir.top - sr.top) / scale;
+
+    popup.style.left = Math.max(4, Math.min(cx - 110, (sr.width / scale) - 224)) + 'px';
+    popup.style.top  = Math.max(4, cy - 78) + 'px';
+
+    screen.appendChild(popup);
+
+    const fechar = (e) => {
+      if (!popup.contains(e.target) && e.target !== iconEl) {
+        _fecharIconePopup();
+        document.removeEventListener('click', fechar, true);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', fechar, true), 0);
+  }
+
+  function _fecharIconePopup() {
+    document.getElementById('bchar-icon-popup')?.remove();
   }
 
   // ── Cor por tipo de habilidade — banner e glow ───────────────────────────────
@@ -1279,9 +1355,12 @@ const BATTLE = (() => {
 
     if (spriteSrc) {
       // ── Modo sprite: imagem pixel art ──
+      const atqCls = c.atq > (c.atqBase ?? c.atq) ? 'up' : c.atq < (c.atqBase ?? c.atq) ? 'down' : '';
+      const defCls = c.def > (c.defBase ?? c.def) ? 'up' : c.def < (c.defBase ?? c.def) ? 'down' : '';
       slot.innerHTML = `
         <div class="battle-char-grad sprite-mode" style="transform:scale(${charScale});transform-origin:bottom center;">
           <img class="battle-char-sprite" src="${spriteSrc}" draggable="false" alt="${c.nome}">
+          ${efHtml ? `<div class="battle-char-efeitos-row efeitos-overlay">${efHtml}</div>` : ''}
         </div>
         <div class="battle-char-nome-sprite" style="color:${corNaipe}bb">${c.nome}</div>
         <div class="battle-char-hp-row">
@@ -1290,7 +1369,11 @@ const BATTLE = (() => {
           </div>
           <div class="battle-char-hp-txt">${c.hp}/${c.pvs}</div>
         </div>
-        ${efHtml ? `<div class="battle-char-efeitos-row">${efHtml}</div>` : ''}
+        <div class="battle-char-stats">
+          <div class="bcs-item"><span class="bcs-l">ATQ</span><span class="bcs-v ${atqCls}">${c.atq}</span></div>
+          <div class="bcs-item"><span class="bcs-l">DEF</span><span class="bcs-v ${defCls}">${c.def}</span></div>
+          <div class="bcs-item"><span class="bcs-l">HP</span><span class="bcs-v">${c.hp}</span></div>
+        </div>
       `;
     } else {
       // ── Fallback card (inimigos sem sprite) ──
@@ -1315,6 +1398,14 @@ const BATTLE = (() => {
         ${efHtml ? `<div class="battle-char-efeitos-row">${efHtml}</div>` : ''}
       `;
     }
+
+    // Wiring de popup para ícones de efeito (ambos os modos)
+    slot.querySelectorAll('.bchar-ef-icon[data-ef-label]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _mostrarIconePopup(el);
+      });
+    });
 
     // Clicável como alvo quando o fluxo está em 'sel_alvo' (habilidade alvo único)
     if (_estadoPainel === 'sel_alvo' && _habSel) {
@@ -1868,7 +1959,8 @@ const BATTLE = (() => {
           ? `<span class="carta-def-label sem-efeito">SEM EFEITO</span>`
           : '';
 
-      el.innerHTML = `<span class="carta-valor">${carta.label}</span>${extraLabel}`;
+      const corCarta = _COR_INI[carta.naipe] ?? '#c9a84c';
+      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>${extraLabel}`;
 
       if (bloqueada) {
         el.disabled = true;
@@ -2481,6 +2573,7 @@ const BATTLE = (() => {
     COMBAT.avancarCombatente();
     if (COMBAT.estado.turno > turnoAntes) {
       _logUI(`── TURNO ${COMBAT.estado.turno} ──`, 'turno');
+      _mostrarBannerTurno(COMBAT.estado.turno);
     }
     const proximo = COMBAT.combatenteAtual();
     if (proximo) _iniciarTurno(proximo);
@@ -2492,6 +2585,25 @@ const BATTLE = (() => {
     _especialPendente  = null;
     _passarConfirmando = false;
     _renderizar();
+  }
+
+  // Banner visual ao início de novo turno (completo — toda a ordem foi percorrida).
+  function _mostrarBannerTurno(numTurno) {
+    const screen = document.getElementById('screen-battle');
+    if (!screen) return;
+    const antigo = document.getElementById('battle-turno-banner');
+    if (antigo) antigo.remove();
+
+    const el = document.createElement('div');
+    el.id = 'battle-turno-banner';
+    el.innerHTML = `
+      <div class="btb-turno">TURNO ${numTurno}</div>
+      <div class="btb-carta">🂠 +1 CARTA</div>
+    `;
+    screen.appendChild(el);
+
+    setTimeout(() => el.classList.add('saindo'), 1000);
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 1500);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -2745,9 +2857,11 @@ const BATTLE = (() => {
       <div id="battle-fim-content">
         <div id="battle-fim-titulo">${ehVitoria ? '⚔ VITÓRIA' : '💀 DERROTA'}</div>
         <div id="battle-fim-chars">${cards}</div>
-        ${ehVitoria
+        ${ehVitoria && _pontos > 0
           ? `<div id="battle-fim-pontos">+${_pontos} PTS</div>`
-          : `<div id="battle-fim-sub">Seu time foi derrotado.</div>`}
+          : !ehVitoria
+            ? `<div id="battle-fim-sub">Seu time foi derrotado.</div>`
+            : ''}
         <button id="battle-fim-btn">${ehVitoria ? 'CONTINUAR →' : '← VOLTAR AO MAPA'}</button>
       </div>
     `;
