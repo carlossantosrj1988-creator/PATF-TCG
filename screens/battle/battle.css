@@ -1278,8 +1278,8 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 180px;
-  background: #181010;
-  border-top: 3px solid #100808;
+  background: #F8F3F8;
+  border-top: 3px solid #181010;
   display: flex;
 }
 
@@ -1288,7 +1288,7 @@
 .battle-panel-btn-grande {
   flex: 1;
   height: 100%;
-  background: transparent;
+  background: #F8F3F8;
   border: none;
   font-size: 17px;
   font-weight: 700;
@@ -1297,13 +1297,15 @@
   font-family: inherit;
   transition: background 0.15s;
   position: relative;
+  color: #181010;
 }
 
-#battle-btn-habilidades          { color: #c9a84c; border-color: #c9a84c44; }
-#battle-btn-habilidades:hover    { background: #c9a84c10; border-color: #c9a84c80; }
+#battle-btn-habilidades          { border-right: 2px solid #181010; }
+#battle-btn-habilidades:hover    { background: #48A058; color: #F8F3F8; }
 
-#battle-btn-passar:hover         { background: #ffffff08; border-color: #ffffff20; }
-#battle-btn-passar.confirmando   { color: #55cc88; background: #55cc8812; border-color: #55cc8844; }
+#battle-btn-passar               { color: #181010; }
+#battle-btn-passar:hover         { background: #e0e0e0; }
+#battle-btn-passar.confirmando   { color: #F8F3F8; background: #48A058; }
 
 /* ── Etapa 2: habilidades (esq) + cartas (dir) ── */
 
@@ -1315,34 +1317,34 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 36px;
-  border-right: 1px solid #ffffff12;
+  border-right: 2px solid #181010;
 }
 
 .battle-btn-hab {
   width: 100%;
   padding: 10px 20px;
-  background: transparent;
-  border: 1px solid #ffffff18;
-  border-radius: 8px;
-  color: #c9a84c;
+  background: #F8F3F8;
+  border: 2px solid #181010;
+  border-radius: 0;
+  color: #181010;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 3px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s;
 }
 
-.battle-btn-hab:hover              { background: #c9a84c15; border-color: #c9a84c50; }
-.battle-btn-hab.vazio              { color: #ffffff25; border-color: #ffffff10; cursor: default; }
-.battle-btn-hab.vazio:hover        { background: transparent; border-color: #ffffff10; }
+.battle-btn-hab:hover              { background: #48A058; color: #F8F3F8; border-color: #181010; }
+.battle-btn-hab.vazio              { color: #aaa; border-color: #ccc; cursor: default; background: #eee; }
+.battle-btn-hab.vazio:hover        { background: #eee; color: #aaa; }
 
 .battle-btn-voltar {
   padding: 8px 20px;
   background: transparent;
   border: none;
-  color: #66778888;
+  color: #888;
   font-size: 12px;
   letter-spacing: 3px;
   cursor: pointer;
@@ -1351,7 +1353,7 @@
   transition: color 0.12s;
 }
 
-.battle-btn-voltar:hover { color: #8899aa; }
+.battle-btn-voltar:hover { color: #181010; }
 
 #battle-panel-cartas {
   flex: 1;
@@ -1435,8 +1437,8 @@
   gap: 8px;
 }
 
-.battle-inimigo-turno-titulo     { font-size: 11px; color: #cc7777; letter-spacing: 3px; font-weight: 700; }
-.battle-inimigo-turno-sub        { font-size: 9px; color: #66778866; letter-spacing: 1px; }
+.battle-inimigo-turno-titulo     { font-size: 11px; color: #B3181C; letter-spacing: 3px; font-weight: 700; }
+.battle-inimigo-turno-sub        { font-size: 9px; color: #181010; letter-spacing: 1px; opacity: 0.5; }
 
 /* ── Botão debug flutuante ── */
 
