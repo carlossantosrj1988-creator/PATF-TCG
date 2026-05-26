@@ -1075,10 +1075,13 @@ const BATTLE = (() => {
     banner.innerHTML = '<div id="bsb-bg"></div><div id="bsb-content"><div id="bsb-name"></div><div id="bsb-sub"></div></div>';
     screen.appendChild(banner);
 
-    const espOv = document.createElement('div');
-    espOv.id = 'battle-especial-overlay';
-    espOv.innerHTML = '<div id="battle-especial-bg"></div><div id="battle-especial-symbol"></div><div id="battle-especial-name"></div><div id="battle-especial-desc"></div>';
-    screen.appendChild(espOv);
+    // overlay de especial fica no body (position:fixed) para sobreviver ao screen.innerHTML=''
+    if (!document.getElementById('battle-especial-overlay')) {
+      const espOv = document.createElement('div');
+      espOv.id = 'battle-especial-overlay';
+      espOv.innerHTML = '<div id="battle-especial-bg"></div><div id="battle-especial-symbol"></div><div id="battle-especial-name"></div><div id="battle-especial-desc"></div>';
+      document.body.appendChild(espOv);
+    }
 
     // Se o turno atual é do inimigo, agenda a ação automática
     if (atual && atual.lado === 'inimigo' && !_aguardando) {
