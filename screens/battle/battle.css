@@ -1385,11 +1385,11 @@
 
 .battle-carta:hover              { transform: translateY(-8px); border-color: #48A058; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
 
-/* ── 4 cores GBC por naipe ── */
-.battle-carta[data-naipe="♥"] { background: #F8D8D8; border-color: #181010; }
-.battle-carta[data-naipe="♦"] { background: #F8F0D0; border-color: #181010; }
-.battle-carta[data-naipe="♠"] { background: #D8E8F8; border-color: #181010; }
-.battle-carta[data-naipe="♣"] { background: #D8F0D8; border-color: #181010; }
+/* ── GBC: fundo neutro para todos, cor só no naipe ── */
+.battle-carta[data-naipe="♥"] { background: #F8F3F8; border-color: #181010; }
+.battle-carta[data-naipe="♦"] { background: #F8F3F8; border-color: #181010; }
+.battle-carta[data-naipe="♠"] { background: #F8F3F8; border-color: #181010; }
+.battle-carta[data-naipe="♣"] { background: #F8F3F8; border-color: #181010; }
 
 .carta-valor     { font-size: 18px; font-weight: 700; line-height: 1; color: #181010; }
 .carta-naipe-icon { font-size: 13px; line-height: 1; }
