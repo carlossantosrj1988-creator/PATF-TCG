@@ -20,7 +20,7 @@
   background: #4cc8ff;
 }
 
-.bfx-canto-tl { top:    -5px; left:  -5px; }
-.bfx-canto-tr { top:    -5px; right: -5px; }
-.bfx-canto-bl { bottom: -5px; left:  -5px; }
-.bfx-canto-br { bottom: -5px; right: -5px; }
+.bfx-canto-tl { top:    0; left:  0; }
+.bfx-canto-tr { top:    0; right: 0; }
+.bfx-canto-bl { bottom: 0; left:  0; }
+.bfx-canto-br { bottom: 0; right: 0; }
