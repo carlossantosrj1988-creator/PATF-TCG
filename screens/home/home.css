@@ -82,9 +82,9 @@ html {
 
 #btn-options {
     position: absolute;
-    top: 11px;
-    right: 16px;
-    font-size: 1.8rem;
+    top: 14px;
+    right: 20px;
+    font-size: 1.4rem;
     color: #fff;
     cursor: pointer;
     z-index: 1000;
