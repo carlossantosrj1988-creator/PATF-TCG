@@ -53,7 +53,6 @@ const BORDER_FX = (() => {
     s.textContent = `
       /* Borda neon no elemento */
       .bfx-on {
-        position: relative !important;
         overflow: visible !important;
         border: 2px solid ${COR_BASE} !important;
         box-shadow: 0 0 8px ${COR_BASE}99, 0 0 22px ${COR_BASE}44,
