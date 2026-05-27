@@ -1192,6 +1192,9 @@ const BATTLE = (() => {
 
     // Live-update do popup de status, se estiver aberto
     if (_statusPopupChar) _mostrarStatusPersonagem(_statusPopupChar);
+
+    // Re-aplica bordas neon após DOM ser recriado
+    if (typeof BORDER_FX !== 'undefined') BORDER_FX.atualizar();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
