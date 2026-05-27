@@ -56,14 +56,14 @@ const BORDER_FX = (() => {
         overflow: visible !important;
         border: 2px solid ${COR_BASE} !important;
         box-shadow: 0 0 8px ${COR_BASE}99, 0 0 22px ${COR_BASE}44,
-                    inset 0 0 8px ${COR_BASE}22 !important;
-        transition: border-color 0.25s, box-shadow 0.25s;
+                    inset 0 0 8px ${COR_BASE}22;
+        transition: border-color 0.25s;
         box-sizing: border-box;
+        animation: bfx-brilho-azul 3s ease infinite;
       }
       .bfx-on.bfx-inimigo {
         border-color: ${COR_INIMIGO} !important;
-        box-shadow: 0 0 8px ${COR_INIMIGO}99, 0 0 22px ${COR_INIMIGO}44,
-                    inset 0 0 8px ${COR_INIMIGO}22 !important;
+        animation: bfx-brilho-vermelho 3s ease infinite;
       }
 
       /* ── Animações físicas da borda ── */
@@ -132,10 +132,10 @@ const BORDER_FX = (() => {
       }
       .bfx-canto.girando       { animation-play-state: running; }
       .bfx-canto.girando-fast  { animation-play-state: running; animation-duration: 0.35s; }
-      .bfx-canto-tl { top:-5px; left:-5px; }
-      .bfx-canto-tr { top:-5px; right:-5px; }
-      .bfx-canto-bl { bottom:-5px; left:-5px; }
-      .bfx-canto-br { bottom:-5px; right:-5px; }
+      .bfx-canto-tl { top: 0px;  left: 0px;  }
+      .bfx-canto-tr { top: 0px;  right: 0px; }
+      .bfx-canto-bl { bottom: 0px; left: 0px;  }
+      .bfx-canto-br { bottom: 0px; right: 0px; }
 
       /* ── Brilho pulsante animado (substitui canvas) ── */
       @keyframes bfx-brilho-azul {
@@ -149,12 +149,6 @@ const BORDER_FX = (() => {
         33% { box-shadow: 0 0 14px #ff6600cc, 0 0 35px #ff660066, inset 0 0 12px #ff660033; }
         66% { box-shadow: 0 0 10px #ff0044aa, 0 0 28px #ff004455, inset 0 0 10px #ff004428; }
         100%{ box-shadow: 0 0 8px #ff330099, 0 0 22px #ff330044, inset 0 0 8px #ff330022; }
-      }
-      .bfx-on:not(.bfx-inimigo):not(.bfx-sirene):not(.bfx-pisca) {
-        animation: bfx-brilho-azul 3s ease infinite;
-      }
-      .bfx-on.bfx-inimigo:not(.bfx-sirene) {
-        animation: bfx-brilho-vermelho 3s ease infinite;
       }
     `;
     document.head.appendChild(s);
