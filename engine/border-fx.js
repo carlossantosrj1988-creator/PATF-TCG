@@ -50,22 +50,19 @@ const BORDER_FX = (() => {
   function _neon(ctx, x1, y1, x2, y2, cor, brilho = 1, h = H_BASE) {
     const b = Math.max(0.3, brilho);
     ctx.save();
-    // Bloom
+    ctx.lineCap = 'round';
+    // Bloom externo — linha grossa transparente (sem filter)
     ctx.strokeStyle = cor;
-    ctx.lineWidth   = h * 3 * b;
-    ctx.globalAlpha = 0.10 * b;
-    ctx.filter      = `blur(${h * 1.2}px)`;
+    ctx.lineWidth   = h * 3.5 * b;
+    ctx.globalAlpha = 0.09 * b;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    // Glow
-    ctx.lineWidth   = h * 1.4 * b;
-    ctx.globalAlpha = 0.30 * b;
-    ctx.filter      = `blur(${h * 0.5}px)`;
+    // Glow médio
+    ctx.lineWidth   = h * 1.6 * b;
+    ctx.globalAlpha = 0.28 * b;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     // Core colorido
-    ctx.strokeStyle = cor;
     ctx.lineWidth   = h * 0.55;
     ctx.globalAlpha = 0.90;
-    ctx.filter      = 'none';
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     // Centro branco
     ctx.strokeStyle = '#ffffff';
@@ -152,42 +149,46 @@ const BORDER_FX = (() => {
   }
 
   // ── Dano lendário: cobrinha no perímetro fullscreen ───────────────────────
-  function _drawLendario(prog) {
+  function _drawLendario() {
     if (!_ctxFull || !_cvFull) return;
     const w     = _cvFull.width;
     const hTela = _cvFull.height;
     _ctxFull.clearRect(0, 0, w, hTela);
 
     const pal   = PAL.lendario;
-    const speed = 0.018;
+    const speed = 0.009;  // mais lento = mais fluido
     const cabT  = (_t * speed) % 1;
-    const rastW = 0.35; // comprimento do rastro em fração do perímetro
+    const rastW = 0.28;
+    const steps = 35;     // menos steps = menos processamento
 
-    // Desenha o rastro da cobrinha
-    const steps = 120;
     for (let i = 0; i < steps; i++) {
       const frac  = i / steps;
       const t0    = ((cabT - frac * rastW) % 1 + 1) % 1;
       const t1    = ((cabT - (frac + 1/steps) * rastW) % 1 + 1) % 1;
       const p0    = _perimetroPos(t0, w, hTela);
       const p1    = _perimetroPos(t1, w, hTela);
-      const alpha = 1 - frac * 0.85;
-      const cor   = pal[Math.floor((_t * 0.4 + i * 0.1)) % pal.length];
-      const bri   = (1 - frac) * 2.5;
+      const alpha = (1 - frac) * 0.95;
+      const cor   = pal[Math.floor((_t * 0.3 + i * 0.15)) % pal.length];
+      const lw    = (1 - frac) * 14 + 2; // linha grossa na cabeça, fina no rastro
 
+      // Sem filter: blur — 3 camadas manuais de glow
       _ctxFull.save();
+      _ctxFull.globalAlpha = alpha * 0.18;
+      _ctxFull.strokeStyle = cor;
+      _ctxFull.lineWidth   = lw * 3;
+      _ctxFull.lineCap     = 'round';
+      _ctxFull.beginPath(); _ctxFull.moveTo(p0.x, p0.y); _ctxFull.lineTo(p1.x, p1.y); _ctxFull.stroke();
+
+      _ctxFull.globalAlpha = alpha * 0.45;
+      _ctxFull.lineWidth   = lw * 1.2;
+      _ctxFull.beginPath(); _ctxFull.moveTo(p0.x, p0.y); _ctxFull.lineTo(p1.x, p1.y); _ctxFull.stroke();
+
       _ctxFull.globalAlpha = alpha;
-      _neon(_ctxFull, p0.x, p0.y, p1.x, p1.y, cor, bri, 10);
+      _ctxFull.strokeStyle = '#ffffff';
+      _ctxFull.lineWidth   = lw * 0.35;
+      _ctxFull.beginPath(); _ctxFull.moveTo(p0.x, p0.y); _ctxFull.lineTo(p1.x, p1.y); _ctxFull.stroke();
       _ctxFull.restore();
     }
-
-    // Flash ofuscante pulsando
-    const flash = 0.15 + 0.15 * Math.abs(Math.sin(_t * 0.4));
-    _ctxFull.save();
-    _ctxFull.globalAlpha = flash;
-    _ctxFull.fillStyle   = '#ffffff';
-    _ctxFull.fillRect(0, 0, w, hTela);
-    _ctxFull.restore();
   }
 
   // ── Loop principal ────────────────────────────────────────────────────────
@@ -212,15 +213,21 @@ const BORDER_FX = (() => {
     else if (nivel >= 1) alvoH = H_BASE * (1 + nivel * 0.7);
     _atualizarAltura(alvoH);
 
-    // Shake físico conforme intensidade
-    if (nivel >= 1 && _t % 3 === 0) {
-      const amp = [0, 3, 6, 10, 14][nivel] ?? 0;
-      _shake(_cvTop, amp);
-      _shake(_cvBot, amp);
-    }
-    if ((_estado === 'sirene' || _estado === 'defesa') && _t % 8 === 0) {
-      _shake(_cvTop, 5);
-      _shake(_cvBot, 5);
+    // CSS classes conforme estado/pulso (aplicado só quando muda)
+    if (isLendario) {
+      _setCssClasse(null, null);
+    } else if (nivel === 3) {
+      _setCssClasse('bfx-onda-top bfx-shake-forte', 'bfx-onda-bot bfx-shake-forte');
+    } else if (nivel === 2) {
+      _setCssClasse('bfx-onda-top bfx-shake-medio', 'bfx-onda-bot bfx-shake-medio');
+    } else if (nivel === 1) {
+      _setCssClasse('bfx-shake-leve', 'bfx-shake-leve');
+    } else if (_estado === 'sirene' || _estado === 'defesa') {
+      _setCssClasse('bfx-sirene', 'bfx-sirene');
+    } else if (_estado === 'troca_turno') {
+      _setCssClasse('bfx-pisca', 'bfx-pisca');
+    } else {
+      _setCssClasse(null, null);
     }
 
     // ── Lendário: fullscreen ativo, top/bot ocultos ──
@@ -228,7 +235,7 @@ const BORDER_FX = (() => {
       if (_cvFull)  _cvFull.style.display  = 'block';
       if (_cvTop)   _cvTop.style.opacity   = '0';
       if (_cvBot)   _cvBot.style.opacity   = '0';
-      _drawLendario(progPulso);
+      _drawLendario();
       _raf = requestAnimationFrame(_draw);
       return;
     } else {
@@ -304,6 +311,110 @@ const BORDER_FX = (() => {
     _raf = requestAnimationFrame(_draw);
   }
 
+  // ── CSS dinâmico para animações das bordas físicas ───────────────────────
+  const _CSS_ID = 'border-fx-style';
+
+  function _injetarCSS() {
+    if (document.getElementById(_CSS_ID)) return;
+    const style = document.createElement('style');
+    style.id = _CSS_ID;
+    style.textContent = `
+      /* Shake — tremor físico da borda */
+      @keyframes bfx-shake-leve {
+        0%,100%{ transform:translateX(0) }
+        20%    { transform:translateX(-3px) }
+        40%    { transform:translateX(3px) }
+        60%    { transform:translateX(-2px) }
+        80%    { transform:translateX(2px) }
+      }
+      @keyframes bfx-shake-medio {
+        0%,100%{ transform:translateX(0) }
+        15%    { transform:translateX(-6px) scaleY(1.3) }
+        35%    { transform:translateX(6px)  scaleY(0.8) }
+        55%    { transform:translateX(-4px) scaleY(1.2) }
+        75%    { transform:translateX(4px)  scaleY(0.9) }
+      }
+      @keyframes bfx-shake-forte {
+        0%,100%{ transform:translateX(0) scaleY(1) }
+        10%    { transform:translateX(-10px) scaleY(1.6) }
+        25%    { transform:translateX(10px)  scaleY(0.6) }
+        40%    { transform:translateX(-8px)  scaleY(1.5) }
+        55%    { transform:translateX(8px)   scaleY(0.7) }
+        70%    { transform:translateX(-6px)  scaleY(1.3) }
+        85%    { transform:translateX(6px)   scaleY(0.8) }
+      }
+
+      /* Ondulação — a borda serpenteia */
+      @keyframes bfx-onda-top {
+        0%  { transform:skewX(0deg)   scaleY(1)   }
+        20% { transform:skewX(6deg)   scaleY(1.4) }
+        40% { transform:skewX(-6deg)  scaleY(0.7) }
+        60% { transform:skewX(4deg)   scaleY(1.3) }
+        80% { transform:skewX(-4deg)  scaleY(0.8) }
+        100%{ transform:skewX(0deg)   scaleY(1)   }
+      }
+      @keyframes bfx-onda-bot {
+        0%  { transform:skewX(0deg)   scaleY(1)   }
+        20% { transform:skewX(-6deg)  scaleY(1.4) }
+        40% { transform:skewX(6deg)   scaleY(0.7) }
+        60% { transform:skewX(-4deg)  scaleY(1.3) }
+        80% { transform:skewX(4deg)   scaleY(0.8) }
+        100%{ transform:skewX(0deg)   scaleY(1)   }
+      }
+
+      /* Pulso — engrossa e afina */
+      @keyframes bfx-pulso {
+        0%,100%{ transform:scaleY(1)   }
+        30%    { transform:scaleY(3.5) }
+        60%    { transform:scaleY(1.5) }
+      }
+
+      /* Sirene — pulso rápido com flash */
+      @keyframes bfx-sirene {
+        0%,100%{ transform:scaleY(1)   opacity:1   }
+        25%    { transform:scaleY(3.2) opacity:0.8 }
+        50%    { transform:scaleY(1)   opacity:1   }
+        75%    { transform:scaleY(2.8) opacity:0.9 }
+      }
+
+      /* Pisca pisca troca de turno */
+      @keyframes bfx-pisca {
+        0%,49%{ opacity:1 } 50%,100%{ opacity:0.1 }
+      }
+
+      /* Classes aplicadas via JS */
+      .bfx-shake-leve  { animation: bfx-shake-leve  0.35s ease infinite; }
+      .bfx-shake-medio { animation: bfx-shake-medio 0.30s ease infinite; }
+      .bfx-shake-forte { animation: bfx-shake-forte 0.25s ease infinite; }
+      .bfx-onda-top    { animation: bfx-onda-top    0.6s  ease infinite; transform-origin: center center; }
+      .bfx-onda-bot    { animation: bfx-onda-bot    0.6s  ease infinite; transform-origin: center center; }
+      .bfx-pulso       { animation: bfx-pulso       0.5s  ease infinite; transform-origin: ${_CSS_BOT_ORIG}; }
+      .bfx-sirene      { animation: bfx-sirene       0.4s  ease infinite; transform-origin: center center; }
+      .bfx-pisca       { animation: bfx-pisca        0.35s steps(1) infinite; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const _CSS_BOT_ORIG = 'bottom center';
+
+  // Aplica classes CSS nos dois canvas de borda (aceita string com espaços)
+  const _TODAS_CLASSES = ['bfx-shake-leve','bfx-shake-medio','bfx-shake-forte',
+                          'bfx-onda-top','bfx-onda-bot','bfx-pulso','bfx-sirene','bfx-pisca'];
+  let _classeAtualTop = '';
+  let _classeAtualBot = '';
+
+  function _setCssClasse(topClass, botClass) {
+    if (!_cvTop || !_cvBot) return;
+    const tc = topClass ?? '';
+    const bc = botClass ?? '';
+    if (tc === _classeAtualTop && bc === _classeAtualBot) return; // sem mudança
+    _classeAtualTop = tc;
+    _classeAtualBot = bc;
+    _TODAS_CLASSES.forEach(c => { _cvTop.classList.remove(c); _cvBot.classList.remove(c); });
+    tc.split(' ').forEach(c => c && _cvTop.classList.add(c));
+    bc.split(' ').forEach(c => c && _cvBot.classList.add(c));
+  }
+
   // ── Criação dos canvas ────────────────────────────────────────────────────
   function _criarCv(id, isBot, fullscreen) {
     const cv = document.createElement('canvas');
@@ -356,6 +467,7 @@ const BORDER_FX = (() => {
     _t       = 0;
     _pulso   = null;
     _estado  = 'repouso';
+    _injetarCSS();
     _resize();
     window.addEventListener('resize', _resize);
     _draw();
