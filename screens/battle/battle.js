@@ -457,6 +457,9 @@ const BATTLE = (() => {
     const cls = lvl >= 3 ? 'battle-shake-insane' : lvl === 2 ? 'battle-shake-heavy' : 'battle-shake-med';
     const dur = lvl >= 3 ? 750 : lvl === 2 ? 600 : 450;
 
+    // Pulso de borda neon proporcional ao dano
+    if (typeof BORDER_FX !== 'undefined') BORDER_FX.pulso(lvl);
+
     screen.classList.remove('battle-shake-med', 'battle-shake-heavy', 'battle-shake-insane');
     void screen.offsetWidth;
     screen.classList.add(cls);
@@ -613,6 +616,13 @@ const BATTLE = (() => {
 
     COMBAT.init(personagens, inimigos);
     _distribuirMao(10);
+
+    // Inicia sistema de bordas neon
+    if (typeof BORDER_FX !== 'undefined') {
+      BORDER_FX.init();
+      BORDER_FX.estado('repouso');
+    }
+
     _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
   }
 
@@ -1522,6 +1532,7 @@ const BATTLE = (() => {
 
     // ── Defesa pendente: interrompe o fluxo normal ──
     if (_defesaPendente) {
+      if (typeof BORDER_FX !== 'undefined') BORDER_FX.estado('defesa');
       painel.appendChild(_criarPainelDefesaEsq());
       painel.appendChild(_criarPainelDefesaDir());
       return painel;
@@ -1531,6 +1542,7 @@ const BATTLE = (() => {
 
     // ── Turno do inimigo ──
     if (!atual || atual.lado === 'inimigo') {
+      if (typeof BORDER_FX !== 'undefined') BORDER_FX.estado('inimigo');
       painel.innerHTML = `
         <div class="battle-inimigo-turno">
           <div class="battle-inimigo-turno-titulo">⚔ TURNO DO INIMIGO</div>
@@ -1538,6 +1550,11 @@ const BATTLE = (() => {
         </div>
       `;
       return painel;
+    }
+
+    // ── Etapa 1: volta ao repouso ──
+    if (_estadoPainel === 'etapa1') {
+      if (typeof BORDER_FX !== 'undefined') BORDER_FX.estado('repouso');
     }
 
     // ── Etapa 1: esq=HABILIDADES+PASSAR, dir=mão completa (especiais clicáveis) ──
@@ -1734,6 +1751,7 @@ const BATTLE = (() => {
             _confirmarAlvo(alvosAuto);
           } else {
             _estadoPainel = 'sel_alvo';
+            if (typeof BORDER_FX !== 'undefined') BORDER_FX.estado('sirene');
             _renderizar();
           }
         });
@@ -2676,6 +2694,10 @@ const BATTLE = (() => {
     if (COMBAT.estado.turno > turnoAntes) {
       _logUI(`── TURNO ${COMBAT.estado.turno} ──`, 'turno');
       _mostrarBannerTurno(COMBAT.estado.turno);
+      if (typeof BORDER_FX !== 'undefined') {
+        BORDER_FX.estado('troca_turno');
+        setTimeout(() => BORDER_FX.estado('repouso'), 2000);
+      }
     }
     const proximo = COMBAT.combatenteAtual();
     if (proximo) _iniciarTurno(proximo);
