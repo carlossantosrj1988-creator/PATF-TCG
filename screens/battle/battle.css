@@ -35,7 +35,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 18px;
+  padding: 0 24px;
 }
 
 .battle-topbar-centro {
@@ -55,7 +55,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding: 0 18px;
+  padding: 0 60px 0 24px;
 }
 
 .topbar-turno     { font-size: 10px; letter-spacing: 3px; color: #ffffff50; text-transform: uppercase; font-weight: 700; }
