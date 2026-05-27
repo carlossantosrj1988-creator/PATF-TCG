@@ -1,0 +1,26 @@
+/* engine/border-fx.css
+   Overlays de borda — irmãos do topbar e do painel, NUNCA tocam neles.
+   Borda simples 2px ciano + 4 quadradinhos 10x10 centrados nas quinas. */
+
+.bfx-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 500;
+  overflow: visible;
+  border: 2px solid #4cc8ff;
+  box-sizing: border-box;
+}
+
+.bfx-canto {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #4cc8ff;
+}
+
+.bfx-canto-tl { top:    -5px; left:  -5px; }
+.bfx-canto-tr { top:    -5px; right: -5px; }
+.bfx-canto-bl { bottom: -5px; left:  -5px; }
+.bfx-canto-br { bottom: -5px; right: -5px; }

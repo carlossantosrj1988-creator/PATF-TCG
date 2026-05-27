@@ -1166,6 +1166,8 @@ const BATTLE = (() => {
     banner.innerHTML = '<div id="bsb-bg"></div><div id="bsb-content"><div id="bsb-name"></div><div id="bsb-sub"></div></div>';
     screen.appendChild(banner);
 
+    BORDER_FX.init();
+
     // overlay de especial fica no body (position:fixed) para sobreviver ao screen.innerHTML=''
     if (!document.getElementById('battle-especial-overlay')) {
       const espOv = document.createElement('div');
