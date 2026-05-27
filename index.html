@@ -95,21 +95,11 @@
         <div class="res-btn" id="btn-reset-time" style="color:#e05555;border-color:#552222;">↺ RESETAR TIME</div>
         <p class="options-label">PONTOS</p>
         <div class="res-btn" id="btn-add-pontos">+ 20 PONTOS DE TESTE</div>
-        <p class="options-label">BORDAS — PREVIEW</p>
-        <div class="res-btn border-preview-btn" data-estado="repouso">● REPOUSO (ALIADO)</div>
-        <div class="res-btn border-preview-btn" data-estado="inimigo">● REPOUSO (INIMIGO)</div>
-        <div class="res-btn border-preview-btn" data-estado="sirene">🚨 SIRENE / ALERTA</div>
-        <div class="res-btn border-preview-btn" data-estado="troca_turno">✦ TROCA DE TURNO</div>
-        <div class="res-btn border-preview-btn" data-estado="dano_fraco">💥 DANO FRACO</div>
-        <div class="res-btn border-preview-btn" data-estado="dano_medio">💥💥 DANO MÉDIO</div>
-        <div class="res-btn border-preview-btn" data-estado="dano_forte">💥💥💥 DANO FORTE</div>
-        <div class="res-btn border-preview-btn" data-estado="dano_lendario">⚡ DANO LENDÁRIO</div>
       </div>
     </div>
   </div>
 
   <!-- ── Scripts — ordem de dependência ── -->
-  <script src="engine/border-fx.js"></script>
   <script src="screens/renderer/renderer.js"></script>
   <script src="chars/chars.js"></script>
   <script src="chars/char-sprite.js"></script>
@@ -215,17 +205,6 @@
       panel.classList.remove('open');
       window.irParaTela('start-screen');
       gameState = 'start-screen';
-    });
-
-    // ── Preview de bordas neon ────────────────────────────────────────────────
-    document.querySelectorAll('.border-preview-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const est = btn.dataset.estado;
-        // Garante que o sistema está ativo
-        if (!document.getElementById('border-fx-top')) BORDER_FX.init();
-        BORDER_FX.preview(est, 3000);
-        panel.classList.remove('open');
-      });
     });
 
     document.getElementById('btn-add-pontos').addEventListener('click', function () {
