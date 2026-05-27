@@ -53,7 +53,6 @@ const BORDER_FX = (() => {
     s.textContent = `
       /* Borda neon no elemento */
       .bfx-on {
-        position: relative !important;
         overflow: visible !important;
         border: 2px solid ${COR_BASE} !important;
         box-shadow: 0 0 8px ${COR_BASE}99, 0 0 22px ${COR_BASE}44,
@@ -138,12 +137,24 @@ const BORDER_FX = (() => {
       .bfx-canto-bl { bottom:-5px; left:-5px; }
       .bfx-canto-br { bottom:-5px; right:-5px; }
 
-      /* ── Canvas de neon (não bloqueia cliques, não cobre conteúdo) ── */
-      .bfx-cv {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 1;
+      /* ── Brilho pulsante animado (substitui canvas) ── */
+      @keyframes bfx-brilho-azul {
+        0%  { box-shadow: 0 0 8px #00cfff99, 0 0 22px #00cfff44, inset 0 0 8px #00cfff22; }
+        33% { box-shadow: 0 0 14px #0088ffcc, 0 0 35px #0088ff66, inset 0 0 12px #0088ff33; }
+        66% { box-shadow: 0 0 10px #00eeffaa, 0 0 28px #00eeff55, inset 0 0 10px #00eeff28; }
+        100%{ box-shadow: 0 0 8px #00cfff99, 0 0 22px #00cfff44, inset 0 0 8px #00cfff22; }
+      }
+      @keyframes bfx-brilho-vermelho {
+        0%  { box-shadow: 0 0 8px #ff330099, 0 0 22px #ff330044, inset 0 0 8px #ff330022; }
+        33% { box-shadow: 0 0 14px #ff6600cc, 0 0 35px #ff660066, inset 0 0 12px #ff660033; }
+        66% { box-shadow: 0 0 10px #ff0044aa, 0 0 28px #ff004455, inset 0 0 10px #ff004428; }
+        100%{ box-shadow: 0 0 8px #ff330099, 0 0 22px #ff330044, inset 0 0 8px #ff330022; }
+      }
+      .bfx-on:not(.bfx-inimigo):not(.bfx-sirene):not(.bfx-pisca) {
+        animation: bfx-brilho-azul 3s ease infinite;
+      }
+      .bfx-on.bfx-inimigo:not(.bfx-sirene) {
+        animation: bfx-brilho-vermelho 3s ease infinite;
       }
     `;
     document.head.appendChild(s);
@@ -359,17 +370,11 @@ const BORDER_FX = (() => {
     _raf = requestAnimationFrame(_draw);
   }
 
-  // ── Cria canvas dentro do elemento ───────────────────────────────────────
+  // ── Cria cantos e aplica bfx-on ao elemento — SEM canvas dentro ──────────
   function _montarElemento(el) {
     el.style.overflow = 'visible';
     _criarCantos(el);
-    const cv      = document.createElement('canvas');
-    cv.className  = 'bfx-cv';
-    cv.width      = el.offsetWidth  || 1280;
-    cv.height     = el.offsetHeight || 52;
-    el.appendChild(cv);
     el.classList.add('bfx-on');
-    return { cv, ctx: cv.getContext('2d') };
   }
 
   // ── API pública ───────────────────────────────────────────────────────────
@@ -410,37 +415,13 @@ const BORDER_FX = (() => {
     _cvTop = _cvBot = _ctxTop = _ctxBot = _cvLend = _ctxLend = null;
   }
 
-  // Chamado após cada _renderizar() — re-anexa canvas e classes ao novo DOM
+  // Chamado após cada _renderizar() — re-aplica borda e cantos ao novo DOM
   function atualizar() {
     const top = document.getElementById('battle-topbar');
     const bot = document.getElementById('battle-panel');
 
-    if (top && !top.classList.contains('bfx-on')) {
-      const r  = _montarElemento(top);
-      _cvTop   = r.cv;
-      _ctxTop  = r.ctx;
-    } else if (top) {
-      // Sincroniza tamanho se necessário
-      const cv = top.querySelector('.bfx-cv');
-      if (cv && (cv.width !== top.offsetWidth)) {
-        cv.width  = top.offsetWidth;
-        cv.height = top.offsetHeight;
-        _cvTop = cv; _ctxTop = cv.getContext('2d');
-      }
-    }
-
-    if (bot && !bot.classList.contains('bfx-on')) {
-      const r  = _montarElemento(bot);
-      _cvBot   = r.cv;
-      _ctxBot  = r.ctx;
-    } else if (bot) {
-      const cv = bot.querySelector('.bfx-cv');
-      if (cv && (cv.width !== bot.offsetWidth)) {
-        cv.width  = bot.offsetWidth;
-        cv.height = bot.offsetHeight;
-        _cvBot = cv; _ctxBot = cv.getContext('2d');
-      }
-    }
+    if (top && !top.classList.contains('bfx-on')) _montarElemento(top);
+    if (bot && !bot.classList.contains('bfx-on')) _montarElemento(bot);
 
     // Atualiza canvas lendário
     if (_cvLend) {
