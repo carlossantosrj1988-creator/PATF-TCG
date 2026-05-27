@@ -1,287 +1,373 @@
-// engine/border-fx.js
+// engine/border-fx.js  v2
 // Sistema de bordas neon vivas — estilo Marvel Snap
-// Estados: repouso | sirene | defesa | inimigo | dano_fraco | dano_medio | dano_forte | dano_lendario | troca_turno
 //
-// API pública:
-//   BORDER_FX.init()           — cria os canvas de borda na tela de batalha
-//   BORDER_FX.estado(nome)     — muda o estado da borda
-//   BORDER_FX.pulso(nivel)     — dispara pulso de dano (1=fraco, 2=medio, 3=forte, 4=lendario)
-//   BORDER_FX.destroy()        — remove os canvas
+// Estados:
+//   repouso        — azul suave, espiral lenta, borda fina
+//   inimigo        — vermelho suave, espiral lenta
+//   sirene         — azul/vermelho alternando, borda PULSA mais grossa, shake
+//   defesa         — igual sirene
+//   troca_turno    — pisca pisca dourado
+//   dano_fraco     — shake leve, ondulação suave
+//   dano_medio     — shake médio, ondulação + ponto horário
+//   dano_forte     — shake forte, ondulação rápida + ponto horário acelerado
+//   dano_lendario  — bordas se juntam e percorrem os 4 lados como cobrinha
+//
+// API:
+//   BORDER_FX.init()
+//   BORDER_FX.destroy()
+//   BORDER_FX.estado(nome)
+//   BORDER_FX.pulso(nivel)   — 1=fraco 2=medio 3=forte 4=lendario
+//   BORDER_FX.preview(nome)  — preview temporário 3s
 
 const BORDER_FX = (() => {
 
-  // ── Canvas: topo e base ──────────────────────────────────────────────────
-  let _cvTop  = null;
-  let _cvBot  = null;
-  let _ctxTop = null;
-  let _ctxBot = null;
-  let _raf    = null;
-  let _t      = 0;           // tempo global (frames)
-  let _estado = 'repouso';   // estado atual
-  let _pulso  = null;        // { nivel, t } — animação de dano em curso
+  // ── Canvas ───────────────────────────────────────────────────────────────
+  let _cvTop   = null;  // borda superior
+  let _cvBot   = null;  // borda inferior
+  let _cvFull  = null;  // canvas fullscreen — dano lendário (4 lados)
+  let _ctxTop  = null;
+  let _ctxBot  = null;
+  let _ctxFull = null;
+  let _raf     = null;
+  let _t       = 0;
+  let _estado  = 'repouso';
+  let _pulso   = null;   // { nivel, t, dur }
 
-  const H = 6; // altura dos canvas em px (borda fina mas com bloom)
+  // Altura base e altura atual (pulso aumenta)
+  const H_BASE = 7;
+  let _hAtual  = H_BASE;
 
-  // ── Paletas ─────────────────────────────────────────────────────────────
-
+  // ── Paletas ──────────────────────────────────────────────────────────────
   const PAL = {
-    azul:     ['#00cfff', '#0088ff', '#00eeff', '#44aaff', '#ffffff'],
-    vermelho: ['#ff2200', '#ff6600', '#ff0055', '#ff4444', '#ffffff'],
-    sirene:   ['#0044ff', '#ff0022', '#00cfff', '#ff3300', '#ffffff'],
-    dourado:  ['#ffd700', '#ffaa00', '#fff200', '#ff8800', '#ffffff'],
-    arco:     ['#ff0000','#ff7700','#ffff00','#00ff00','#00ffff','#0077ff','#aa00ff','#ffffff'],
+    azul:     ['#00cfff','#0088ff','#00eeff','#44aaff','#ffffff'],
+    vermelho: ['#ff2200','#ff6600','#ff0055','#ff4444','#ffffff'],
+    dourado:  ['#ffd700','#ffaa00','#fff200','#ff8800','#ffffff'],
+    arco:     ['#ff0000','#ff7700','#ffff00','#00ff00','#00ffff','#0077ff','#aa00ff','#ff00aa','#ffffff'],
     lendario: ['#ff00ff','#00ffff','#ffff00','#ff0000','#00ff00','#ffffff','#ff7700','#aa00ff'],
   };
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  function _cor(pal, idx) {
-    return pal[((idx % pal.length) + pal.length) % pal.length];
-  }
-
-  // Neon real: core branco + glow colorido + bloom externo
-  function _neonStroke(ctx, x1, y1, x2, y2, cor, brilho = 1) {
-    // Bloom externo
+  // ── Neon real: bloom + glow + core + branco ──────────────────────────────
+  function _neon(ctx, x1, y1, x2, y2, cor, brilho = 1, h = H_BASE) {
+    const b = Math.max(0.3, brilho);
     ctx.save();
+    // Bloom
     ctx.strokeStyle = cor;
-    ctx.lineWidth   = 14 * brilho;
-    ctx.globalAlpha = 0.12 * brilho;
-    ctx.filter      = `blur(${6 * brilho}px)`;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    // Glow médio
-    ctx.lineWidth   = 6 * brilho;
-    ctx.globalAlpha = 0.35 * brilho;
-    ctx.filter      = `blur(${2 * brilho}px)`;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    // Core
-    ctx.lineWidth   = 2;
-    ctx.globalAlpha = 0.9;
+    ctx.lineWidth   = h * 3 * b;
+    ctx.globalAlpha = 0.10 * b;
+    ctx.filter      = `blur(${h * 1.2}px)`;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    // Glow
+    ctx.lineWidth   = h * 1.4 * b;
+    ctx.globalAlpha = 0.30 * b;
+    ctx.filter      = `blur(${h * 0.5}px)`;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    // Core colorido
+    ctx.strokeStyle = cor;
+    ctx.lineWidth   = h * 0.55;
+    ctx.globalAlpha = 0.90;
     ctx.filter      = 'none';
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     // Centro branco
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 0.8;
-    ctx.globalAlpha = 0.7 * brilho;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.lineWidth   = h * 0.22;
+    ctx.globalAlpha = 0.65 * b;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     ctx.restore();
   }
 
-  // ── Desenhos por estado ──────────────────────────────────────────────────
+  // ── Shake físico nos canvas ───────────────────────────────────────────────
+  function _shake(cv, amp) {
+    if (!cv) return;
+    const dx = (Math.random() - 0.5) * amp * 2;
+    const dy = (Math.random() - 0.5) * amp * 0.5;
+    cv.style.transform = `translate(${dx}px, ${dy}px)`;
+    setTimeout(() => { if (cv) cv.style.transform = ''; }, 60);
+  }
 
-  function _drawRepouso(ctx, w, t, flipped) {
-    ctx.clearRect(0, 0, w, H);
-    const pal    = _estado === 'inimigo' ? PAL.vermelho : PAL.azul;
-    const speed  = 0.008;
-    const segs   = 6;
-    const segW   = w / segs;
-    // Espiral lenta — barbearia
+  // ── Posição no perímetro (sentido horário) ────────────────────────────────
+  // Dado t ∈ [0,1], retorna {x,y} no perímetro do retângulo w×h_tela
+  function _perimetroPos(t, w, hTela) {
+    const perimetro = 2 * (w + hTela);
+    const dist      = ((t % 1) + 1) % 1 * perimetro;
+    if (dist < w)                    return { x: dist,          y: 0 };           // topo →
+    if (dist < w + hTela)            return { x: w,             y: dist - w };    // dir ↓
+    if (dist < 2 * w + hTela)        return { x: w - (dist - w - hTela), y: hTela }; // base ←
+    return { x: 0, y: hTela - (dist - 2 * w - hTela) };                           // esq ↑
+  }
+
+  // ── Desenho dos estados ──────────────────────────────────────────────────
+
+  // Espiral barbearia: segs segmentos coloridos ciclando
+  function _barbearia(ctx, w, t, flipped, pal, speed, brilho) {
+    const h    = _hAtual;
+    const segs = 8;
+    const sw   = w / segs;
     for (let s = 0; s < segs; s++) {
-      const phase  = (flipped ? -1 : 1) * (t * speed + s / segs);
-      const idx    = Math.floor(phase * pal.length) % pal.length;
-      const alpha  = 0.55 + 0.2 * Math.sin(t * 0.04 + s);
-      const cor    = pal[Math.abs(idx) % pal.length];
-      const x1     = s * segW;
-      const x2     = x1 + segW;
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      _neonStroke(ctx, x1, H / 2, x2, H / 2, cor, 0.7);
+      const phase = (flipped ? -1 : 1) * (t * speed + s / segs);
+      const idx   = Math.abs(Math.floor(phase * pal.length)) % pal.length;
+      const alpha = 0.5 + 0.25 * Math.sin(t * 0.05 + s);
+      ctx.save(); ctx.globalAlpha = alpha;
+      _neon(ctx, s * sw, h/2, (s+1)*sw, h/2, pal[idx], brilho, h);
       ctx.restore();
     }
-    // Flicker suave
-    const flicker = 0.85 + 0.15 * Math.sin(t * 0.13 + (flipped ? 1 : 0));
+  }
+
+  // Ponto brilhante viajando no sentido horário pelas bordas (topo+base)
+  function _pontoHorario(ctx, w, t, isBot, speed, cor, brilho) {
+    const h    = _hAtual;
+    const pos  = ((t * speed) % 1 + 1) % 1;
+    const x    = isBot ? (1 - pos) * w : pos * w;
+    const r    = h * 2.5 * brilho;
     ctx.save();
-    ctx.globalAlpha = flicker * 0.15;
-    ctx.fillStyle   = _estado === 'inimigo' ? '#ff2200' : '#00cfff';
-    ctx.fillRect(0, 0, w, H);
+    const grd = ctx.createRadialGradient(x, h/2, 0, x, h/2, r);
+    grd.addColorStop(0, '#ffffff');
+    grd.addColorStop(0.3, cor);
+    grd.addColorStop(1, 'transparent');
+    ctx.globalAlpha = 0.9 * brilho;
+    ctx.fillStyle   = grd;
+    ctx.beginPath(); ctx.arc(x, h/2, r, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  function _drawSirene(ctx, w, t, flipped) {
-    ctx.clearRect(0, 0, w, H);
-    const fase  = Math.floor(t / 8) % 2; // alterna a cada 8 frames
-    const cor   = fase === 0 ? '#0044ff' : '#ff0022';
-    const brilho = 1.5 + 0.5 * Math.sin(t * 0.3);
-    _neonStroke(ctx, 0, H / 2, w, H / 2, cor, brilho);
-    // Pulso de alerta
-    const alpha = 0.3 + 0.3 * Math.abs(Math.sin(t * 0.25));
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle   = cor;
-    ctx.fillRect(0, 0, w, H);
-    ctx.restore();
-  }
-
-  function _drawTrocaTurno(ctx, w, t, flipped) {
-    ctx.clearRect(0, 0, w, H);
-    // Pisca pisca natal — segmentos alternados
-    const segW = 40;
-    const segs = Math.ceil(w / segW);
-    for (let s = 0; s < segs; s++) {
-      const on  = ((s + Math.floor(t / 6)) % 2) === 0;
-      const cor = PAL.dourado[s % PAL.dourado.length];
-      if (on) {
-        _neonStroke(ctx, s * segW, H / 2, Math.min((s + 1) * segW, w), H / 2, cor, 1.2);
-      }
-    }
-  }
-
-  function _drawDanoFraco(ctx, w, t, flipped, prog) {
-    ctx.clearRect(0, 0, w, H);
-    // Shake: deslocamento vertical pequeno
-    const shake = Math.sin(t * 1.8) * 2 * (1 - prog);
-    const pal   = PAL.arco;
-    const segs  = 8;
-    const segW  = w / segs;
-    for (let s = 0; s < segs; s++) {
-      const cor = pal[(s + Math.floor(t * 0.4)) % pal.length];
-      const y   = H / 2 + shake * Math.sin(s * 1.3);
-      _neonStroke(ctx, s * segW, y, (s + 1) * segW, y, cor, 0.9 + 0.3 * (1 - prog));
-    }
-  }
-
-  function _drawDanoMedio(ctx, w, t, flipped, prog) {
-    ctx.clearRect(0, 0, w, H);
-    // Ondulação + espiral barbearia acelerada
-    const pal   = PAL.arco;
-    const pts   = 80;
-    const speed = (flipped ? -1 : 1) * t * 0.12;
+  // Ondulação snake
+  function _ondulacao(ctx, w, t, flipped, pal, speed, amplitude, brilho) {
+    const h   = _hAtual;
+    const pts = 100;
+    const dir = flipped ? -1 : 1;
     for (let i = 0; i < pts - 1; i++) {
-      const x1  = (i / pts) * w;
-      const x2  = ((i + 1) / pts) * w;
-      const y1  = H / 2 + Math.sin(i * 0.25 + speed) * (H / 2 - 1);
-      const y2  = H / 2 + Math.sin((i + 1) * 0.25 + speed) * (H / 2 - 1);
-      const cor = pal[(i + Math.floor(t * 0.6)) % pal.length];
-      _neonStroke(ctx, x1, y1, x2, y2, cor, 1.1);
+      const x1 = (i / pts) * w;
+      const x2 = ((i + 1) / pts) * w;
+      const y1 = h/2 + Math.sin(i * 0.28 + dir * t * speed) * amplitude;
+      const y2 = h/2 + Math.sin((i+1) * 0.28 + dir * t * speed) * amplitude;
+      const cor = pal[(i + Math.floor(t * 0.5)) % pal.length];
+      _neon(ctx, x1, y1, x2, y2, cor, brilho, h);
     }
   }
 
-  function _drawDanoForte(ctx, w, t, flipped, prog) {
-    ctx.clearRect(0, 0, w, H);
-    // Cobrinha correndo da borda para o centro e voltando
-    const pal    = PAL.lendario;
-    const cobra  = ((t * 4) % (w * 2)); // posição da cabeça (vai e volta)
-    const pos    = cobra > w ? w * 2 - cobra : cobra;
-    const headW  = 120;
-    const x1     = Math.max(0, pos - headW);
-    const x2     = Math.min(w, pos + headW);
-    const cor    = pal[Math.floor(t * 0.5) % pal.length];
-    const corB   = pal[(Math.floor(t * 0.5) + 2) % pal.length];
-    _neonStroke(ctx, x1, H / 2, x2, H / 2, cor, 2.0);
-    // Rastro
-    if (x1 > 0)  _neonStroke(ctx, 0, H / 2, x1, H / 2, corB, 0.4);
-    if (x2 < w)  _neonStroke(ctx, x2, H / 2, w, H / 2, corB, 0.4);
+  // ── Pulso de espessura ────────────────────────────────────────────────────
+  function _atualizarAltura(alvoH) {
+    _hAtual += (alvoH - _hAtual) * 0.12;
+    if (_cvTop)  { _cvTop.height  = Math.ceil(_hAtual); _cvTop.style.height  = Math.ceil(_hAtual) + 'px'; }
+    if (_cvBot)  { _cvBot.height  = Math.ceil(_hAtual); _cvBot.style.height  = Math.ceil(_hAtual) + 'px'; }
   }
 
-  function _drawDanoLendario(ctx, w, t, flipped, prog) {
-    ctx.clearRect(0, 0, w, H);
+  // ── Dano lendário: cobrinha no perímetro fullscreen ───────────────────────
+  function _drawLendario(prog) {
+    if (!_ctxFull || !_cvFull) return;
+    const w     = _cvFull.width;
+    const hTela = _cvFull.height;
+    _ctxFull.clearRect(0, 0, w, hTela);
+
     const pal   = PAL.lendario;
-    // Tudo ao mesmo tempo — ondulação + cobrinha + flash
-    const pts   = 80;
-    const speed = (flipped ? -1 : 1) * t * 0.25;
-    for (let i = 0; i < pts - 1; i++) {
-      const x1  = (i / pts) * w;
-      const x2  = ((i + 1) / pts) * w;
-      const y1  = H / 2 + Math.sin(i * 0.4 + speed) * (H / 2 - 1);
-      const y2  = H / 2 + Math.sin((i + 1) * 0.4 + speed) * (H / 2 - 1);
-      const cor = pal[(i + Math.floor(t * 1.2)) % pal.length];
-      _neonStroke(ctx, x1, y1, x2, y2, cor, 2.2);
+    const speed = 0.018;
+    const cabT  = (_t * speed) % 1;
+    const rastW = 0.35; // comprimento do rastro em fração do perímetro
+
+    // Desenha o rastro da cobrinha
+    const steps = 120;
+    for (let i = 0; i < steps; i++) {
+      const frac  = i / steps;
+      const t0    = ((cabT - frac * rastW) % 1 + 1) % 1;
+      const t1    = ((cabT - (frac + 1/steps) * rastW) % 1 + 1) % 1;
+      const p0    = _perimetroPos(t0, w, hTela);
+      const p1    = _perimetroPos(t1, w, hTela);
+      const alpha = 1 - frac * 0.85;
+      const cor   = pal[Math.floor((_t * 0.4 + i * 0.1)) % pal.length];
+      const bri   = (1 - frac) * 2.5;
+
+      _ctxFull.save();
+      _ctxFull.globalAlpha = alpha;
+      _neon(_ctxFull, p0.x, p0.y, p1.x, p1.y, cor, bri, 10);
+      _ctxFull.restore();
     }
-    // Flash ofuscante
-    const flash = 0.4 + 0.4 * Math.abs(Math.sin(t * 0.5));
-    ctx.save();
-    ctx.globalAlpha = flash;
-    ctx.fillStyle   = '#ffffff';
-    ctx.fillRect(0, 0, w, H);
-    ctx.restore();
+
+    // Flash ofuscante pulsando
+    const flash = 0.15 + 0.15 * Math.abs(Math.sin(_t * 0.4));
+    _ctxFull.save();
+    _ctxFull.globalAlpha = flash;
+    _ctxFull.fillStyle   = '#ffffff';
+    _ctxFull.fillRect(0, 0, w, hTela);
+    _ctxFull.restore();
   }
 
-  // ── Loop principal ───────────────────────────────────────────────────────
-
+  // ── Loop principal ────────────────────────────────────────────────────────
   function _draw() {
-    if (!_cvTop || !_cvBot) return;
-    const w = _cvTop.width;
     _t++;
 
-    let drawFn = _drawRepouso;
-    let progPulso = 1;
+    let isLendario = false;
+    let progPulso  = 1;
 
     if (_pulso) {
       _pulso.t++;
-      const dur = [0, 40, 60, 90, 130][_pulso.nivel] ?? 60;
-      progPulso = Math.min(1, _pulso.t / dur);
-      if (progPulso >= 1) _pulso = null;
+      progPulso = Math.min(1, _pulso.t / _pulso.dur);
+      if (progPulso >= 1) { _pulso = null; }
+    }
 
-      if (_pulso) {
-        const fns = [null, _drawDanoFraco, _drawDanoMedio, _drawDanoForte, _drawDanoLendario];
-        drawFn = fns[_pulso.nivel] ?? _drawDanoFraco;
+    const nivel = _pulso ? _pulso.nivel : 0;
+    isLendario  = nivel === 4;
+
+    // Altura alvo conforme estado
+    let alvoH = H_BASE;
+    if (_estado === 'sirene' || _estado === 'defesa') alvoH = H_BASE * 2.8;
+    else if (nivel >= 1) alvoH = H_BASE * (1 + nivel * 0.7);
+    _atualizarAltura(alvoH);
+
+    // Shake físico conforme intensidade
+    if (nivel >= 1 && _t % 3 === 0) {
+      const amp = [0, 3, 6, 10, 14][nivel] ?? 0;
+      _shake(_cvTop, amp);
+      _shake(_cvBot, amp);
+    }
+    if ((_estado === 'sirene' || _estado === 'defesa') && _t % 8 === 0) {
+      _shake(_cvTop, 5);
+      _shake(_cvBot, 5);
+    }
+
+    // ── Lendário: fullscreen ativo, top/bot ocultos ──
+    if (isLendario) {
+      if (_cvFull)  _cvFull.style.display  = 'block';
+      if (_cvTop)   _cvTop.style.opacity   = '0';
+      if (_cvBot)   _cvBot.style.opacity   = '0';
+      _drawLendario(progPulso);
+      _raf = requestAnimationFrame(_draw);
+      return;
+    } else {
+      if (_cvFull)  _cvFull.style.display  = 'none';
+      if (_cvTop)   _cvTop.style.opacity   = '1';
+      if (_cvBot)   _cvBot.style.opacity   = '1';
+    }
+
+    // ── Desenha top e bot ──
+    const w = _cvTop?.width ?? 0;
+    if (!_ctxTop || !_ctxBot || w === 0) { _raf = requestAnimationFrame(_draw); return; }
+
+    _ctxTop.clearRect(0, 0, w, _hAtual + 4);
+    _ctxBot.clearRect(0, 0, w, _hAtual + 4);
+
+    // Estado base
+    if (nivel === 0) {
+      if (_estado === 'sirene' || _estado === 'defesa') {
+        const fase = Math.floor(_t / 7) % 2;
+        const cor  = fase === 0 ? '#0044ff' : '#ff0022';
+        const bri  = 1.6 + 0.6 * Math.abs(Math.sin(_t * 0.28));
+        _barbearia(_ctxTop, w, _t, false, [cor, '#ffffff', cor], 0.025, bri);
+        _barbearia(_ctxBot, w, _t, true,  [cor, '#ffffff', cor], 0.025, bri);
+        _pontoHorario(_ctxTop, w, _t, false, 0.006, cor, bri);
+        _pontoHorario(_ctxBot, w, _t, true,  0.006, cor, bri);
+      } else if (_estado === 'troca_turno') {
+        const sw  = 38;
+        const segs = Math.ceil(w / sw);
+        for (let s = 0; s < segs; s++) {
+          const on  = ((s + Math.floor(_t / 5)) % 2) === 0;
+          const cor = PAL.dourado[s % PAL.dourado.length];
+          if (on) {
+            _neon(_ctxTop, s*sw, _hAtual/2, Math.min((s+1)*sw,w), _hAtual/2, cor, 1.4, _hAtual);
+            _neon(_ctxBot, s*sw, _hAtual/2, Math.min((s+1)*sw,w), _hAtual/2, cor, 1.4, _hAtual);
+          }
+        }
+      } else {
+        // Repouso / inimigo
+        const pal = _estado === 'inimigo' ? PAL.vermelho : PAL.azul;
+        const bri = 0.75 + 0.15 * Math.sin(_t * 0.04);
+        _barbearia(_ctxTop, w, _t, false, pal, 0.009, bri);
+        _barbearia(_ctxBot, w, _t, true,  pal, 0.009, bri);
+        _pontoHorario(_ctxTop, w, _t, false, 0.002, pal[0], bri * 0.8);
+        _pontoHorario(_ctxBot, w, _t, true,  0.002, pal[0], bri * 0.8);
       }
     }
 
-    if (!_pulso) {
-      if (_estado === 'sirene' || _estado === 'defesa') drawFn = _drawSirene;
-      else if (_estado === 'troca_turno')               drawFn = _drawTrocaTurno;
-      else                                              drawFn = _drawRepouso;
+    // Dano fraco
+    else if (nivel === 1) {
+      const bri = 1.0 + 0.4 * Math.abs(Math.sin(_t * 0.35));
+      _barbearia(_ctxTop, w, _t, false, PAL.arco, 0.018, bri);
+      _barbearia(_ctxBot, w, _t, true,  PAL.arco, 0.018, bri);
     }
 
-    drawFn(_ctxTop, w, _t, false, progPulso);
-    drawFn(_ctxBot, w, _t, true,  progPulso);
+    // Dano médio
+    else if (nivel === 2) {
+      const bri = 1.3 + 0.4 * Math.abs(Math.sin(_t * 0.4));
+      _ondulacao(_ctxTop, w, _t, false, PAL.arco, 0.14, _hAtual * 0.38, bri);
+      _ondulacao(_ctxBot, w, _t, true,  PAL.arco, 0.14, _hAtual * 0.38, bri);
+      _pontoHorario(_ctxTop, w, _t, false, 0.008, '#ffffff', 1.8);
+      _pontoHorario(_ctxBot, w, _t, true,  0.008, '#ffffff', 1.8);
+    }
+
+    // Dano forte
+    else if (nivel === 3) {
+      const bri = 1.8 + 0.5 * Math.abs(Math.sin(_t * 0.5));
+      _ondulacao(_ctxTop, w, _t, false, PAL.lendario, 0.22, _hAtual * 0.45, bri);
+      _ondulacao(_ctxBot, w, _t, true,  PAL.lendario, 0.22, _hAtual * 0.45, bri);
+      _pontoHorario(_ctxTop, w, _t, false, 0.015, '#ffffff', 2.2);
+      _pontoHorario(_ctxBot, w, _t, true,  0.015, '#ffffff', 2.2);
+    }
 
     _raf = requestAnimationFrame(_draw);
   }
 
-  // ── Criação dos canvas ───────────────────────────────────────────────────
-
-  function _criarCanvas(id, bottom) {
+  // ── Criação dos canvas ────────────────────────────────────────────────────
+  function _criarCv(id, isBot, fullscreen) {
     const cv = document.createElement('canvas');
-    cv.id     = id;
-    cv.height = H;
-    cv.style.cssText = `
-      position: absolute;
-      left: 0; right: 0;
-      ${bottom ? 'bottom: 180px' : 'top: 0'};
-      width: 100%;
-      height: ${H}px;
-      pointer-events: none;
-      z-index: 9998;
-      image-rendering: pixelated;
-    `;
+    cv.id = id;
+    if (fullscreen) {
+      cv.style.cssText = `
+        position:fixed; top:0; left:0;
+        width:100%; height:100%;
+        pointer-events:none; z-index:9997;
+        display:none;
+      `;
+    } else {
+      cv.height = H_BASE;
+      cv.style.cssText = `
+        position:fixed;
+        left:0; right:0;
+        ${isBot ? 'bottom:0' : 'top:0'};
+        width:100%;
+        height:${H_BASE}px;
+        pointer-events:none;
+        z-index:9998;
+        transition: opacity 0.4s;
+      `;
+    }
     return cv;
   }
 
-  // ── API ──────────────────────────────────────────────────────────────────
+  // ── Resize ────────────────────────────────────────────────────────────────
+  function _resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (_cvTop)  { _cvTop.width  = w; }
+    if (_cvBot)  { _cvBot.width  = w; }
+    if (_cvFull) { _cvFull.width = w; _cvFull.height = h; }
+  }
 
+  // ── API ───────────────────────────────────────────────────────────────────
   function init() {
     destroy();
-
-    const container = document.getElementById('game-container') ?? document.body;
-    _cvTop = _criarCanvas('border-fx-top',  false);
-    _cvBot = _criarCanvas('border-fx-bot',  true);
-    container.appendChild(_cvTop);
-    container.appendChild(_cvBot);
-
-    // Ajusta largura ao container
-    const resize = () => {
-      const cw = container.offsetWidth;
-      if (_cvTop) { _cvTop.width  = cw; }
-      if (_cvBot) { _cvBot.width  = cw; }
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    _ctxTop = _cvTop.getContext('2d');
-    _ctxBot = _cvBot.getContext('2d');
-    _t      = 0;
-    _pulso  = null;
-    _estado = 'repouso';
-
+    _cvTop  = _criarCv('border-fx-top',  false, false);
+    _cvBot  = _criarCv('border-fx-bot',  true,  false);
+    _cvFull = _criarCv('border-fx-full', false, true);
+    document.body.appendChild(_cvTop);
+    document.body.appendChild(_cvBot);
+    document.body.appendChild(_cvFull);
+    _ctxTop  = _cvTop.getContext('2d');
+    _ctxBot  = _cvBot.getContext('2d');
+    _ctxFull = _cvFull.getContext('2d');
+    _hAtual  = H_BASE;
+    _t       = 0;
+    _pulso   = null;
+    _estado  = 'repouso';
+    _resize();
+    window.addEventListener('resize', _resize);
     _draw();
   }
 
   function destroy() {
     if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
+    window.removeEventListener('resize', _resize);
     document.getElementById('border-fx-top')?.remove();
     document.getElementById('border-fx-bot')?.remove();
-    _cvTop = _ctxTop = _cvBot = _ctxBot = null;
+    document.getElementById('border-fx-full')?.remove();
+    _cvTop = _cvBot = _cvFull = _ctxTop = _ctxBot = _ctxFull = null;
   }
 
   function estado(nome) {
@@ -289,15 +375,15 @@ const BORDER_FX = (() => {
   }
 
   function pulso(nivel = 1) {
-    _pulso = { nivel: Math.max(1, Math.min(4, nivel)), t: 0 };
+    const durs = [0, 45, 65, 95, 160];
+    _pulso = { nivel: Math.max(1, Math.min(4, nivel)), t: 0, dur: durs[nivel] ?? 65 };
   }
 
-  // Preview — dispara um estado temporário por durMs e volta ao anterior
-  function preview(nome, durMs = 2500) {
+  function preview(nome, durMs = 3000) {
+    const map = { dano_fraco: 1, dano_medio: 2, dano_forte: 3, dano_lendario: 4 };
     const anterior = _estado;
-    if (nome.startsWith('dano_')) {
-      const map = { dano_fraco: 1, dano_medio: 2, dano_forte: 3, dano_lendario: 4 };
-      pulso(map[nome] ?? 1);
+    if (map[nome]) {
+      pulso(map[nome]);
     } else {
       estado(nome);
       setTimeout(() => estado(anterior), durMs);
