@@ -1514,22 +1514,19 @@
   overflow-x: auto;
 }
 
-/* ── Cartas da mão (estilo baralho real + valor 3D Marvel Snap) ── */
+/* ── Cartas da mão (estrutura, layout, conteudo interno) ──
+   Borda + animacao vivem em bordas/cartas.css (carregado depois). */
 
 .battle-carta {
   flex-shrink: 0;
   width: 72px;
   height: 104px;
   padding: 0;
-  background: #fafaf5;
-  border: 6px solid #ff3050;
-  border-radius: 12px;
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.12s;
   position: relative;
   overflow: visible;
-  animation: cartaBordaVida 60s ease-in-out infinite;
 }
 
 .battle-carta[data-naipe="♥"] { --naipe-cor: #e06060; }
@@ -1538,18 +1535,7 @@
 .battle-carta[data-naipe="♠"] { --naipe-cor: #7aade8; }
 .battle-carta:not([data-naipe="♥"]):not([data-naipe="♣"]):not([data-naipe="♦"]):not([data-naipe="♠"]) { --naipe-cor: #c9a84c; }
 
-@keyframes cartaBordaVida {
-  0%, 100% { border-color: #ff3050; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #ff3050, 0 0 14px #ff305088, 0 4px 10px rgba(0,0,0,0.7); }
-  12.5%   { border-color: #ff9030; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #ff9030, 0 0 14px #ff903088, 0 4px 10px rgba(0,0,0,0.7); }
-  25%     { border-color: #ffd840; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #ffd840, 0 0 14px #ffd84088, 0 4px 10px rgba(0,0,0,0.7); }
-  37.5%   { border-color: #40d860; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #40d860, 0 0 14px #40d86088, 0 4px 10px rgba(0,0,0,0.7); }
-  50%     { border-color: #40d0e0; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #40d0e0, 0 0 14px #40d0e088, 0 4px 10px rgba(0,0,0,0.7); }
-  62.5%   { border-color: #4060e0; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #4060e0, 0 0 14px #4060e088, 0 4px 10px rgba(0,0,0,0.7); }
-  75%     { border-color: #a040c0; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #a040c0, 0 0 14px #a040c088, 0 4px 10px rgba(0,0,0,0.7); }
-  87.5%   { border-color: #ff6090; box-shadow: inset 0 0 4px rgba(0,0,0,0.5), 0 0 8px #ff6090, 0 0 14px #ff609088, 0 4px 10px rgba(0,0,0,0.7); }
-}
-
-.battle-carta:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
+.battle-carta:hover { transform: translateY(-8px); }
 
 /* ── Cantos com valor + naipe pequeno (vazam pra fora da carta) ── */
 .carta-canto {
@@ -1617,20 +1603,6 @@
   line-height: 1;
   filter: drop-shadow(0 0 6px currentColor);
 }
-
-/* ── Sinergia de naipe: glow colorido + flutuação ── */
-@keyframes sinergica-pulse {
-  0%, 100% { transform: translateY(-3px); }
-  50%       { transform: translateY(-8px); }
-}
-.battle-carta.sinergica { animation: sinergica-pulse 1.3s ease-in-out infinite; }
-
-.battle-carta.sinergica[data-naipe="♥"] { box-shadow: 0 0 14px rgba(224,96,96,0.55),  0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♦"] { box-shadow: 0 0 14px rgba(232,192,80,0.55), 0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♠"] { box-shadow: 0 0 14px rgba(122,173,232,0.55),0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♣"] { box-shadow: 0 0 14px rgba(90,200,128,0.55), 0 2px 6px rgba(0,0,0,0.5); }
-
-.battle-carta.sinergica.nao-clicavel { opacity: 0.65; }
 
 .battle-mao-vazia { color: #ffffff20; font-size: 20px; margin: auto; }
 
