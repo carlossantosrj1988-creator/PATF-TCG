@@ -1542,8 +1542,8 @@
   align-items: center;
   line-height: 1;
 }
-.carta-canto-tl { top: -16px; left:  -2px; }
-.carta-canto-br { bottom: -16px; right: -2px; transform: rotate(180deg); }
+.carta-canto-tl { top: -20px; left:  -12px; }
+.carta-canto-br { bottom: -20px; right: -12px; transform: rotate(180deg); }
 
 /* ── Valor 3D — vaza pra fora + outline forte + tripla sombra pesada ── */
 .carta-valor {
