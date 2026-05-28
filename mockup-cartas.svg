@@ -6,8 +6,7 @@
        CARTA 1 — Ás de Copas (♥ vermelho)
   ══════════════════════════════════════════════════════════════════ -->
   <g transform="translate(14,18)">
-    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#e06060" stroke-width="1.5"/>
-    <rect x="4" y="4" width="64" height="96" rx="5" fill="none" stroke="#e0606020" stroke-width="0.8"/>
+    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#1a1a1a" stroke-width="1"/>
     <text x="8"  y="20" font-family="Cinzel, serif" font-size="14" font-weight="900" fill="#e06060">A</text>
     <text x="8"  y="32" font-size="10" fill="#e06060">♥</text>
     <text x="36" y="68" font-size="48" fill="#e06060" text-anchor="middle"
@@ -20,8 +19,7 @@
        CARTA 2 — Ás de Paus (♣ verde)
   ══════════════════════════════════════════════════════════════════ -->
   <g transform="translate(102,18)">
-    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#5ac880" stroke-width="1.5"/>
-    <rect x="4" y="4" width="64" height="96" rx="5" fill="none" stroke="#5ac88020" stroke-width="0.8"/>
+    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#1a1a1a" stroke-width="1"/>
     <text x="8"  y="20" font-family="Cinzel, serif" font-size="14" font-weight="900" fill="#5ac880">A</text>
     <text x="8"  y="32" font-size="10" fill="#5ac880">♣</text>
     <text x="36" y="68" font-size="48" fill="#5ac880" text-anchor="middle"
@@ -34,8 +32,7 @@
        CARTA 3 — Ás de Ouros (♦ dourado)
   ══════════════════════════════════════════════════════════════════ -->
   <g transform="translate(190,18)">
-    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#e8c050" stroke-width="1.5"/>
-    <rect x="4" y="4" width="64" height="96" rx="5" fill="none" stroke="#e8c05020" stroke-width="0.8"/>
+    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#1a1a1a" stroke-width="1"/>
     <text x="8"  y="20" font-family="Cinzel, serif" font-size="14" font-weight="900" fill="#c9a330">A</text>
     <text x="8"  y="32" font-size="10" fill="#c9a330">♦</text>
     <text x="36" y="68" font-size="48" fill="#e8c050" text-anchor="middle"
@@ -48,8 +45,7 @@
        CARTA 4 — Ás de Espadas (♠ azul)
   ══════════════════════════════════════════════════════════════════ -->
   <g transform="translate(278,18)">
-    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#7aade8" stroke-width="1.5"/>
-    <rect x="4" y="4" width="64" height="96" rx="5" fill="none" stroke="#7aade820" stroke-width="0.8"/>
+    <rect width="72" height="104" rx="8" fill="#fafaf5" stroke="#1a1a1a" stroke-width="1"/>
     <text x="8"  y="20" font-family="Cinzel, serif" font-size="14" font-weight="900" fill="#7aade8">A</text>
     <text x="8"  y="32" font-size="10" fill="#7aade8">♠</text>
     <text x="36" y="68" font-size="48" fill="#7aade8" text-anchor="middle"
