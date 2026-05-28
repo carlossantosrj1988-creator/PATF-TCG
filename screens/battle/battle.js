@@ -2368,6 +2368,8 @@ const BATTLE = (() => {
       radiacao:          '☢ Radiação',
       estatica:          '⚡ Estática',
       queimadura:        '🔥 Queimadura',
+      veneno:            '☠ Veneno',
+      sangramento:       '🩸 Sangramento',
       resfriamento:      '❄ Resfriamento',
       enfraquecido:      '↓ Enfraquecido',
       exposto:           '▽ Exposto',
@@ -2378,11 +2380,12 @@ const BATTLE = (() => {
       acao_rapida:       '⚡ Ação Rápida',
       critico:           '💥 Crítico',
     };
-    if (map[e.tipo]) return map[e.tipo];
-    if (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo]?.nome) {
-      return EFEITOS_DATA[e.tipo].nome;
+    const chave = e._origem ?? e.tipo;
+    if (map[chave]) return map[chave];
+    if (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[chave]?.nome) {
+      return EFEITOS_DATA[chave].nome;
     }
-    return e.tipo;
+    return chave;
   }
 
   function _classeEfeito(e) {
