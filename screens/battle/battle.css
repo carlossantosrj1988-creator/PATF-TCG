@@ -1521,15 +1521,34 @@
   width: 72px;
   height: 104px;
   padding: 0;
-  background: #fafaf5;
-  border: 1px solid #1a1a1a;
-  border-radius: 8px;
+  background:
+    linear-gradient(#fafaf5, #fafaf5) padding-box,
+    linear-gradient(180deg,
+      #5a1a90 0%,
+      #7035b0 14%,
+      #4020a0 28%,
+      #9050d0 42%,
+      #a030a0 56%,
+      #4020a0 70%,
+      #7035b0 84%,
+      #5a1a90 100%
+    ) border-box;
+  background-size: 100% 100%, 100% 300%;
+  background-repeat: no-repeat;
+  border: 4px solid transparent;
+  border-radius: 10px;
   cursor: pointer;
   font-family: inherit;
-  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition: transform 0.12s, box-shadow 0.12s;
   box-shadow: 0 4px 10px rgba(0,0,0,0.7);
   position: relative;
   overflow: visible;
+  animation: cartaBordaCosmo 5s linear infinite;
+}
+
+@keyframes cartaBordaCosmo {
+  from { background-position: 0 0, 0 0%; }
+  to   { background-position: 0 0, 0 -200%; }
 }
 
 .battle-carta:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
@@ -1612,10 +1631,10 @@
 }
 .battle-carta.sinergica { animation: sinergica-pulse 1.3s ease-in-out infinite; }
 
-.battle-carta.sinergica[data-naipe="♥"] { border-color: #e06060; box-shadow: 0 0 14px rgba(224,96,96,0.55),  0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♦"] { border-color: #e8c050; box-shadow: 0 0 14px rgba(232,192,80,0.55), 0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♠"] { border-color: #7aade8; box-shadow: 0 0 14px rgba(122,173,232,0.55),0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♣"] { border-color: #5ac880; box-shadow: 0 0 14px rgba(90,200,128,0.55), 0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♥"] { box-shadow: 0 0 14px rgba(224,96,96,0.55),  0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♦"] { box-shadow: 0 0 14px rgba(232,192,80,0.55), 0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♠"] { box-shadow: 0 0 14px rgba(122,173,232,0.55),0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♣"] { box-shadow: 0 0 14px rgba(90,200,128,0.55), 0 2px 6px rgba(0,0,0,0.5); }
 
 .battle-carta.sinergica.nao-clicavel { opacity: 0.65; }
 
