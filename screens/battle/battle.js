@@ -580,6 +580,16 @@ const BATTLE = (() => {
   // Retorna símbolo de naipe do combatente (aceita 'copas' ou '♥')
   function _naipeSim(c) { return _NAIPE_SIM[c?.naipe] ?? c?.naipe ?? null; }
 
+  function _innerCarta(carta, corCarta, extraLabel) {
+    const v = carta.valor;
+    const n = carta.naipe ?? '★';
+    const cor = `style="color:${corCarta}"`;
+    const cantoBr = extraLabel
+      ? extraLabel
+      : `<span class="carta-canto carta-canto-br"><span class="carta-valor">${v}</span><span class="carta-naipe-pq" ${cor}>${n}</span></span>`;
+    return `<span class="carta-canto carta-canto-tl"><span class="carta-valor">${v}</span><span class="carta-naipe-pq" ${cor}>${n}</span></span><span class="carta-naipe-gr" ${cor}>${n}</span>${cantoBr}`;
+  }
+
   // opts: { etapaIdx, pontos, inimigos: [resolvedMonster, ...], onVitoria, onDerrota, tutorial }
   function init(opts = {}) {
     _onVitoria         = opts.onVitoria ?? null;
@@ -1629,7 +1639,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta';
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
+      el.innerHTML = _innerCarta(carta, corCarta);
       el.addEventListener('click', () => _escolherCartaAdicional(carta, i));
       div.appendChild(el);
     });
@@ -1726,7 +1736,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
+      el.innerHTML = _innerCarta(carta, corCarta);
       if (clicavel) {
         el.addEventListener('click', () => {
           _cartaSel    = carta;
@@ -1767,7 +1777,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta' + (ehEspecial ? ' nao-clicavel' : '') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
+      el.innerHTML = _innerCarta(carta, corCarta);
       if (ehEspecial) {
         el.disabled = true;
       } else {
@@ -1919,7 +1929,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
-      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>`;
+      el.innerHTML = _innerCarta(carta, corCarta);
       if (clicavel) {
         el.addEventListener('click', () => _usarEspecial(carta, i));
       } else {
@@ -2032,7 +2042,7 @@ const BATTLE = (() => {
           : '';
 
       const corCarta = _COR_INI[carta.naipe] ?? '#c9a84c';
-      el.innerHTML = `<span class="carta-valor" style="color:${corCarta}">${carta.valor}</span><span class="carta-naipe-icon" style="color:${corCarta}">${carta.naipe ?? '★'}</span>${extraLabel}`;
+      el.innerHTML = _innerCarta(carta, corCarta, extraLabel);
 
       if (bloqueada) {
         el.disabled = true;
