@@ -357,7 +357,8 @@ const COMBAT = (() => {
       }
     }
     // Limpa efeitos expirados (rei_atq_bonus zerado, etc.)
-    atacante.efeitos = atacante.efeitos.filter(e => !('duracao' in e) || e.duracao > 0);
+    // duracao: null = permanente até consumo manual (rodada_extra, acao_rapida, veneno, etc).
+    atacante.efeitos = atacante.efeitos.filter(e => !('duracao' in e) || e.duracao === null || e.duracao > 0);
     const poderes = _parsePoder(poderEfetivo);
 
     // clubs_furtivo: skill Normal do Paus vira Furtiva enquanto o efeito estiver ativo
