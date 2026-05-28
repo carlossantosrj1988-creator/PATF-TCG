@@ -1639,6 +1639,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta';
       el.dataset.naipe = carta.naipe ?? '';
+      el.dataset.valor = carta.valor;
       el.innerHTML = _innerCarta(carta, corCarta);
       el.addEventListener('click', () => _escolherCartaAdicional(carta, i));
       div.appendChild(el);
@@ -1736,6 +1737,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
+      el.dataset.valor = carta.valor;
       el.innerHTML = _innerCarta(carta, corCarta);
       if (clicavel) {
         el.addEventListener('click', () => {
@@ -1777,6 +1779,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta' + (ehEspecial ? ' nao-clicavel' : '') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
+      el.dataset.valor = carta.valor;
       el.innerHTML = _innerCarta(carta, corCarta);
       if (ehEspecial) {
         el.disabled = true;
@@ -1929,6 +1932,7 @@ const BATTLE = (() => {
       const el = document.createElement('button');
       el.className = 'battle-carta' + (clicavel ? '' : ' nao-clicavel') + (ehSinerg ? ' sinergica' : '');
       el.dataset.naipe = carta.naipe ?? '';
+      el.dataset.valor = carta.valor;
       el.innerHTML = _innerCarta(carta, corCarta);
       if (clicavel) {
         el.addEventListener('click', () => _usarEspecial(carta, i));
@@ -2033,6 +2037,7 @@ const BATTLE = (() => {
         + (sel      ? ' selecionada' : '')
         + (bloqueada ? ' nao-clicavel' : '');
       el.dataset.naipe = carta.naipe ?? '';
+      el.dataset.valor = carta.valor;
 
       // Label especial para J (esquiva) e outros especiais (sem efeito)
       const extraLabel = ehJ
