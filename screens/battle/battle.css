@@ -1533,8 +1533,8 @@
       #7035b0 84%,
       #5a1a90 100%
     ) border-box;
-  background-size: 100% 100%, 100% 300%;
-  background-repeat: no-repeat;
+  background-size: 100% 100%, 100% 100%;
+  background-repeat: no-repeat, repeat-y;
   border: 4px solid transparent;
   border-radius: 10px;
   cursor: pointer;
@@ -1548,7 +1548,7 @@
 
 @keyframes cartaBordaCosmo {
   from { background-position: 0 0, 0 0%; }
-  to   { background-position: 0 0, 0 -200%; }
+  to   { background-position: 0 0, 0 -100%; }
 }
 
 .battle-carta:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
