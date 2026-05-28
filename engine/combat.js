@@ -629,14 +629,18 @@ const COMBAT = (() => {
     if (!hab) return;
 
     const poder      = typeof hab.poder === 'number' ? hab.poder : 0;
-    const danoContra = Math.max(0, contraAtacante.atq + poder - alvo.def);
+    const atqTotal   = contraAtacante.atq + poder;
+    const defAlvo    = alvo.def;
+    const danoContra = Math.max(0, atqTotal - defAlvo);
 
     const causouDano = danoContra > 0;
 
     if (causouDano) {
       alvo.hp = Math.max(0, alvo.hp - danoContra);
       PASSIVAS.recalcularStats(alvo);
-      _log('dano', `${contraAtacante.nome} (contra-ataque: ${hab.nome}) → ${alvo.nome}: ${danoContra} dano`);
+      _log('dano', `${contraAtacante.nome} (contra-ataque: ${hab.nome}) → ${alvo.nome}: ${atqTotal} ATQ - ${defAlvo} DEF = ${danoContra} dano`);
+    } else {
+      _log('info', `${contraAtacante.nome} (contra-ataque: ${hab.nome}) → ${alvo.nome}: ${atqTotal} ATQ - ${defAlvo} DEF = 0 (bloqueado)`);
     }
 
     // Efeitos puro: aplica sem precisar de dano.
