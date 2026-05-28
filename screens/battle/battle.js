@@ -1367,10 +1367,13 @@ const BATTLE = (() => {
     const charScale = CHAR_SCALE[c.poolId] ?? 1.0;
     const scale = pos.scale;
 
+    const ehAlvoDefesa = !!(_defesaPendente && _defesaPendente.alvoAtual && _defesaPendente.alvoAtual.id === c.id);
+
     const slot = document.createElement('div');
     slot.className = 'battle-char-slot'
-      + (isAtivo ? ' ativo' : '')
-      + (morto   ? ' morto' : '');
+      + (isAtivo       ? ' ativo' : '')
+      + (ehAlvoDefesa  ? ' alvo-defesa' : '')
+      + (morto         ? ' morto' : '');
     slot.dataset.id   = c.id;
     slot.dataset.lado = c.lado;
     slot.style.left      = pos.left;
