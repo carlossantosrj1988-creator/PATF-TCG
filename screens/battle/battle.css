@@ -1545,6 +1545,10 @@
 .carta-canto-tl { top: -20px; left:  -12px; }
 .carta-canto-br { bottom: -20px; right: -12px; transform: rotate(180deg); }
 
+/* J tem largura menor e haste vertical na direita — desloca pra alinhar visualmente */
+.battle-carta[data-valor="J"] .carta-canto-tl { left:  -8px; }
+.battle-carta[data-valor="J"] .carta-canto-br { right: -8px; }
+
 /* ── Valor 3D — vaza pra fora + outline forte + tripla sombra pesada ── */
 .carta-valor {
   font-family: 'Cinzel', serif;
