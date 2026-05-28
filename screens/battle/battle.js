@@ -2224,7 +2224,13 @@ const BATTLE = (() => {
           }
           for (const alvo of alvos) {
             const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
-            if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+            if (dano > 0) {
+              _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+            } else if (alvo.hp > 0) {
+              _animarSlot(alvo.id, 'recebendo-dano');
+              _floatTexto(alvo.id, 'BLOQUEADO', 'bloqueado');
+              _logUI(`🛡 ${alvo.nome} bloqueou (0 dano)`, 'info');
+            }
           }
           setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(atacante)), 600);
         }
@@ -2639,13 +2645,20 @@ const BATTLE = (() => {
         const hpAntes = _capturaHP();
         COMBAT.executarContraAtaque(contraAtacante, alvo);
 
+        let alvoSofreuDano = false;
         for (const cc of COMBAT.estado.combatentes) {
           const diff = (hpAntes[cc.id] ?? cc.hp) - cc.hp;
           if (diff > 0) {
             _animarSlot(cc.id, 'recebendo-dano');
             _floatDanoContado(cc.id, diff, 'dano');
             _logUI(`💥 ${cc.nome} recebeu ${diff} de dano`, 'dmg');
+            if (cc.id === alvo.id) alvoSofreuDano = true;
           }
+        }
+        if (!alvoSofreuDano && alvo.hp > 0) {
+          _animarSlot(alvo.id, 'recebendo-dano');
+          _floatTexto(alvo.id, 'BLOQUEADO', 'bloqueado');
+          _logUI(`🛡 ${alvo.nome} bloqueou o contra-ataque (0 dano)`, 'info');
         }
 
         _renderizar();
@@ -2853,7 +2866,13 @@ const BATTLE = (() => {
           }
           for (const alvo of decisao.alvos) {
             const dano = (hpAntes[alvo.id] ?? 0) - alvo.hp;
-            if (dano > 0) _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+            if (dano > 0) {
+              _logUI(`💥 ${alvo.nome} recebeu ${dano} de dano`, 'dmg');
+            } else if (alvo.hp > 0) {
+              _animarSlot(alvo.id, 'recebendo-dano');
+              _floatTexto(alvo.id, 'BLOQUEADO', 'bloqueado');
+              _logUI(`🛡 ${alvo.nome} bloqueou (0 dano)`, 'info');
+            }
           }
           setTimeout(() => _processarContraAtaques(() => _verificarEtapa4(c)), 600);
         }
@@ -2904,7 +2923,9 @@ const BATTLE = (() => {
             _floatTexto(alvo.id, 'ESQUIVA!', 'esquiva');
             _logUI(`✨ ${alvo.nome} esquivou com o Valete!`, 'info');
           } else if (hpAntes[alvo.id] !== undefined) {
+            _animarSlot(alvo.id, 'recebendo-dano');
             _floatTexto(alvo.id, 'BLOQUEADO', 'bloqueado');
+            _logUI(`🛡 ${alvo.nome} bloqueou (0 dano)`, 'info');
           }
         }
       }
