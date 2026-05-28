@@ -54,13 +54,14 @@ const TUTORIAL_MAP = (() => {
     window.irParaTela('screen-gameover');
   }
 
-  function _iniciarBatalha(inimigos, tutorialFlag, onVitoriaFn) {
+  function _iniciarBatalha(inimigos, tutorialFlag, onVitoriaFn, autoIniciativa) {
     BATTLE.init({
       inimigos,
-      tutorial:   tutorialFlag,
-      onVitoria:  onVitoriaFn,
-      onDerrota:  _onDerrota,
-      background: 'assets/backgrounds/tutorial_plains.png',
+      tutorial:        tutorialFlag,
+      onVitoria:       onVitoriaFn,
+      onDerrota:       _onDerrota,
+      background:      'assets/backgrounds/tutorial_plains.png',
+      autoIniciativa:  autoIniciativa === true,
     });
     const bs = document.getElementById('screen-battle');
     if (bs) {
@@ -88,13 +89,14 @@ const TUTORIAL_MAP = (() => {
             const salvo = TUTORIAL_STATE.hp[p.poolId];
             p.hpAtual = salvo ? salvo.cur : p.pvs;
           }
+          // Fase 2 do miniboss — continuacao, sem nova tela de iniciativa.
           _iniciarBatalha([MONSTROS.get('butter_venenoso')], false, () => {
             _salvarHP();
             const vivos = PLAYER_STATE.personagens.filter(
               p => (TUTORIAL_STATE.hp[p.poolId]?.cur ?? 0) > 0
             ).length;
             _afterBattle(etapaIdx, () => onConcluida(vivos));
-          });
+          }, true);
         });
       } else {
         _iniciarBatalha(inimigos, etapaIdx === 0, () => {

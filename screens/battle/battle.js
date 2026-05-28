@@ -623,7 +623,24 @@ const BATTLE = (() => {
 
     COMBAT.init(personagens, inimigos);
     _distribuirMao(10);
-    _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
+    if (opts.autoIniciativa) {
+      _autoIniciativa(); // pula a tela de iniciativa (continuacao de batalha multi-fase)
+    } else {
+      _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
+    }
+  }
+
+  // Auto-aloca a primeira carta da mao pra cada personagem do jogador,
+  // depois resolve iniciativa igual o fluxo normal. Usado em transicoes
+  // de fase (ex: casulo → butter venenoso) pra nao reapresentar a tela.
+  function _autoIniciativa() {
+    const estado    = COMBAT.estado;
+    const jogadores = estado.combatentes.filter(c => c.lado === 'jogador' && c.hp > 0);
+    const picks     = {};
+    for (let i = 0; i < jogadores.length && i < estado.maoJogador.length; i++) {
+      picks[jogadores[i].id] = { carta: estado.maoJogador[i], idx: i };
+    }
+    _confirmarIniciativa(picks);
   }
 
   function _distribuirMao(n) {
@@ -1367,10 +1384,13 @@ const BATTLE = (() => {
     const charScale = CHAR_SCALE[c.poolId] ?? 1.0;
     const scale = pos.scale;
 
+    const ehAlvoDefesa = !!(_defesaPendente && _defesaPendente.alvoAtual && _defesaPendente.alvoAtual.id === c.id);
+
     const slot = document.createElement('div');
     slot.className = 'battle-char-slot'
-      + (isAtivo ? ' ativo' : '')
-      + (morto   ? ' morto' : '');
+      + (isAtivo       ? ' ativo' : '')
+      + (ehAlvoDefesa  ? ' alvo-defesa' : '')
+      + (morto         ? ' morto' : '');
     slot.dataset.id   = c.id;
     slot.dataset.lado = c.lado;
     slot.style.left      = pos.left;
@@ -2368,6 +2388,8 @@ const BATTLE = (() => {
       radiacao:          '☢ Radiação',
       estatica:          '⚡ Estática',
       queimadura:        '🔥 Queimadura',
+      veneno:            '☠ Veneno',
+      sangramento:       '🩸 Sangramento',
       resfriamento:      '❄ Resfriamento',
       enfraquecido:      '↓ Enfraquecido',
       exposto:           '▽ Exposto',
@@ -2378,11 +2400,12 @@ const BATTLE = (() => {
       acao_rapida:       '⚡ Ação Rápida',
       critico:           '💥 Crítico',
     };
-    if (map[e.tipo]) return map[e.tipo];
-    if (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[e.tipo]?.nome) {
-      return EFEITOS_DATA[e.tipo].nome;
+    const chave = e._origem ?? e.tipo;
+    if (map[chave]) return map[chave];
+    if (typeof EFEITOS_DATA !== 'undefined' && EFEITOS_DATA[chave]?.nome) {
+      return EFEITOS_DATA[chave].nome;
     }
-    return e.tipo;
+    return chave;
   }
 
   function _classeEfeito(e) {
