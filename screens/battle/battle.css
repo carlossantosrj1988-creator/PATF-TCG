@@ -367,15 +367,39 @@
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
-/* Ativo: glow dourado no sprite */
+/* Ativo: glow dourado mais forte no sprite */
 .battle-char-slot.ativo .battle-char-sprite {
-  filter: drop-shadow(0 0 10px rgba(201,168,76,0.85)) drop-shadow(0 4px 6px rgba(0,0,0,0.7));
-  animation: sprite-ativo-pulse 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(255,210,80,1)) drop-shadow(0 0 28px rgba(255,180,40,0.7)) drop-shadow(0 4px 6px rgba(0,0,0,0.7));
+  animation: sprite-ativo-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes sprite-ativo-pulse {
-  0%, 100% { filter: drop-shadow(0 0 7px rgba(201,168,76,0.6)) drop-shadow(0 4px 6px rgba(0,0,0,0.7)); }
-  50%       { filter: drop-shadow(0 0 18px rgba(201,168,76,1.0)) drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(255,210,80,0.85)) drop-shadow(0 0 20px rgba(255,180,40,0.5)) drop-shadow(0 4px 6px rgba(0,0,0,0.7)); }
+  50%       { filter: drop-shadow(0 0 22px rgba(255,210,80,1.0))  drop-shadow(0 0 40px rgba(255,180,40,0.85)) drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+}
+
+/* Seta indicadora acima do personagem ativo */
+.battle-char-slot.ativo::before {
+  content: '▼';
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 26px;
+  line-height: 1;
+  color: rgba(255,210,80,1);
+  text-shadow:
+    0 0 8px rgba(255,210,80,1),
+    0 0 16px rgba(255,180,40,0.8),
+    0 2px 4px rgba(0,0,0,0.9);
+  animation: ativo-seta-bob 1.2s ease-in-out infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes ativo-seta-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0);    opacity: 1;   }
+  50%       { transform: translateX(-50%) translateY(-6px); opacity: 0.8; }
 }
 
 /* Selecionável como alvo: glow vermelho no sprite */
