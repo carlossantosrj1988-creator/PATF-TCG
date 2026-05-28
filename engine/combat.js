@@ -490,18 +490,21 @@ const COMBAT = (() => {
 
       // Gatilhos: efeito intrínseco + passivas
       EFEITOS_HABILIDADES.disparar(hab, 'ao_causar_dano', atacante, { alvo: alvoReal, ...resultado });
+
+      // Linker: aplica efeitos nomeados das tags da habilidade no alvo.
+      // Habilidades efeitoPuro aplicam sem precisar de dano (butter_veneno, etc).
+      // Habilidades de dano só aplicam efeitos quando causaram pelo menos 1 de dano.
+      const aplicaEfeitos = hab.efeitoPuro || resultado.causouDano;
+      if (aplicaEfeitos && Array.isArray(hab.tags) && hab.tags.length > 0
+          && typeof EFEITOS !== 'undefined' && EFEITOS.aplicar) {
+        for (const tag of hab.tags) {
+          EFEITOS.aplicar(tag, alvoReal, atacante);
+        }
+      }
+
       if (resultado.causouDano) {
         PASSIVAS.disparar('ao_causar_dano', atacante, { alvo: alvoReal, ...resultado });
         PASSIVAS.disparar('ao_sofrer_dano', alvoReal, { atacante, ...resultado });
-
-        // Linker: aplica efeitos nomeados das tags da habilidade no alvo.
-        // (Apenas quando causou dano — game-design 02 §3.3.)
-        if (Array.isArray(hab.tags) && hab.tags.length > 0
-            && typeof EFEITOS !== 'undefined' && EFEITOS.aplicar) {
-          for (const tag of hab.tags) {
-            EFEITOS.aplicar(tag, alvoReal, atacante);
-          }
-        }
 
         // Redemoinho: aliados do alvo com estado ativo disparam contra-ataque simples.
         // ATQ + poder (1) vs DEF do inimigo, sem carta. 50% só o agressor / 50% todos.
