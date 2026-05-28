@@ -623,7 +623,24 @@ const BATTLE = (() => {
 
     COMBAT.init(personagens, inimigos);
     _distribuirMao(10);
-    _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
+    if (opts.autoIniciativa) {
+      _autoIniciativa(); // pula a tela de iniciativa (continuacao de batalha multi-fase)
+    } else {
+      _telaIniciativa(); // jogador escolhe cartas antes da batalha começar
+    }
+  }
+
+  // Auto-aloca a primeira carta da mao pra cada personagem do jogador,
+  // depois resolve iniciativa igual o fluxo normal. Usado em transicoes
+  // de fase (ex: casulo → butter venenoso) pra nao reapresentar a tela.
+  function _autoIniciativa() {
+    const estado    = COMBAT.estado;
+    const jogadores = estado.combatentes.filter(c => c.lado === 'jogador' && c.hp > 0);
+    const picks     = {};
+    for (let i = 0; i < jogadores.length && i < estado.maoJogador.length; i++) {
+      picks[jogadores[i].id] = { carta: estado.maoJogador[i], idx: i };
+    }
+    _confirmarIniciativa(picks);
   }
 
   function _distribuirMao(n) {
