@@ -1514,47 +1514,86 @@
   overflow-x: auto;
 }
 
-/* ── Cartas da mão ── */
+/* ── Cartas da mão (estilo baralho real + valor 3D Marvel Snap) ── */
 
 .battle-carta {
   flex-shrink: 0;
   width: 72px;
   height: 104px;
   padding: 0;
-  background: linear-gradient(160deg, #1e2840 0%, #101520 60%, #0c1018 100%);
-  border: 1px solid rgba(80,110,180,0.3);
+  background: #fafaf5;
+  border: 1px solid #1a1a1a;
   border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.7);
   position: relative;
+  overflow: visible;
 }
 
-.battle-carta::before {
-  content: '';
+.battle-carta:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
+
+/* ── Cantos com valor + naipe pequeno (top-left e bottom-right rotacionado) ── */
+.carta-canto {
   position: absolute;
-  inset: 4px;
-  border-radius: 5px;
-  border: 1px solid rgba(255,255,255,0.04);
-  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.carta-canto-tl { top: 4px;    left: 6px; }
+.carta-canto-br { bottom: 4px; right: 6px; transform: rotate(180deg); }
+
+/* ── Valor 3D — gradiente vertical + outline + dupla sombra ── */
+.carta-valor {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  -webkit-text-stroke: 1.2px #1a1a1a;
+  paint-order: stroke fill;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.85)) drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+}
+.battle-carta[data-naipe="♥"] .carta-valor {
+  background: linear-gradient(180deg, #ffb0b0 0%, #e06060 55%, #7a2222 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.battle-carta[data-naipe="♣"] .carta-valor {
+  background: linear-gradient(180deg, #c8efd6 0%, #5ac880 55%, #1f5a30 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.battle-carta[data-naipe="♦"] .carta-valor {
+  background: linear-gradient(180deg, #fff0c0 0%, #e8c050 55%, #7a5a10 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.battle-carta[data-naipe="♠"] .carta-valor {
+  background: linear-gradient(180deg, #d8e8ff 0%, #7aade8 55%, #2a4878 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.battle-carta:not([data-naipe="♥"]):not([data-naipe="♣"]):not([data-naipe="♦"]):not([data-naipe="♠"]) .carta-valor {
+  background: linear-gradient(180deg, #fff2c8 0%, #c9a84c 55%, #6a5320 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-.battle-carta:hover              { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
+/* ── Naipe pequeno (debaixo do valor no canto) ── */
+.carta-naipe-pq {
+  font-size: 12px;
+  line-height: 1;
+  margin-top: 1px;
+  filter: drop-shadow(0 0 2px currentColor);
+}
 
-/* ── Borda colorida por naipe ── */
-.battle-carta[data-naipe="♥"] { border-color: rgba(224,96,96,0.35); }
-.battle-carta[data-naipe="♦"] { border-color: rgba(232,192,80,0.35); }
-.battle-carta[data-naipe="♠"] { border-color: rgba(122,173,232,0.35); }
-.battle-carta[data-naipe="♣"] { border-color: rgba(90,200,128,0.35); }
-
-.carta-valor      { font-family: 'Cinzel', serif; font-size: 18px; font-weight: 900; line-height: 1; filter: drop-shadow(0 0 6px currentColor); }
-.carta-naipe-icon { font-size: 14px; line-height: 1; filter: drop-shadow(0 0 4px currentColor); }
+/* ── Naipe grande centralizado ── */
+.carta-naipe-gr {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 38px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px currentColor);
+}
 
 /* ── Sinergia de naipe: glow colorido + flutuação ── */
 @keyframes sinergica-pulse {
@@ -1563,28 +1602,32 @@
 }
 .battle-carta.sinergica { animation: sinergica-pulse 1.3s ease-in-out infinite; }
 
-.battle-carta.sinergica[data-naipe="♥"] { border-color: rgba(224,96,96,0.9);  box-shadow: 0 0 14px rgba(224,96,96,0.55),  0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♦"] { border-color: rgba(232,192,80,0.9); box-shadow: 0 0 14px rgba(232,192,80,0.55), 0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♠"] { border-color: rgba(122,173,232,0.9);box-shadow: 0 0 14px rgba(122,173,232,0.55),0 2px 6px rgba(0,0,0,0.5); }
-.battle-carta.sinergica[data-naipe="♣"] { border-color: rgba(90,200,128,0.9); box-shadow: 0 0 14px rgba(90,200,128,0.55), 0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♥"] { border-color: #e06060; box-shadow: 0 0 14px rgba(224,96,96,0.55),  0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♦"] { border-color: #e8c050; box-shadow: 0 0 14px rgba(232,192,80,0.55), 0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♠"] { border-color: #7aade8; box-shadow: 0 0 14px rgba(122,173,232,0.55),0 2px 6px rgba(0,0,0,0.5); }
+.battle-carta.sinergica[data-naipe="♣"] { border-color: #5ac880; box-shadow: 0 0 14px rgba(90,200,128,0.55), 0 2px 6px rgba(0,0,0,0.5); }
 
-/* Sinergia em carta desabilitada (preview no etapa1/sel_habilidade) */
 .battle-carta.sinergica.nao-clicavel { opacity: 0.65; }
 
-.battle-mao-vazia                { color: #ffffff20; font-size: 20px; margin: auto; }
+.battle-mao-vazia { color: #ffffff20; font-size: 20px; margin: auto; }
 
-/* ── Labels especiais nas cartas de defesa ── */
+/* ── Labels especiais nas cartas de defesa (substituem o canto inferior) ── */
 .carta-def-label {
-  display: block;
-  font-size: 7px;
-  font-weight: 700;
+  position: absolute;
+  bottom: 6px;
+  left: 4px;
+  right: 4px;
   text-align: center;
+  font-size: 8px;
+  font-weight: 700;
   letter-spacing: 0.5px;
-  margin-top: 2px;
   line-height: 1;
+  padding: 2px 0;
+  background: rgba(255,255,255,0.92);
+  border-radius: 3px;
 }
-.carta-def-label.esquiva  { color: #55cc88; }
-.carta-def-label.sem-efeito { color: #555566; }
+.carta-def-label.esquiva  { color: #1f5a30; }
+.carta-def-label.sem-efeito { color: #666; }
 
 /* ── Turno do inimigo ── */
 
