@@ -18,6 +18,62 @@
     transform   0.12s;
 }
 
+/* ── Pseudo-element pros efeitos especiais (mascara: aparece so na borda) ── */
+.battle-carta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+  -webkit-mask:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+          mask:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(#000, #000);
+          mask-composite: exclude;
+}
+
+/* 8-bit pixelado — quadradinhos de cores fortes */
+body.efeito-8bit .battle-carta::before {
+  background:
+    linear-gradient(45deg,  #fff 50%, transparent 50%),
+    linear-gradient(-45deg, #fff 50%, transparent 50%),
+    #ff3050;
+  background-size: 4px 4px;
+  opacity: 0.75;
+}
+
+/* CRT verde phosphor — scanlines + verde retro */
+body.efeito-crt .battle-carta::before {
+  background:
+    repeating-linear-gradient(0deg,
+      transparent 0px, transparent 2px,
+      rgba(0,0,0,0.55) 2px, rgba(0,0,0,0.55) 3px),
+    #40d860;
+  opacity: 0.75;
+}
+
+/* Poste de barbearia — listras diagonais vermelho/branco/azul */
+body.efeito-barbearia .battle-carta::before {
+  background: repeating-linear-gradient(45deg,
+    #ff3050 0px,  #ff3050 6px,
+    #ffffff 6px,  #ffffff 12px,
+    #3050ff 12px, #3050ff 18px);
+  opacity: 0.75;
+}
+
+/* Multi-cor neon brilhante — gradient conico de cores vivas */
+body.efeito-multi-neon .battle-carta::before {
+  background: conic-gradient(from 0deg,
+    #ff3050, #ff9030, #ffd840, #40d860,
+    #40d0e0, #4060e0, #a040c0, #ff6090, #ff3050);
+  opacity: 0.75;
+}
+
 /* ── Sinergia de naipe: flutuacao pulsante ── */
 @keyframes sinergica-pulse {
   0%, 100% { transform: translateY(-3px); }

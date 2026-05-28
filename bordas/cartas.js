@@ -17,26 +17,46 @@
     '#c040ff',  // roxo cosmico
   ];
 
-  const root = document.documentElement;
+  const EFEITOS = ['8bit', 'crt', 'barbearia', 'multi-neon'];
 
-  // Cor inicial aleatoria
+  const root = document.documentElement;
+  const body = document.body;
+
   function corAleatoria() {
     return CORES[Math.floor(Math.random() * CORES.length)];
   }
 
-  function aplicar(cor) {
+  function efeitoAleatorio() {
+    return EFEITOS[Math.floor(Math.random() * EFEITOS.length)];
+  }
+
+  function aplicarCor(cor) {
     root.style.setProperty('--carta-borda-cor', cor);
     root.style.setProperty('--carta-borda-glow', cor + '88');
   }
 
-  function loop() {
-    aplicar(corAleatoria());
-    // Proxima troca entre 6 e 12 segundos
-    const prox = 6000 + Math.random() * 6000;
-    setTimeout(loop, prox);
+  function aplicarEfeito(efeito) {
+    EFEITOS.forEach(e => body.classList.remove('efeito-' + e));
+    if (efeito) body.classList.add('efeito-' + efeito);
   }
 
-  aplicar(corAleatoria());
-  setTimeout(loop, 6000 + Math.random() * 6000);
+  function loopCor() {
+    aplicarCor(corAleatoria());
+    const prox = 6000 + Math.random() * 6000;  // 6-12s
+    setTimeout(loopCor, prox);
+  }
+
+  function loopEfeito() {
+    // 60% sem efeito (so cor base), 40% com efeito especial
+    const usar = Math.random() < 0.4;
+    aplicarEfeito(usar ? efeitoAleatorio() : null);
+    // Duracao do estado atual: 8-18s
+    const prox = 8000 + Math.random() * 10000;
+    setTimeout(loopEfeito, prox);
+  }
+
+  aplicarCor(corAleatoria());
+  setTimeout(loopCor, 6000 + Math.random() * 6000);
+  setTimeout(loopEfeito, 4000 + Math.random() * 6000);
 
 })();
