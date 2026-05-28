@@ -1521,30 +1521,15 @@
   width: 72px;
   height: 104px;
   padding: 0;
-  background:
-    linear-gradient(#fafaf5, #fafaf5) padding-box,
-    linear-gradient(180deg,
-      #5a1a90 0%,
-      #7035b0 14%,
-      #4020a0 28%,
-      #9050d0 42%,
-      #a030a0 56%,
-      #4020a0 70%,
-      #7035b0 84%,
-      #5a1a90 100%
-    ) border-box;
-  background-size: 100% 100%, 100% 100%;
-  background-repeat: no-repeat;
-  border: 6px solid transparent;
+  background: #fafaf5;
+  border: 6px solid var(--naipe-cor, #c9a84c);
   border-radius: 12px;
   cursor: pointer;
   font-family: inherit;
-  transition: transform 0.12s, box-shadow 0.12s;
-  box-shadow:
-    inset 0 0 4px rgba(0,0,0,0.5),
-    0 4px 10px rgba(0,0,0,0.7);
+  transition: transform 0.12s;
   position: relative;
   overflow: visible;
+  animation: cartaNeonPulse 4s ease-in-out infinite;
 }
 
 .battle-carta[data-naipe="♥"] { --naipe-cor: #e06060; }
@@ -1552,6 +1537,23 @@
 .battle-carta[data-naipe="♦"] { --naipe-cor: #e8c050; }
 .battle-carta[data-naipe="♠"] { --naipe-cor: #7aade8; }
 .battle-carta:not([data-naipe="♥"]):not([data-naipe="♣"]):not([data-naipe="♦"]):not([data-naipe="♠"]) { --naipe-cor: #c9a84c; }
+
+@keyframes cartaNeonPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 4px rgba(0,0,0,0.5),
+      0 0 5px  var(--naipe-cor),
+      0 0 10px transparent,
+      0 4px 10px rgba(0,0,0,0.7);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 4px rgba(0,0,0,0.5),
+      0 0 12px var(--naipe-cor),
+      0 0 22px var(--naipe-cor),
+      0 4px 10px rgba(0,0,0,0.7);
+  }
+}
 
 .battle-carta:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(0,0,0,0.6); }
 
