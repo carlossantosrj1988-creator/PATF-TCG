@@ -132,17 +132,19 @@ const PASSIVAS = (() => {
   // ══════════════════════════════════════════════════════════════════════════
 
   // our_p1 — Concentração de Energia
-  // Ao passar a rodada: ganha 1 carga (_energiaCargas, sem limite fixo) e causa
-  // 1 de dano puro a todos os inimigos.
-  // O gasto das cargas ao usar habilidade é feito via modificar_poder em efeitos-habilidades
-  // — ou, alternativamente, interceptado em battle.js antes de resolverAcao.
+  // Ao passar a rodada: ganha 1 carga (_energiaCargas, máx. 5) e causa dano
+  // verdadeiro a todos os inimigos IGUAL ao número de cargas atual (2 cargas → 2 dano).
+  // O gasto das cargas ao usar uma habilidade de dano (+1 poder por carga; com
+  // 5 cargas o ataque único vira AoE) é resolvido inline em combat.js (resolverAcao).
+  const ENERGIA_MAX = 5;
   registrar('our_p1', 'ao_passar_rodada', (c) => {
-    c._energiaCargas = (c._energiaCargas ?? 0) + 1;
+    c._energiaCargas = Math.min((c._energiaCargas ?? 0) + 1, ENERGIA_MAX);
+    const dano = c._energiaCargas;   // dano da rodada = nº de cargas (após o teto)
     const estado = (typeof COMBAT !== 'undefined') ? COMBAT.estado : null;
     if (!estado) return;
     for (const inimigo of estado.combatentes) {
       if (inimigo.lado !== c.lado && inimigo.hp > 0) {
-        inimigo.hp = Math.max(0, inimigo.hp - 1);
+        inimigo.hp = Math.max(0, inimigo.hp - dano);
         recalcularStats(inimigo);
       }
     }

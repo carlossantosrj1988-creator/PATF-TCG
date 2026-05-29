@@ -510,7 +510,7 @@ const HABILIDADES = (() => {
     our_p1: {                         // ex-Concentração de Energia (Samus ♦)
       nome:      'Concentração de Energia',
       gatilho:   'Ao passar a rodada / ao usar habilidade',
-      descricao: 'Ao passar a rodada, ganha 1 carga e causa 1 de dano puro a todos os inimigos. Ao usar qualquer habilidade, gasta cargas para aumentar o poder (+1 por carga). Com 5 cargas gastas, o alvo muda para todos os inimigos.',
+      descricao: 'Ao passar a rodada, ganha 1 carga (máx. 5) e causa dano verdadeiro a todos os inimigos igual ao número de cargas atual (2 cargas → 2 de dano). Ao usar uma habilidade de dano, gasta todas as cargas e ganha +1 de poder por carga. Com 5 cargas, o ataque de alvo único atinge todos os inimigos.',
     },
     our_p2: {                         // ex-Presença de Nimb (♦)
       nome:      'Ação Duplicada',

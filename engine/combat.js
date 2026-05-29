@@ -344,6 +344,7 @@ const COMBAT = (() => {
 
     // 3. Poder efetivo — gasta bônus acumulados (ex: Ódio, Rei)
     let poderEfetivo = hab.poder ?? 0;
+    let energiaAoe = false;   // Concentração de Energia: 5 cargas → ataque único vira AoE
     if (!hab.efeitoPuro) {
       const odio = atacante.efeitos.find(e => e.tipo === 'odio_bonus' && e.duracao > 0);
       if (odio && odio.valor > 0) {
@@ -354,6 +355,17 @@ const COMBAT = (() => {
       if (rei) {
         poderEfetivo += rei.valor;
         rei.duracao = 0;          // consumido
+      }
+      // Concentração de Energia (our_p1): gasta TODAS as cargas pra turbinar uma
+      // habilidade de dano. +1 de poder por carga; com 5 cargas, vira AoE (todos os inimigos).
+      if (atacante.passivas.includes('our_p1')) {
+        const cargas = atacante._energiaCargas ?? 0;
+        if (cargas > 0) {
+          poderEfetivo += cargas;
+          energiaAoe = (cargas >= 5);
+          atacante._energiaCargas = 0;   // gasta tudo, zera
+          _log('efeito', `${atacante.nome} (Concentração de Energia) gastou ${cargas} carga(s): +${cargas} de poder${energiaAoe ? ' e mira em todos os inimigos' : ''}`);
+        }
       }
     }
     // Limpa efeitos expirados (rei_atq_bonus zerado, etc.)
@@ -378,6 +390,13 @@ const COMBAT = (() => {
           _log('efeito', `${atacante.nome} (Encantado) atacou aliado ${alvosEfetivos[0].nome}`);
         }
       }
+    }
+
+    // Concentração de Energia com 5 cargas: ataque único passa a atingir todos os inimigos.
+    if (energiaAoe && hab.alvo === 'unico') {
+      alvosEfetivos = BATTLE_STATE.combatentes.filter(
+        t => t.lado !== atacante.lado && _estaVivo(t)
+      );
     }
 
     // Estática: habilidade Elétrica → 5 dano puro em portadores de Estática
