@@ -44,6 +44,7 @@ const DAMAGE = (() => {
   // Carta do mesmo naipe do personagem → valor de dano dobrado.
   // Só se aplica em dano de ataque — não em efeito puro, não na defesa.
   function valorComEspecialidade(carta, naipePersonagem) {
+    if (!carta) return 0;
     const base = DECK.valorDano(carta);
     if (naipePersonagem && carta.naipe && naipePersonagem === carta.naipe) {
       return base * 2;
